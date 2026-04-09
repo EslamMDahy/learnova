@@ -26,6 +26,26 @@ class CoursesApi {
     throw const FormatException('Invalid response from /courses/my');
   }
 
+  /// GET /courses/{id}
+  ///
+  /// Used to reload a single course after a browser refresh, so the
+  /// details page is never dependent on the in-memory cache.
+  Future<MyCourseItem> getCourseById(
+    int id, {
+    CancelToken? cancelToken,
+  }) async {
+    final res = await _client.get<Map<String, dynamic>>(
+      '/courses/$id',
+      cancelToken: cancelToken,
+    );
+    final data = res.data;
+    if (data is Map<String, dynamic>) {
+      AppLogger.log('GET /courses/$id -> $data', level: LogLevel.debug);
+      return MyCourseItem.fromJson(data);
+    }
+    throw FormatException('Invalid response from GET /courses/$id');
+  }
+
   /// POST /courses
   ///
   /// NOTE: kept as Map to avoid breaking existing code.

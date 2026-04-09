@@ -24,7 +24,9 @@ import '../../features/instructor/presentation/pages/instructor_shell.dart';
 import '../../features/instructor/presentation/pages/instructor_route_pages.dart';
 import '../../features/instructor/presentation/pages/course_details/course_details_page.dart';
 import '../../features/instructor/presentation/controllers/selected_course_provider.dart';
+import '../../features/instructor/data/courses_providers.dart';
 import '../../shared/pages/error_page.dart';
+import '../../shared/widgets/empty_state_page.dart';
 
 import 'routes.dart';
 
@@ -68,11 +70,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         }
 
         // ── Landing / root ───────────────────────────────────────────────────
-        // '/' = landing page for guests.
-        // Authenticated users hitting '/' go to their dashboard.
         if (path == Routes.landing) {
-          if (!isAuthed) return null; // show landing page
-          if (!s.hasMe) return Routes.home; // bootstrapping
+          if (!isAuthed) return null;
+          if (!s.hasMe) return Routes.home;
           if (s.isOwner) return Routes.adminUsers;
           if (s.isInstructor) return Routes.instructorDashboard;
           return Routes.home;
@@ -80,12 +80,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
         // ── Unauthenticated → protected route ───────────────────────────────
         if (!isAuthed && !_isPublicRoute(path)) {
-          return Routes.landing; // send guests to landing, not /login
+          return Routes.landing;
         }
 
         // ── Authenticated → auth-only routes ────────────────────────────────
         if (isAuthed && _isAuthOnlyRoute(path)) {
-          // Verification routes stay accessible regardless.
           if (path == Routes.verifyEmail || path == Routes.verifyEmailSent) {
             return null;
           }
@@ -96,13 +95,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         }
 
         // ── /settings → role-based settings ────────────────────────────────
-        // The generic /settings route has no shell — redirect to the
-        // role-specific settings page that lives inside the correct shell.
         if (path == Routes.settings) {
-          if (!s.hasMe) return null; // wait for bootstrap
+          if (!s.hasMe) return null;
           if (s.isOwner) return Routes.adminSettings;
           if (s.isInstructor) return Routes.instructorSettings;
-          // Generic student/home settings (no dedicated shell yet)
           return null;
         }
 
@@ -153,7 +149,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: RouteNames.error,
         builder: (_, state) {
           final type = state.uri.queryParameters['type'] ?? 'server';
-          final msg = state.uri.queryParameters['msg'];
+          final msg  = state.uri.queryParameters['msg'];
           final errorId = state.uri.queryParameters['id'];
           return ErrorPage(errorType: type, message: msg, errorId: errorId);
         },
@@ -260,15 +256,29 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             name: RouteNames.instructorCourseDetails,
             pageBuilder: (context, state) {
               final slug = state.pathParameters['courseSlug']!;
-              final course = SelectedCourseCache.value;
-              if (course == null) {
-                // Cache lost on page refresh — redirect to courses list
+
+              // ── Hot path: course still in memory / sessionStorage ──────────
+              // Pass it directly to avoid an unnecessary network round-trip.
+              final cached = SelectedCourseCache.value;
+              if (cached != null) {
                 return NoTransitionPage(
-                  child: _CourseRedirectPage(slug: slug),
+                  child: CourseDetailsPage(
+                    courseSlug: slug,
+                    cachedCourse: cached,
+                  ),
                 );
               }
+
+              // ── Cold path: page refresh — only the id is persisted ─────────
+              // CourseDetailsPage will call selectedCourseByIdProvider to
+              // reload from the API. No silent redirect needed anymore.
+              final courseId = SelectedCourseCache.cachedCourseId;
               return NoTransitionPage(
-                child: CourseDetailsPage(courseSlug: slug, course: course),
+                child: CourseDetailsPage(
+                  courseSlug: slug,
+                  cachedCourse: null,
+                  cachedCourseId: courseId,
+                ),
               );
             },
           ),
@@ -284,24 +294,43 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (_, __) =>
                 const NoTransitionPage(child: SettingsPage()),
           ),
+
+          // ── Coming-soon routes: now show a proper empty state ─────────────
           GoRoute(
             path: Routes.instructorQuestionBank,
             name: RouteNames.instructorQuestionBank,
             pageBuilder: (_, __) => const NoTransitionPage(
-              child: _ComingSoonPage(title: 'Question Bank'),
+              child: EmptyStatePage(
+                icon: Icons.quiz_outlined,
+                title: 'Question Bank',
+                description:
+                    'Build, organise and reuse questions across all your courses. Coming soon.',
+              ),
             ),
           ),
           GoRoute(
             path: Routes.instructorQuizzes,
             name: RouteNames.instructorQuizzes,
-            pageBuilder: (_, __) =>
-                const NoTransitionPage(child: _ComingSoonPage(title: 'Quizzes')),
+            pageBuilder: (_, __) => const NoTransitionPage(
+              child: EmptyStatePage(
+                icon: Icons.assignment_outlined,
+                title: 'Quizzes',
+                description:
+                    'Create timed quizzes and auto-grade student submissions. Coming soon.',
+              ),
+            ),
           ),
           GoRoute(
             path: Routes.instructorHelp,
             name: RouteNames.instructorHelp,
-            pageBuilder: (_, __) =>
-                const NoTransitionPage(child: _ComingSoonPage(title: 'Help')),
+            pageBuilder: (_, __) => const NoTransitionPage(
+              child: EmptyStatePage(
+                icon: Icons.help_outline_rounded,
+                title: 'Help & Support',
+                description:
+                    'Browse guides, FAQs and contact the support team. Coming soon.',
+              ),
+            ),
           ),
         ],
       ),
@@ -316,23 +345,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
 String _initialLocationSafe(SessionSnapshot session) {
   try {
-    // Pending verification takes highest priority.
     final pending = session.pendingVerificationEmail;
     if (pending != null && !session.hasAccessToken && !session.isPersisted) {
       return Routes.verifyEmailSentFor(pending);
     }
-    // No live token yet → treat as guest for routing purposes.
-    // A remember-me session may still be restored during bootstrap, but we must
-    // not mount protected routes before that finishes. Router will refresh as
-    // soon as bootstrap saves a token.
-    if (!session.hasAccessToken) {
-      return Routes.landing;
-    }
-    // Authenticated → role-based dashboard.
+    if (!session.hasAccessToken) return Routes.landing;
     if (session.hasMe && session.isOwner) return Routes.adminUsers;
-    if (session.hasMe && session.isInstructor) {
-      return Routes.instructorDashboard;
-    }
+    if (session.hasMe && session.isInstructor) return Routes.instructorDashboard;
     return Routes.home;
   } catch (_) {
     _clearSessionSafe();
@@ -340,8 +359,6 @@ String _initialLocationSafe(SessionSnapshot session) {
   }
 }
 
-/// Routes that are publicly accessible without authentication.
-/// Includes the landing page, auth pages, and utility pages.
 bool _isPublicRoute(String path) {
   return path == Routes.landing ||
       _isAuthOnlyRoute(path) ||
@@ -350,8 +367,6 @@ bool _isPublicRoute(String path) {
       path == Routes.verifyEmailSent;
 }
 
-/// Auth-flow routes: login, signup, forgot/reset password.
-/// These redirect authenticated users away (to dashboard).
 bool _isAuthOnlyRoute(String path) {
   return path == Routes.login ||
       path == Routes.signup ||
@@ -372,81 +387,37 @@ void _clearSessionSafe() {
 
 class RouteNames {
   RouteNames._();
-  static const landing = 'landing';
-  static const home = 'home';
-  static const login = 'login';
-  static const signup = 'signup';
-  static const forgotPassword = 'forgotPassword';
-  static const verifyEmail = 'verifyEmail';
+  static const landing    = 'landing';
+  static const home       = 'home';
+  static const login      = 'login';
+  static const signup     = 'signup';
+  static const forgotPassword  = 'forgotPassword';
+  static const verifyEmail     = 'verifyEmail';
   static const verifyEmailSent = 'verifyEmailSent';
-  static const resetPassword = 'resetPassword';
-  static const settings = 'settings';
-  static const error = 'error';
+  static const resetPassword   = 'resetPassword';
+  static const settings  = 'settings';
+  static const error     = 'error';
 
-  static const instructorDashboard = 'instructorDashboard';
-  static const instructorCourses = 'instructorCourses';
+  static const instructorDashboard   = 'instructorDashboard';
+  static const instructorCourses     = 'instructorCourses';
   static const instructorCourseDetails = 'instructorCourseDetails';
-  static const instructorQuestionBank = 'instructorQuestionBank';
-  static const instructorQuizzes = 'instructorQuizzes';
-  static const instructorSettings = 'instructorSettings';
-  static const instructorHelp = 'instructorHelp';
+  static const instructorQuestionBank  = 'instructorQuestionBank';
+  static const instructorQuizzes       = 'instructorQuizzes';
+  static const instructorSettings      = 'instructorSettings';
+  static const instructorHelp          = 'instructorHelp';
   static const instructorNotifications = 'instructorNotifications';
 
-  static const adminUsers = 'adminUsers';
+  static const adminUsers        = 'adminUsers';
   static const adminJoinRequests = 'adminJoinRequests';
   static const adminUpgradePlans = 'adminUpgradePlans';
-  static const adminSettings = 'adminSettings';
-  static const adminHelp = 'adminHelp';
+  static const adminSettings     = 'adminSettings';
+  static const adminHelp         = 'adminHelp';
   static const adminNotifications = 'adminNotifications';
 
   // compat
-  static const instructorCourseMaterials = 'instructorCourseMaterials';
-  static const instructorCourseStudents = 'instructorCourseStudents';
-  static const instructorCourseAnalytics = 'instructorCourseAnalytics';
+  static const instructorCourseMaterials    = 'instructorCourseMaterials';
+  static const instructorCourseStudents     = 'instructorCourseStudents';
+  static const instructorCourseAnalytics    = 'instructorCourseAnalytics';
   static const instructorCourseQuestionBank = 'instructorCourseQuestionBank';
-  static const instructorCourseQuizzes = 'instructorCourseQuizzes';
-}
-
-class _ComingSoonPage extends StatelessWidget {
-  final String title;
-  const _ComingSoonPage({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.pageBg,
-      alignment: Alignment.center,
-      child: Text(
-        '$title (Coming Soon)',
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-}
-
-/// Shown when cache is lost (page refresh). Sends the user back to courses list.
-class _CourseRedirectPage extends StatefulWidget {
-  final String slug;
-  const _CourseRedirectPage({required this.slug});
-  @override
-  State<_CourseRedirectPage> createState() => _CourseRedirectPageState();
-}
-
-class _CourseRedirectPageState extends State<_CourseRedirectPage> {
-  @override
-  void initState() {
-    super.initState();
-    // Redirect on next frame so the router is fully mounted
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.go(Routes.instructorCourses);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: AppColors.pageBg,
-      body: Center(child: CircularProgressIndicator()),
-    );
-  }
+  static const instructorCourseQuizzes      = 'instructorCourseQuizzes';
 }

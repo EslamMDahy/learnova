@@ -43,6 +43,16 @@ class CoursesRepository {
     return MyCoursesResponse(items: enrichedItems, total: response.total);
   }
 
+  /// Fetch a single course by its numeric id.
+  ///
+  /// Used by [selectedCourseByIdProvider] so the details page can reload
+  /// itself after a browser refresh without depending on the in-memory cache.
+  Future<MyCourseItem> getCourseById(
+    int id, {
+    CancelToken? cancelToken,
+  }) =>
+      _api.getCourseById(id, cancelToken: cancelToken);
+
   Future<Map<String, dynamic>> createCourse({
     required CourseCreateRequest payload,
     CancelToken? cancelToken,
