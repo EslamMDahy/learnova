@@ -4,6 +4,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/endpoints.dart';
 import 'dto/login_request.dart';
 import 'dto/login_response.dart';
+import 'dto/signup_request.dart';
 
 class AuthApi {
   final ApiClient _client;
@@ -18,24 +19,17 @@ class AuthApi {
     );
 
     final payload = (res.data ?? <String, dynamic>{}).cast<String, dynamic>();
-    final response = LoginResponse.fromJson(payload);
-    return response;
+    return LoginResponse.fromJson(payload);
   }
 
-  Future<void> signup({
-    required String fullName,
-    required String email,
-    required String password,
-    required String systemRole,
-  }) async {
+  /// POST /auth/register
+  ///
+  /// Accepts a typed [SignupRequest] DTO so field names are validated at
+  /// compile time — no more silent bugs from raw Map key typos.
+  Future<void> signup(SignupRequest request) async {
     await _client.post(
       Endpoints.signup,
-      data: {
-        'full_name': fullName.trim(),
-        'email': email.trim(),
-        'password': password,
-        'system_role': systemRole.trim(),
-      },
+      data: request.toJson(),
     );
   }
 
@@ -125,9 +119,7 @@ class AuthApi {
   }
 
   Future<void> logout() async {
-    await _client.post(
-      Endpoints.logout,
-    );
+    await _client.post(Endpoints.logout);
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

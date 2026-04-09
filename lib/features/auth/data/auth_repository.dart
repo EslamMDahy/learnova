@@ -1,20 +1,22 @@
 import '../../../core/network/i_token_refresh_scheduler.dart';
 import '../../../core/storage/token_storage.dart';
 import '../../../core/storage/user_storage.dart';
-import '../domain/i_auth_repository.dart';
 import 'auth_api.dart';
 import 'dto/login_request.dart';
+import 'dto/signup_request.dart';
+import '../domain/i_auth_repository.dart';
 
-/// Concrete implementation of [IAuthRepository].
-/// Depends on [ITokenRefreshScheduler] instead of the full [ApiClient] to keep
-/// the data layer decoupled from network internals.
 class AuthRepository implements IAuthRepository {
   final AuthApi _api;
-  final ITokenRefreshScheduler _refreshScheduler;
 
-  AuthRepository(this._api, this._refreshScheduler);
+  /// Narrow interface — the repository only needs to schedule/cancel the
+  /// proactive token refresh. It no longer depends on the full [ApiClient],
+  /// which keeps this class independently testable.
+  final ITokenRefreshScheduler _tokenScheduler;
 
-  // ── Login ────────────────────────────────────────────────────────────────
+  AuthRepository(this._api, this._tokenScheduler);
+
+  // ─── Login ────────────────────────────────────────────────────────────────
 
   @override
   Future<void> login({
@@ -55,20 +57,16 @@ class AuthRepository implements IAuthRepository {
     }
 
     UserStorage.saveMe(meToStore, persist: persist);
+    TokenStorage.saveSession(accessToken: res.accessToken, persist: persist);
 
-    // Clears any pending verification state on successful login.
-    TokenStorage.saveSession(
-      accessToken: res.accessToken,
-      persist: persist,
-    );
-
-    // Start proactive refresh timer — fires 2 min before the token expires.
-    _refreshScheduler.scheduleProactiveRefresh(res.accessToken);
+    // Start proactive refresh timer — fires 2 min before the token expires
+    // so the user is never interrupted by a 401 during active use.
+    _tokenScheduler.scheduleProactiveRefresh(res.accessToken);
   }
 
   dynamic _toIntOrString(String id) => int.tryParse(id) ?? id;
 
-  // ── Signup ─────────────────────────────────────────────────────────────
+  // ─── Signup ───────────────────────────────────────────────────────────────
 
   @override
   Future<void> signup({
@@ -78,14 +76,16 @@ class AuthRepository implements IAuthRepository {
     required String systemRole,
   }) async {
     await _api.signup(
-      fullName: fullName.trim(),
-      email: email.trim(),
-      password: password,
-      systemRole: systemRole,
+      SignupRequest(
+        fullName: fullName.trim(),
+        email: email.trim(),
+        password: password,
+        systemRole: systemRole,
+      ),
     );
   }
 
-  // ── Email verification ──────────────────────────────────────────────────
+  // ─── Email verification ───────────────────────────────────────────────────
 
   @override
   Future<String> verifyEmail(String token) => _api.verifyEmail(token);
@@ -98,7 +98,7 @@ class AuthRepository implements IAuthRepository {
   Future<bool> checkEmailVerified(String email) =>
       _api.checkEmailVerified(email.trim());
 
-  // ── Password ──────────────────────────────────────────────────────────────
+  // ─── Password ─────────────────────────────────────────────────────────────
 
   @override
   Future<String> forgotPassword(String email) =>
@@ -111,11 +111,11 @@ class AuthRepository implements IAuthRepository {
   }) =>
       _api.resetPassword(token: token, newPassword: newPassword);
 
-  // ── Session ───────────────────────────────────────────────────────────────
+  // ─── Session ──────────────────────────────────────────────────────────────
 
   @override
   Future<void> logout() async {
-    _refreshScheduler.cancelProactiveRefresh();
+    _tokenScheduler.cancelProactiveRefresh();
     try {
       await _api.logout();
     } catch (_) {
