@@ -483,15 +483,8 @@ Future<void> _showAddSubtopicDialog(
 
   // ── Create / copy module dialog ──────────────────────────────────────────
   //
-  // BUG FIX: the original implementation only handled `result.isNew == true`
-  // (creating a brand-new module).  When the instructor selected an existing
-  // module from another course the sheet returned
-  // `ModuleSelectorResult.existing(module, sourceCourseId)` — isNew is false —
-  // and the caller had no else-branch, so the dialog simply closed and nothing
-  // happened.
-  //
-  // The fix adds the missing else-branch that calls `copyModule()` with the
-  // correct source/target course IDs, refreshes the sidebar, and shows a toast.
+  // FIX: the original implementation used result.existingModule which does not
+  // exist on ModuleSelectorResult. The correct field name is result.existing.
   Future<void> _showCreateModuleDialog() async {
     final currentModules =
         ref.read(courseDetailsControllerProvider(widget.course.id)).modules;
@@ -526,10 +519,10 @@ Future<void> _showAddSubtopicDialog(
     } else {
       // ── Branch B: copy an existing module from another course ────────────
       //
-      // result.existingModule  – the ModuleItem the instructor chose
-      // result.sourceCourseId  – the course it currently lives in
-      // widget.course.id       – the destination (current) course
-      final sourceModule   = result.existingModule!;
+      // result.existing    – the ModuleItem the instructor chose
+      // result.sourceCourseId – the course it currently lives in
+      // widget.course.id   – the destination (current) course
+      final sourceModule   = result.existing!;
       final sourceCourseId = result.sourceCourseId!;
 
       final copied = await notifier.copyModule(

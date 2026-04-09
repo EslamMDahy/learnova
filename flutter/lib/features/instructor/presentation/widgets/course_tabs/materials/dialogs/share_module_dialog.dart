@@ -1,9 +1,26 @@
-// Re-exports the share dialog that lives in the entry point file.
-// The full implementation (_ShareModuleDialog) requires Riverpod ConsumerStatefulWidget
-// access to coursesApiProvider, so it is intentionally kept in materials_tab.dart
-// and only accessed via _showShareModuleDialog() on the state.
+// share_module_dialog.dart
 //
-// This file is a placeholder to satisfy the planned folder structure.
-// Future: extract once coursesApiProvider is injectable without BuildContext.
-export '../../../../widgets/course_tabs/materials_tab.dart'
-    show ShareModuleDialogAccessor;
+// Public-facing entry point for the Share Module dialog.
+// The full implementation (_ShareModuleDialog) lives in materials_tab.dart as
+// a private class because it uses coursesRepositoryProvider which is already
+// injected into that file via ConsumerStatefulWidget.
+//
+// This stub documents the intended public API and acts as a future extraction
+// point. When coursesRepositoryProvider becomes injectable via a standalone
+// ConsumerWidget, the dialog can be moved here.
+//
+// Current usage (from materials_tab.dart):
+//   final targetCourse = await _showManagedDialog<MyCourseItem>(
+//     barrierColor: Colors.black.withOpacity(0.35),
+//     builder: (_) => _ShareModuleDialog(module: m, currentCourseId: widget.course.id),
+//   );
+//
+// Future public API (once extracted):
+//   Future<MyCourseItem?> showShareModuleDialog(
+//     BuildContext context, {
+//     required ModuleItem module,
+//     required int currentCourseId,
+//   });
+
+library share_module_dialog;
+// No exports until _ShareModuleDialog is extracted from materials_tab.dart.
