@@ -10,9 +10,13 @@ import '../ui/global_loading_bus.dart';
 import 'api_exceptions.dart';
 import 'dio_adapter_config.dart';
 import 'endpoints.dart';
+import 'i_token_refresh_scheduler.dart';
 import 'refresh_client.dart';
 
-class ApiClient {
+/// HTTP client built on Dio.
+/// Also implements [ITokenRefreshScheduler] so the repository layer can depend
+/// on the narrow interface rather than the full ApiClient.
+class ApiClient implements ITokenRefreshScheduler {
   ApiClient({Dio? dio, RefreshClient? refreshClient})
       : _dio = dio ?? Dio(),
         _refreshClient = refreshClient ?? createRefreshClient() {
@@ -63,8 +67,7 @@ class ApiClient {
           // – we have a token (otherwise the user is already logged out)
           // – not an auth endpoint (avoid refresh-loops)
           // – not already retried for this request
-          final shouldTryRefresh =
-              Env.enableRefreshToken &&
+          final shouldTryRefresh = Env.enableRefreshToken &&
               status == 401 &&
               TokenStorage.hasToken &&
               !_isAuthPath(e.requestOptions.path) &&
@@ -133,21 +136,15 @@ class ApiClient {
   final Dio _dio;
   final RefreshClient _refreshClient;
 
-  // ── Proactive refresh timer ─────────────────────────────────────────────────
+  // ── Proactive refresh timer (ITokenRefreshScheduler) ───────────────────────
   //
   // Fires 2 minutes before the JWT expires so the user never hits a 401 mid-
   // session. After every successful refresh (reactive or proactive) we cancel
   // the old timer and schedule a new one for the replacement token.
-  //
-  // Guard: if the token is already expired (or within 30 s of expiry) when
-  // scheduleProactiveRefresh is called we delay 30 s instead of firing
-  // immediately.  This prevents a burst of refresh calls on page load when
-  // the stored token is very close to expiry.
 
   Timer? _proactiveTimer;
 
-  /// Call once after login / bootstrap with the raw JWT so the timer knows
-  /// when to schedule the next silent refresh.
+  @override
   void scheduleProactiveRefresh(String accessToken) {
     _proactiveTimer?.cancel();
     _proactiveTimer = null;
@@ -156,7 +153,6 @@ class ApiClient {
       final parts = accessToken.split('.');
       if (parts.length != 3) return;
 
-      // Base64url → base64 padding
       String pad(String s) {
         final rem = s.length % 4;
         return rem == 0 ? s : s + '=' * (4 - rem);
@@ -175,13 +171,8 @@ class ApiClient {
       );
       final now = DateTime.now().toUtc();
 
-      // Token already expired — don't schedule; let the reactive interceptor
-      // handle the next 401.
       if (expiry.isBefore(now)) return;
 
-      // Fire 2 minutes before expiry.
-      // If we're already within 2 min (but not expired), wait at least 30 s
-      // to avoid immediately hammering the refresh endpoint on page load.
       final fireAt = expiry.subtract(const Duration(minutes: 2));
       final delay = fireAt.isAfter(now)
           ? fireAt.difference(now)
@@ -193,6 +184,7 @@ class ApiClient {
     }
   }
 
+  @override
   void cancelProactiveRefresh() {
     _proactiveTimer?.cancel();
     _proactiveTimer = null;
@@ -213,16 +205,13 @@ class ApiClient {
         persist: TokenStorage.isPersisted,
       );
 
-      // Reschedule for the new token's lifetime.
       scheduleProactiveRefresh(newToken);
     } catch (_) {
-      // Proactive refresh failed (e.g. no network, cookie expired).
-      // Don't log the user out here — the reactive 401 interceptor will
-      // handle the next failed request and show the session-expired message.
+      // Proactive refresh failed. Reactive 401 interceptor will handle it.
     }
   }
 
-  // ── Public HTTP methods ─────────────────────────────────────────────────────
+  // ── Public HTTP methods ────────────────────────────────────────────────────
 
   Future<Response<T>> get<T>(
     String path, {
@@ -297,7 +286,7 @@ class ApiClient {
         cancelToken: cancelToken,
       );
 
-  // ── Retry helpers ───────────────────────────────────────────────────────────
+  // ── Retry helpers ────────────────────────────────────────────────────────────
 
   bool _shouldRetryGetOnce(DioException e) {
     if (e.requestOptions.method.toUpperCase() != 'GET') return false;
@@ -318,10 +307,7 @@ class ApiClient {
       followRedirects: o.followRedirects,
       validateStatus: o.validateStatus,
       receiveDataWhenStatusError: o.receiveDataWhenStatusError,
-      extra: {
-        ...o.extra,
-        '__getRetried': true,
-      },
+      extra: {...o.extra, '__getRetried': true},
     );
 
     return _dio.request<dynamic>(
@@ -335,11 +321,7 @@ class ApiClient {
     );
   }
 
-  // ── Refresh token (single-flight) ───────────────────────────────────────────
-  //
-  // A Completer ensures that if multiple requests get a 401 simultaneously,
-  // only ONE refresh call is made to the backend.  All waiting requests share
-  // the same future and retry with the single new token.
+  // ── Refresh token (single-flight) ──────────────────────────────────────────
 
   Completer<String>? _refreshCompleter;
 
@@ -393,10 +375,7 @@ class ApiClient {
       followRedirects: o.followRedirects,
       validateStatus: o.validateStatus,
       receiveDataWhenStatusError: o.receiveDataWhenStatusError,
-      extra: {
-        ...o.extra,
-        '__authRetried': true,
-      },
+      extra: {...o.extra, '__authRetried': true},
     );
 
     return _dio.request<dynamic>(
