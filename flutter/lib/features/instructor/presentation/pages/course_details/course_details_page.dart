@@ -211,21 +211,23 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
   Widget _buildContent(MyCourseItem course) {
     final pages = _buildPages(course);
     return Column(children: [
-      // ── Tab header — stretches to full width ──────────────────────────────
+      // ── Tab header — centered, does NOT stretch to full width ─────────────
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: const BoxDecoration(
           color: Colors.white,
           border: Border(bottom: BorderSide(color: AppColors.border)),
         ),
-        child: _PillTabBar(
-          tabs: _tabs,
-          currentIndex: _currentIndex,
-          onTap: (i) {
-            setState(() => _currentIndex = i);
-            _session.setString(_tabKey, i.toString());
-            _tabController.animateTo(i);
-          },
+        child: Center(
+          child: _PillTabBar(
+            tabs: _tabs,
+            currentIndex: _currentIndex,
+            onTap: (i) {
+              setState(() => _currentIndex = i);
+              _session.setString(_tabKey, i.toString());
+              _tabController.animateTo(i);
+            },
+          ),
         ),
       ),
       Expanded(
@@ -239,7 +241,7 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Pill tab bar — stretches to fill the header width
+//  Pill tab bar — wraps its content, centered in the header
 // ─────────────────────────────────────────────────────────────────────────────
 class _PillTabBar extends StatelessWidget {
   final List<_TabDef> tabs;
@@ -254,25 +256,25 @@ class _PillTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: AppColors.pageBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: List.generate(tabs.length, (i) {
-          return Expanded(
-            child: _PillTab(
+    return IntrinsicWidth(
+      child: Container(
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: AppColors.pageBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(tabs.length, (i) {
+            return _PillTab(
               icon: tabs[i].icon,
               label: tabs[i].label,
               selected: i == currentIndex,
               onTap: () => onTap(i),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -312,7 +314,7 @@ class _PillTabState extends State<_PillTab> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
           decoration: BoxDecoration(
             color: widget.selected
                 ? Colors.white
@@ -342,24 +344,17 @@ class _PillTabState extends State<_PillTab> {
                     : AppColors.textMuted,
               ),
               const SizedBox(width: 6),
-              Flexible(
-                child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 150),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontFamily: 'Inter',
-                    fontWeight: widget.selected
-                        ? FontWeight.w700
-                        : FontWeight.w500,
-                    color: widget.selected
-                        ? AppColors.textTitle
-                        : AppColors.textMuted,
-                  ),
-                  child: Text(
-                    widget.label,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
+              Text(
+                widget.label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontFamily: 'Inter',
+                  fontWeight: widget.selected
+                      ? FontWeight.w700
+                      : FontWeight.w500,
+                  color: widget.selected
+                      ? AppColors.textTitle
+                      : AppColors.textMuted,
                 ),
               ),
             ],
