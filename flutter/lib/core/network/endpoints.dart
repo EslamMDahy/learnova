@@ -45,8 +45,13 @@ class Endpoints {
       '$_courses/$courseId/modules/$moduleId/update';
   static String deleteModule(int courseId, int moduleId) =>
       '$_courses/$courseId/modules/$moduleId/delete';
-  static String copyModule(int courseId, int moduleId) =>
-      '$_courses/$courseId/modules/$moduleId/copy';
+  /// POST /courses/{targetCourseId}/modules/{moduleId}/copy
+  ///
+  /// The backend resolves the source course from the module record itself.
+  /// [targetCourseId] is the course the copied module should land in.
+  /// No request body is required — the backend does not read one.
+  static String copyModule(int targetCourseId, int moduleId) =>
+      '$_courses/$targetCourseId/modules/$moduleId/copy';
   static String reorderModules(int courseId) =>
       '$_courses/$courseId/modules/reorder';
 
@@ -77,7 +82,6 @@ class Endpoints {
       '$_courses/$courseId/modules/$moduleId/materials/$materialId/topics/reorder';
 
   // ─── LEARNING OUTCOMES ───────────────────────────────────────────────────
-  // Base: /courses/{course_id}/learning-outcomes
   static String learningOutcomes(int courseId) =>
       '$_courses/$courseId/learning-outcomes';
   static String getLearningOutcome(int courseId, int outcomeId) =>
