@@ -35,7 +35,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       if (!mounted) return;
 
       final uri = GoRouterState.of(context).uri;
-      final resetDone   = uri.queryParameters['reset'] == '1';
+      final resetDone    = uri.queryParameters['reset'] == '1';
       final verifiedDone = uri.queryParameters['verified'] == '1';
 
       if (verifiedDone) setState(() => _showVerifiedSuccess = true);
@@ -49,7 +49,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         _successTimer = Timer(const Duration(seconds: 3), () {
           if (!mounted) return;
           setState(() {
-            _showResetSuccess   = false;
+            _showResetSuccess    = false;
             _showVerifiedSuccess = false;
           });
         });
@@ -95,14 +95,12 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         break;
 
       case LoginResult.emailNotVerified:
-        // pendingVerificationEmail is already stored by LoginController.
-        // Navigate to the verify screen with the email pre-filled.
         context.go(Routes.verifyEmailSentFor(email));
         break;
 
       case LoginResult.authError:
       case LoginResult.error:
-        // Error is shown inline via state.error.
+        // Error is shown inline via state.errorMessage.
         break;
     }
   }
@@ -110,7 +108,10 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(loginControllerProvider);
-    final err = state.error;
+
+    // Derived from AsyncValue — no manual bool flags needed.
+    final isLoading = state.isLoading;
+    final err       = state.errorMessage;
 
     return AppAuthShell(
       isMobile: widget.isMobile,
@@ -195,7 +196,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
             AppRememberForgotRow(
               value: rememberMe,
-              disabled: state.loading,
+              disabled: isLoading,
               onChanged: (v) => setState(() => rememberMe = v ?? false),
               onForgot: () => context.go(Routes.forgotPassword),
             ),
@@ -204,7 +205,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
             AppPrimaryLoadingButton(
               label: 'Log In',
-              loading: state.loading,
+              loading: isLoading,
               onPressed: _onLogin,
             ),
 
@@ -215,14 +216,14 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             AppSocialButton(
               label: 'Google',
               imagePath: 'assets/google.png',
-              disabled: state.loading,
+              disabled: isLoading,
               onTap: () {},
             ),
             const SizedBox(height: 12),
             AppSocialButton(
               label: 'Microsoft',
               imagePath: 'assets/microsoft.png',
-              disabled: state.loading,
+              disabled: isLoading,
               onTap: () {},
             ),
 
@@ -235,8 +236,12 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                   "Don't have an account? ",
                   style: TextStyle(color: Colors.black),
                 ),
-                InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
-                  onTap: state.loading ? null : () => context.go(Routes.signup),
+                InkWell(
+                  hoverColor: Colors.transparent,
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+                  onTap: isLoading ? null : () => context.go(Routes.signup),
                   child: const Text(
                     'Sign up',
                     style: TextStyle(
