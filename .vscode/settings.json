@@ -1,0 +1,14 @@
+{
+  "continue.models": [
+    {
+      "title": "Ollama Local",
+      "provider": "ollama",
+      "model": "qwen2.5-coder:7b"
+    }
+  ],
+  "continue.tabAutocompleteModel": {
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b"
+  },
+  "cmake.sourceDirectory": "D:/owner/github/Front/Learnova-Smart-Study-Companion/Flutter/windows"
+}

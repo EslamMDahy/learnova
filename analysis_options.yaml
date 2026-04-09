@@ -1,0 +1,84 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    # Treat warnings as errors in CI (comment out locally if too noisy)
+    unnecessary_null_comparison: warning
+    dead_code: warning
+    unused_import: warning
+    strict_raw_type: ignore
+    inference_failure_on_collection_literal: ignore
+    unused_element_parameter: ignore
+    unused_element: ignore
+    inference_failure_on_function_invocation: ignore
+    deprecated_member_use: ignore
+    inference_failure_on_function_return_type: ignore
+    use_build_context_synchronously: ignore
+    inference_failure_on_untyped_parameter: ignore
+    inference_failure_on_instance_creation: ignore
+    flutter_style_todos: ignore
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
+linter:
+  rules:
+    # ── Style ──────────────────────────────────────────────────
+    - always_declare_return_types
+    - annotate_overrides
+    - avoid_empty_else
+    - avoid_print
+    - avoid_redundant_argument_values
+    - avoid_relative_lib_imports
+    - avoid_return_types_on_setters
+    - avoid_unnecessary_containers
+    - avoid_unused_constructor_parameters
+    - camel_case_types
+    - cancel_subscriptions
+    - close_sinks
+    - constant_identifier_names
+    - curly_braces_in_flow_control_structures
+    - depend_on_referenced_packages
+    - empty_catches
+    - eol_at_end_of_file
+    - exhaustive_cases
+    - file_names
+    - flutter_style_todos
+    - leading_newlines_in_multiline_strings
+    - library_names
+    - library_prefixes
+    - no_duplicate_case_values
+    - no_logic_in_create_state
+    - non_constant_identifier_names
+    - null_check_on_nullable_type_parameter
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_final_fields
+    - prefer_final_locals
+    - prefer_is_empty
+    - prefer_is_not_empty
+    - prefer_null_aware_operators
+    - prefer_single_quotes
+    - require_trailing_commas
+    - sized_box_for_whitespace
+    - sort_child_properties_last
+    - type_annotate_public_apis
+    - unawaited_futures
+    - unnecessary_await_in_return
+    - unnecessary_brace_in_string_interps
+    - unnecessary_const
+    - unnecessary_new
+    - unnecessary_null_checks
+    - unnecessary_overrides
+    - unnecessary_parenthesis
+    - unnecessary_string_interpolations
+    - unnecessary_this
+    - use_full_hex_values_for_flutter_colors
+    - use_if_null_to_convert_nulls_to_bools
+    - use_key_in_widget_constructors
+    - use_rethrow_when_possible
+    - use_super_parameters
