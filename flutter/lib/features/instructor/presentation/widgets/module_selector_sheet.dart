@@ -7,20 +7,28 @@ import '../../data/courses_providers.dart';
 import '../../data/modules_materials_providers.dart';
 import '../../data/modules_models.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────────
+//  Result model
+// ─────────────────────────────────────────────────────────────────────────────────
 class ModuleSelectorResult {
   final bool isNew;
   final ModuleItem? existing;
+  /// The course the [existing] module lives in. Required when [isNew] is false
+  /// so the caller knows which course to pass as [sourceCourseId] to the copy
+  /// endpoint: POST /courses/{sourceCourseId}/modules/{moduleId}/copy
+  final int? sourceCourseId;
   final String? newTitle;
   final String? newDescription;
 
-  const ModuleSelectorResult.existing(this.existing)
+  const ModuleSelectorResult.existing(this.existing, this.sourceCourseId)
       : isNew = false,
         newTitle = null,
         newDescription = null;
 
   const ModuleSelectorResult.newModule(this.newTitle, this.newDescription)
       : isNew = true,
-        existing = null;
+        existing = null,
+        sourceCourseId = null;
 }
 
 Future<ModuleSelectorResult?> showModuleSelectorSheet(
@@ -32,7 +40,7 @@ Future<ModuleSelectorResult?> showModuleSelectorSheet(
   final width = size.width < 600 ? size.width * 0.96 : 860.0;
   final height = size.height < 820 ? size.height * 0.82 : 720.0;
 
-  return showDialog<ModuleSelectorResult>(  
+  return showDialog<ModuleSelectorResult>(
     context: context,
     barrierColor: const Color(0xFF0B1A2B).withOpacity(0.55),
     builder: (_) => Dialog(
@@ -148,7 +156,6 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
     );
   }
 
-
   Widget _buildStepContent(AsyncValue<List<_ReusableCourse>> reusableAsync) {
     if (_step == _SelectorStep.chooseCourse) return _buildChooseCourse(reusableAsync);
     if (_step == _SelectorStep.chooseModule) return _buildChooseModule();
@@ -199,8 +206,13 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
                   child: _ActionCard(
                     icon: Icons.auto_awesome_rounded,
                     badge: 'Recommended',
+                    // Both badges use the same blue palette to stay consistent
+                    // with the site’s primary color. The old “From other courses”
+                    // badge was purple which clashed with the rest of the UI.
                     badgeColor: const Color(0xFFE8F1FF),
                     badgeTextColor: const Color(0xFF1D6FE9),
+                    iconBg: const Color(0xFFEFF6FF),
+                    iconFg: const Color(0xFF137FEC),
                     title: 'Create a fresh module',
                     description:
                         'Best for a brand-new chapter, week, or topic group. Title and description are validated before creation.',
@@ -213,8 +225,10 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
                   child: _ActionCard(
                     icon: Icons.content_copy_rounded,
                     badge: 'From other courses',
-                    badgeColor: const Color(0xFFF1EAFE),
-                    badgeTextColor: const Color(0xFF7C3AED),
+                    badgeColor: const Color(0xFFE8F1FF),
+                    badgeTextColor: const Color(0xFF1D6FE9),
+                    iconBg: const Color(0xFFEFF6FF),
+                    iconFg: const Color(0xFF137FEC),
                     title: 'Reuse from another course',
                     description: readyCount > 0
                         ? '$readyCount validated modules can be copied from ${courses.length} ${courses.length == 1 ? 'other course' : 'other courses'}.'
@@ -398,7 +412,15 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
                           child: _ModuleTile(
                             module: module,
                             enabled: true,
-                            onTap: () => Navigator.pop(context, ModuleSelectorResult.existing(module)),
+                            // FIX: pass the source course id so the caller can
+                            // build the correct copy endpoint URL.
+                            onTap: () => Navigator.pop(
+                              context,
+                              ModuleSelectorResult.existing(
+                                module,
+                                entry.course.id,
+                              ),
+                            ),
                           ),
                         )),
                   ],
@@ -614,6 +636,7 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
               ),
               const SizedBox(width: 10),
               Expanded(
+                flex: 2,
                 child: FilledButton.icon(
                   onPressed: _submitCreate,
                   style: FilledButton.styleFrom(
@@ -789,7 +812,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
+          InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent),
             onTap: onClose,
             borderRadius: BorderRadius.circular(99),
             child: Container(
@@ -813,6 +836,8 @@ class _ActionCard extends StatelessWidget {
   final String badge;
   final Color badgeColor;
   final Color badgeTextColor;
+  final Color iconBg;
+  final Color iconFg;
   final String title;
   final String description;
   final String cta;
@@ -824,6 +849,8 @@ class _ActionCard extends StatelessWidget {
     required this.badge,
     required this.badgeColor,
     required this.badgeTextColor,
+    required this.iconBg,
+    required this.iconFg,
     required this.title,
     required this.description,
     required this.cta,
@@ -838,7 +865,7 @@ class _ActionCard extends StatelessWidget {
       child: Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        child: InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
+        child: InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent),
           borderRadius: BorderRadius.circular(10),
           onTap: enabled ? onTap : null,
           child: Container(
@@ -856,12 +883,10 @@ class _ActionCard extends StatelessWidget {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: icon == Icons.content_copy_rounded
-                            ? const Color(0xFFF5F3FF)
-                            : const Color(0xFFEFF6FF),
+                        color: iconBg,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(icon, size: 18, color: icon == Icons.content_copy_rounded ? const Color(0xFF8B5CF6) : const Color(0xFF137FEC)),
+                      child: Icon(icon, size: 18, color: iconFg),
                     ),
                     const Spacer(),
                     Container(
@@ -973,7 +998,7 @@ class _CourseTile extends StatelessWidget {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(10),
-      child: InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
+      child: InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent),
         borderRadius: BorderRadius.circular(10),
         onTap: onTap,
         child: Container(
@@ -1191,7 +1216,7 @@ class _BackLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
+    return InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent),
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: Padding(
