@@ -4,20 +4,19 @@ import '../../../../core/error/app_error_bus.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../core/network/error_mapper.dart';
 import '../../data/auth_providers.dart';
-import '../../data/auth_repository.dart';
+import '../../domain/i_auth_repository.dart';
 import 'login_state.dart';
 
+/// Auth controller for the login screen.
+/// Uses the Riverpod 2.x [Notifier] API (replaces the deprecated [StateNotifier]).
 final loginControllerProvider =
-    StateNotifierProvider<LoginController, LoginState>(
-  (ref) => LoginController(ref),
-);
+    NotifierProvider<LoginController, LoginState>(LoginController.new);
 
-class LoginController extends StateNotifier<LoginState> {
-  LoginController(this.ref) : super(const LoginState());
+class LoginController extends Notifier<LoginState> {
+  @override
+  LoginState build() => const LoginState();
 
-  final Ref ref;
-
-  AuthRepository get _repo => ref.read(authRepositoryProvider);
+  IAuthRepository get _repo => ref.read(authRepositoryProvider);
 
   void clearError() {
     if (state.error != null) {
@@ -59,10 +58,7 @@ class LoginController extends StateNotifier<LoginState> {
         return LoginResult.authError;
       }
 
-      state = state.copyWith(
-        loading: false,
-        error: failure.message,
-      );
+      state = state.copyWith(loading: false, error: failure.message);
       return LoginResult.error;
     }
   }

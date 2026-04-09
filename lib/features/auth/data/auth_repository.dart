@@ -1,16 +1,22 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/i_token_refresh_scheduler.dart';
 import '../../../core/storage/token_storage.dart';
 import '../../../core/storage/user_storage.dart';
+import '../domain/i_auth_repository.dart';
 import 'auth_api.dart';
 import 'dto/login_request.dart';
 
-class AuthRepository {
+/// Concrete implementation of [IAuthRepository].
+/// Depends on [ITokenRefreshScheduler] instead of the full [ApiClient] to keep
+/// the data layer decoupled from network internals.
+class AuthRepository implements IAuthRepository {
   final AuthApi _api;
-  final ApiClient _apiClient;
-  AuthRepository(this._api, this._apiClient);
+  final ITokenRefreshScheduler _refreshScheduler;
 
-  // ─── Login ────────────────────────────────────────────────────────────────
+  AuthRepository(this._api, this._refreshScheduler);
 
+  // ── Login ────────────────────────────────────────────────────────────────
+
+  @override
   Future<void> login({
     required String email,
     required String password,
@@ -55,15 +61,16 @@ class AuthRepository {
       accessToken: res.accessToken,
       persist: persist,
     );
-    // Start proactive refresh timer — fires 2 min before the token expires
-    // so the user is never interrupted by a 401 during active use.
-    _apiClient.scheduleProactiveRefresh(res.accessToken);
+
+    // Start proactive refresh timer — fires 2 min before the token expires.
+    _refreshScheduler.scheduleProactiveRefresh(res.accessToken);
   }
 
   dynamic _toIntOrString(String id) => int.tryParse(id) ?? id;
 
-  // ─── Signup ───────────────────────────────────────────────────────────────
+  // ── Signup ─────────────────────────────────────────────────────────────
 
+  @override
   Future<void> signup({
     required String fullName,
     required String email,
@@ -78,33 +85,37 @@ class AuthRepository {
     );
   }
 
-  // ─── Email verification ───────────────────────────────────────────────────
+  // ── Email verification ──────────────────────────────────────────────────
 
+  @override
   Future<String> verifyEmail(String token) => _api.verifyEmail(token);
 
+  @override
   Future<String> resendVerificationEmail(String email) =>
       _api.resendVerificationEmail(email.trim());
 
-  /// Check if the user's email is verified without requiring login.
-  /// Returns true if the backend confirms the email is verified.
+  @override
   Future<bool> checkEmailVerified(String email) =>
       _api.checkEmailVerified(email.trim());
 
-  // ─── Password ─────────────────────────────────────────────────────────────
+  // ── Password ──────────────────────────────────────────────────────────────
 
+  @override
   Future<String> forgotPassword(String email) =>
       _api.forgotPassword(email.trim());
 
+  @override
   Future<String> resetPassword({
     required String token,
     required String newPassword,
   }) =>
       _api.resetPassword(token: token, newPassword: newPassword);
 
-  // ─── Session ──────────────────────────────────────────────────────────────
+  // ── Session ───────────────────────────────────────────────────────────────
 
+  @override
   Future<void> logout() async {
-    _apiClient.cancelProactiveRefresh();
+    _refreshScheduler.cancelProactiveRefresh();
     try {
       await _api.logout();
     } catch (_) {

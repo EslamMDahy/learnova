@@ -4,19 +4,19 @@ import '../../../../core/error/app_error_bus.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../core/network/error_mapper.dart';
 import '../../data/auth_providers.dart';
-import '../../data/auth_repository.dart';
+import '../../domain/i_auth_repository.dart';
 import 'signup_state.dart';
 
+/// Auth controller for the signup screen.
+/// Uses the Riverpod 2.x [Notifier] API.
 final signupControllerProvider =
-    StateNotifierProvider<SignupController, SignupState>(
-  (ref) => SignupController(ref),
-);
+    NotifierProvider<SignupController, SignupState>(SignupController.new);
 
-class SignupController extends StateNotifier<SignupState> {
-  SignupController(this.ref) : super(const SignupState());
+class SignupController extends Notifier<SignupState> {
+  @override
+  SignupState build() => const SignupState();
 
-  final Ref ref;
-  AuthRepository get _repo => ref.read(authRepositoryProvider);
+  IAuthRepository get _repo => ref.read(authRepositoryProvider);
 
   void clearError() {
     if (state.error != null) {
@@ -25,8 +25,6 @@ class SignupController extends StateNotifier<SignupState> {
   }
 
   void reset() {
-    
-    clearError();
     state = const SignupState();
   }
 
@@ -35,24 +33,19 @@ class SignupController extends StateNotifier<SignupState> {
     return s.isNotEmpty && s.contains('@') && s.contains('.');
   }
 
-
-  /// full_name, email, password, system_role
   Future<bool> signup({
     required String fullName,
     required String email,
     required String password,
     required String systemRole,
   }) async {
-    
     clearError();
-
     state = state.copyWith(loading: true);
 
     final cleanFullName = fullName.trim();
     final cleanEmail = email.trim();
     final cleanSystemRole = systemRole.trim().toLowerCase();
 
-    
     if (cleanFullName.isEmpty) {
       state = state.copyWith(loading: false, error: 'Full name is required.');
       return false;
@@ -60,27 +53,20 @@ class SignupController extends StateNotifier<SignupState> {
 
     if (!_looksLikeEmail(cleanEmail)) {
       state = state.copyWith(
-        loading: false,
-        error: 'Please enter a valid email.',
-      );
+          loading: false, error: 'Please enter a valid email.');
       return false;
     }
 
     if (password.trim().length < 8) {
       state = state.copyWith(
-        loading: false,
-        error: 'Password must be at least 8 characters.',
-      );
+          loading: false,
+          error: 'Password must be at least 8 characters.');
       return false;
     }
 
-    
     const allowed = {'student', 'instructor', 'assistant', 'owner'};
     if (!allowed.contains(cleanSystemRole)) {
-      state = state.copyWith(
-        loading: false,
-        error: 'Invalid System Role.',
-      );
+      state = state.copyWith(loading: false, error: 'Invalid System Role.');
       return false;
     }
 
@@ -103,10 +89,7 @@ class SignupController extends StateNotifier<SignupState> {
         return false;
       }
 
-      state = state.copyWith(
-        loading: false,
-        error: failure.message,
-      );
+      state = state.copyWith(loading: false, error: failure.message);
       return false;
     }
   }
