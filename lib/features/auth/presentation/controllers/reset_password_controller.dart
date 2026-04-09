@@ -1,33 +1,25 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/error/app_error_bus.dart';
-import '../../../../core/storage/token_storage.dart';
 import '../../../../core/network/error_mapper.dart';
 import '../../data/auth_providers.dart';
-import '../../data/auth_repository.dart';
+import '../../domain/i_auth_repository.dart';
 import 'reset_password_state.dart';
 
+/// Auth controller for the reset-password screen.
+/// Uses the Riverpod 2.x [Notifier] API.
 final resetPasswordControllerProvider =
-    StateNotifierProvider<ResetPasswordController, ResetPasswordState>(
-  (ref) => ResetPasswordController(ref),
-);
+    NotifierProvider<ResetPasswordController, ResetPasswordState>(
+        ResetPasswordController.new);
 
-class ResetPasswordController extends StateNotifier<ResetPasswordState> {
-  ResetPasswordController(this.ref) : super(const ResetPasswordState());
+class ResetPasswordController extends Notifier<ResetPasswordState> {
+  @override
+  ResetPasswordState build() => const ResetPasswordState();
 
-  final Ref ref;
-
-  AuthRepository get _repo => ref.read(authRepositoryProvider);
-
-  void reset() {
-    
-    clearError();
-    state = const ResetPasswordState();
-  }
+  IAuthRepository get _repo => ref.read(authRepositoryProvider);
 
   void clearError() {
     if (state.error != null) {
-      state = state.copyWith();
+      state = state.copyWith(clearError: true);
     }
   }
 
@@ -35,53 +27,19 @@ class ResetPasswordController extends StateNotifier<ResetPasswordState> {
     required String token,
     required String newPassword,
   }) async {
-    final t = token.trim();
-
-    
     clearError();
-
-    state = state.copyWith(
-      loading: true,
-      success: false,
-    );
-
-    if (t.isEmpty) {
-      state = state.copyWith(
-        loading: false,
-        success: false,
-        error: 'Invalid reset link. Please request a new one.',
-      );
-      return false;
-    }
+    state = state.copyWith(loading: true);
 
     try {
-      final msg = await _repo.resetPassword(
-        token: t,
+      final message = await _repo.resetPassword(
+        token: token,
         newPassword: newPassword,
       );
-
-      state = state.copyWith(
-        loading: false,
-        success: true,
-        message: msg.trim().isNotEmpty
-            ? msg.trim()
-            : 'Password reset successfully. You can now log in.',
-      );
-
+      state = state.copyWith(loading: false, successMessage: message);
       return true;
-    } catch (err) {
-      final failure = mapApiFailure(err);
-
-      if (TokenStorage.hasToken && failure.isAuthIssue) {
-        state = state.copyWith(loading: false);
-        AppErrorReporter.report(ref, failure);
-        return false;
-      }
-
-      state = state.copyWith(
-        loading: false,
-        error: failure.message,
-      );
+    } catch (e) {
+      final failure = mapApiFailure(e);
+      state = state.copyWith(loading: false, error: failure.message);
       return false;
     }
   }

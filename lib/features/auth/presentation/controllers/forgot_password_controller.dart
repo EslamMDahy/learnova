@@ -1,103 +1,40 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/error/app_error_bus.dart';
-import '../../../../core/storage/token_storage.dart';
 import '../../../../core/network/error_mapper.dart';
 import '../../data/auth_providers.dart';
-import '../../data/auth_repository.dart';
+import '../../domain/i_auth_repository.dart';
 import 'forgot_password_state.dart';
 
+/// Auth controller for the forgot-password screen.
+/// Uses the Riverpod 2.x [Notifier] API.
 final forgotPasswordControllerProvider =
-    StateNotifierProvider<ForgotPasswordController, ForgotPasswordState>(
-  (ref) => ForgotPasswordController(ref),
-);
+    NotifierProvider<ForgotPasswordController, ForgotPasswordState>(
+        ForgotPasswordController.new);
 
-class ForgotPasswordController extends StateNotifier<ForgotPasswordState> {
-  ForgotPasswordController(this.ref) : super(const ForgotPasswordState());
+class ForgotPasswordController extends Notifier<ForgotPasswordState> {
+  @override
+  ForgotPasswordState build() => const ForgotPasswordState();
 
-  final Ref ref;
-
-  AuthRepository get _repo => ref.read(authRepositoryProvider);
-
-  void reset() {
-    
-    clearError();
-    state = const ForgotPasswordState();
-  }
+  IAuthRepository get _repo => ref.read(authRepositoryProvider);
 
   void clearError() {
     if (state.error != null) {
-      state = state.copyWith();
+      state = state.copyWith(clearError: true);
     }
   }
 
-  bool _looksLikeEmail(String v) {
-    final s = v.trim();
-    return s.isNotEmpty && s.contains('@');
-  }
-
-  Future<bool> sendResetLink(String email) async {
-    final e = email.trim();
-
-    
+  Future<bool> forgotPassword(String email) async {
     clearError();
-
-    
-    state = state.copyWith(
-      loading: true,
-      sent: false,
-      lastEmail: state.lastEmail, 
-    );
-
-    if (!_looksLikeEmail(e)) {
-      state = state.copyWith(
-        loading: false,
-        sent: false,
-        error: 'Please enter a valid email address.',
-      );
-      return false;
-    }
+    state = state.copyWith(loading: true);
 
     try {
-      final msg = await _repo.forgotPassword(e);
-
-      final safeMsg = (msg.trim().isNotEmpty)
-          ? msg.trim()
-          : 'If this email exists, a reset link has been sent.';
-
-      state = state.copyWith(
-        loading: false,
-        sent: true,
-        message: safeMsg,
-        lastEmail: e, 
-      );
+      final message = await _repo.forgotPassword(email.trim());
+      state = state.copyWith(loading: false, successMessage: message);
       return true;
-    } catch (err) {
-      final failure = mapApiFailure(err);
-
-      if (TokenStorage.hasToken && failure.isAuthIssue) {
-        state = state.copyWith(loading: false);
-        AppErrorReporter.report(ref, failure);
-        return false;
-      }
-
-      state = state.copyWith(
-        loading: false,
-        error: failure.message,
-      );
+    } catch (e) {
+      final failure = mapApiFailure(e);
+      state = state.copyWith(loading: false, error: failure.message);
       return false;
     }
-  }
-
-  Future<bool> resend() async {
-    final e = (state.lastEmail ?? '').trim();
-    if (!_looksLikeEmail(e)) {
-      state = state.copyWith(
-        sent: false,
-        error: 'Email is missing. Please enter your email again.',
-      );
-      return false;
-    }
-    return sendResetLink(e);
   }
 }
