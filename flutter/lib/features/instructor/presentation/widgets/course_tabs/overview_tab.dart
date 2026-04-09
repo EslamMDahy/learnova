@@ -7,6 +7,102 @@ import '../../controllers/course_details_controller.dart';
 import '../course_outcomes_panel.dart';
 import '../generate_questions_dialog.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Shared helpers — single source of truth, no more scattered top-level fns
+// ─────────────────────────────────────────────────────────────────────────────
+abstract final class _H {
+  // Status
+  static String statusLabel(String v) {
+    switch (v.trim().toLowerCase()) {
+      case 'published':
+      case 'active':
+        return 'Active';
+      case 'draft':
+        return 'Draft';
+      case 'archived':
+        return 'Archived';
+      default:
+        return titleCase(v.trim().isEmpty ? 'Unknown' : v.trim());
+    }
+  }
+
+  static Color statusAccent(String v) {
+    switch (v.trim().toLowerCase()) {
+      case 'published':
+      case 'active':
+        return const Color(0xFF16A34A);
+      case 'draft':
+        return const Color(0xFFD97706);
+      case 'archived':
+        return const Color(0xFF64748B);
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  static Color statusSoft(String v) {
+    switch (v.trim().toLowerCase()) {
+      case 'published':
+      case 'active':
+        return const Color(0xFFDCFCE7);
+      case 'draft':
+        return const Color(0xFFFEF3C7);
+      case 'archived':
+        return const Color(0xFFE2E8F0);
+      default:
+        return const Color(0xFFEFF6FF);
+    }
+  }
+
+  // Date
+  static String formatDate(DateTime d) =>
+      '${d.day}/${d.month}/${d.year}';
+
+  static String relativeDate(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inDays <= 0) return 'today';
+    if (diff.inDays == 1) return '1 day ago';
+    if (diff.inDays < 30) return '${diff.inDays} days ago';
+    final months = (diff.inDays / 30).floor();
+    if (months <= 1) return '1 month ago';
+    if (months < 12) return '$months months ago';
+    final years = (months / 12).floor();
+    return years <= 1 ? '1 year ago' : '$years years ago';
+  }
+
+  // Text
+  static String titleCase(String v) {
+    final s = v.trim();
+    if (s.isEmpty) return v;
+    return s[0].toUpperCase() + s.substring(1);
+  }
+
+  // Shared decoration reused by multiple cards
+  static BoxDecoration cardDecoration({
+    Color color = Colors.white,
+    double radius = 16,
+  }) =>
+      BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x09000000), blurRadius: 12, offset: Offset(0, 3)),
+        ],
+      );
+
+  static BoxDecoration surfaceDecoration({double radius = 14}) =>
+      BoxDecoration(
+        color: const Color(0xFFFAFBFD),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: AppColors.border),
+      );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  CourseOverviewTab
+// ─────────────────────────────────────────────────────────────────────────────
 class CourseOverviewTab extends ConsumerWidget {
   final MyCourseItem course;
   const CourseOverviewTab({super.key, required this.course});
@@ -15,14 +111,20 @@ class CourseOverviewTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(courseDetailsControllerProvider(course.id));
     final moduleCount = state.modules.length;
-    final materialCount = state.materials.values.fold<int>(0, (s, l) => s + l.length);
+    final materialCount =
+        state.materials.values.fold<int>(0, (s, l) => s + l.length);
     final questionCount = state.questions.length;
     final studentCount = course.enrollmentCount ?? 0;
-    final publishedModules = state.modules.where((m) => m.isPublished).length;
-    final draftModules = (moduleCount - publishedModules).clamp(0, moduleCount);
-    final avgMaterialsPerModule = moduleCount == 0 ? 0.0 : materialCount / moduleCount;
-    final hasContent = moduleCount > 0 || materialCount > 0 || questionCount > 0;
+    final publishedModules =
+        state.modules.where((m) => m.isPublished).length;
+    final draftModules =
+        (moduleCount - publishedModules).clamp(0, moduleCount);
+    final avgMaterialsPerModule =
+        moduleCount == 0 ? 0.0 : materialCount / moduleCount;
+    final hasContent =
+        moduleCount > 0 || materialCount > 0 || questionCount > 0;
 
+    // Setup progress (4 milestones)
     int completedSteps = 0;
     if (moduleCount > 0) completedSteps++;
     if (materialCount > 0) completedSteps++;
@@ -30,7 +132,6 @@ class CourseOverviewTab extends ConsumerWidget {
     if (studentCount > 0) completedSteps++;
     final setupProgress = completedSteps / 4.0;
 
-    final statusLabel = _statusLabel(course.status);
     final setupLabel = setupProgress >= 1
         ? 'Course ready to teach'
         : setupProgress >= 0.5
@@ -43,13 +144,15 @@ class CourseOverviewTab extends ConsumerWidget {
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 1180;
           final isMedium = constraints.maxWidth >= 860;
-          final horizontalPadding = isWide ? 24.0 : 16.0;
+          final hPad = isWide ? 24.0 : 16.0;
 
           return SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(horizontalPadding, 20, horizontalPadding, 32),
+            padding:
+                EdgeInsets.fromLTRB(hPad, 20, hPad, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ── Hero ──────────────────────────────────────────────────
                 _OverviewHero(
                   course: course,
                   moduleCount: moduleCount,
@@ -59,7 +162,20 @@ class CourseOverviewTab extends ConsumerWidget {
                   setupProgress: setupProgress,
                   setupLabel: setupLabel,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+
+                // ── Smart next-action banner ──────────────────────────────
+                _NextActionBanner(
+                  moduleCount: moduleCount,
+                  materialCount: materialCount,
+                  questionCount: questionCount,
+                  studentCount: studentCount,
+                  draftModules: draftModules,
+                  courseId: course.id,
+                ),
+                const SizedBox(height: 12),
+
+                // ── Stat cards ────────────────────────────────────────────
                 _ResponsiveStatsGrid(
                   isWide: isWide,
                   isMedium: isMedium,
@@ -101,158 +217,48 @@ class CourseOverviewTab extends ConsumerWidget {
                     ),
                     _InsightStatCard(
                       title: 'Course status',
-                      value: statusLabel,
-                      subtitle: '${(setupProgress * 100).round()}% setup complete',
+                      value: _H.statusLabel(course.status),
+                      subtitle:
+                          '${(setupProgress * 100).round()}% setup complete',
                       icon: Icons.verified_rounded,
-                      accent: _statusAccent(course.status),
-                      softColor: _statusSoft(course.status),
+                      accent: _H.statusAccent(course.status),
+                      softColor: _H.statusSoft(course.status),
                       compactText: true,
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
+
+                // ── Sections (wide / narrow) ──────────────────────────────
                 if (isWide)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 7,
-                        child: Column(
-                          children: [
-                            _SectionCard(
-                              title: 'Setup progress',
-                              subtitle: 'Track what is ready and what still needs attention before the course is fully prepared.',
-                              icon: Icons.track_changes_rounded,
-                              iconColor: AppColors.primary,
-                              child: _SetupProgressSection(
-                                moduleCount: moduleCount,
-                                materialCount: materialCount,
-                                questionCount: questionCount,
-                                studentCount: studentCount,
-                                setupProgress: setupProgress,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            _SectionCard(
-                              title: 'Recent insights',
-                              subtitle: 'A quick operational snapshot of this course based on the content already created.',
-                              icon: Icons.insights_rounded,
-                              iconColor: const Color(0xFF7C3AED),
-                              child: _RecentInsightsSection(
-                                course: course,
-                                moduleCount: moduleCount,
-                                materialCount: materialCount,
-                                questionCount: questionCount,
-                                studentCount: studentCount,
-                                publishedModules: publishedModules,
-                                draftModules: draftModules,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        flex: 5,
-                        child: Column(
-                          children: [
-                            _SectionCard(
-                              title: 'Course structure',
-                              subtitle: 'Browse the modules currently shaping this course.',
-                              icon: Icons.account_tree_rounded,
-                              iconColor: const Color(0xFF0EA5E9),
-                              trailing: state.modulesLoading
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    )
-                                  : null,
-                              child: _CourseStructureSection(
-                                modulesLoading: state.modulesLoading,
-                                modules: state.modules,
-                                materials: state.materials,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            _SectionCard(
-                              title: 'Quick actions',
-                              subtitle: 'Jump into the most common instructor workflows without leaving the overview.',
-                              icon: Icons.bolt_rounded,
-                              iconColor: const Color(0xFFD97706),
-                              child: _QuickActions(
-                                courseId: course.id,
-                                hasContent: hasContent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  _WideLayout(
+                    course: course,
+                    moduleCount: moduleCount,
+                    materialCount: materialCount,
+                    questionCount: questionCount,
+                    studentCount: studentCount,
+                    publishedModules: publishedModules,
+                    draftModules: draftModules,
+                    setupProgress: setupProgress,
+                    hasContent: hasContent,
+                    modulesLoading: state.modulesLoading,
+                    modules: state.modules,
+                    materials: state.materials,
                   )
                 else
-                  Column(
-                    children: [
-                      _SectionCard(
-                        title: 'Setup progress',
-                        subtitle: 'Track what is ready and what still needs attention before the course is fully prepared.',
-                        icon: Icons.track_changes_rounded,
-                        iconColor: AppColors.primary,
-                        child: _SetupProgressSection(
-                          moduleCount: moduleCount,
-                          materialCount: materialCount,
-                          questionCount: questionCount,
-                          studentCount: studentCount,
-                          setupProgress: setupProgress,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      _SectionCard(
-                        title: 'Quick actions',
-                        subtitle: 'Jump into the most common instructor workflows without leaving the overview.',
-                        icon: Icons.bolt_rounded,
-                        iconColor: const Color(0xFFD97706),
-                        child: _QuickActions(
-                          courseId: course.id,
-                          hasContent: hasContent,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      _SectionCard(
-                        title: 'Course structure',
-                        subtitle: 'Browse the modules currently shaping this course.',
-                        icon: Icons.account_tree_rounded,
-                        iconColor: const Color(0xFF0EA5E9),
-                        trailing: state.modulesLoading
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : null,
-                        child: _CourseStructureSection(
-                          modulesLoading: state.modulesLoading,
-                          modules: state.modules,
-                          materials: state.materials,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      _SectionCard(
-                        title: 'Recent insights',
-                        subtitle: 'A quick operational snapshot of this course based on the content already created.',
-                        icon: Icons.insights_rounded,
-                        iconColor: const Color(0xFF7C3AED),
-                        child: _RecentInsightsSection(
-                          course: course,
-                          moduleCount: moduleCount,
-                          materialCount: materialCount,
-                          questionCount: questionCount,
-                          studentCount: studentCount,
-                          publishedModules: publishedModules,
-                          draftModules: draftModules,
-                        ),
-                      ),
-                    ],
+                  _NarrowLayout(
+                    course: course,
+                    moduleCount: moduleCount,
+                    materialCount: materialCount,
+                    questionCount: questionCount,
+                    studentCount: studentCount,
+                    publishedModules: publishedModules,
+                    draftModules: draftModules,
+                    setupProgress: setupProgress,
+                    hasContent: hasContent,
+                    modulesLoading: state.modulesLoading,
+                    modules: state.modules,
+                    materials: state.materials,
                   ),
               ],
             ),
@@ -263,6 +269,420 @@ class CourseOverviewTab extends ConsumerWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Smart next-action banner
+// ─────────────────────────────────────────────────────────────────────────────
+class _NextActionBanner extends ConsumerWidget {
+  final int moduleCount;
+  final int materialCount;
+  final int questionCount;
+  final int studentCount;
+  final int draftModules;
+  final int courseId;
+
+  const _NextActionBanner({
+    required this.moduleCount,
+    required this.materialCount,
+    required this.questionCount,
+    required this.studentCount,
+    required this.draftModules,
+    required this.courseId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final (
+      IconData icon,
+      Color accent,
+      Color soft,
+      String title,
+      String body,
+      String? cta,
+      VoidCallback? onCta,
+    ) = _resolve(context, ref);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        color: soft,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withOpacity(0.22)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: accent.withOpacity(0.14),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 18, color: accent),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: accent,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  body,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textMuted,
+                    height: 1.45,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (cta != null && onCta != null) ...[
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: onCta,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: accent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    cta,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  (
+    IconData,
+    Color,
+    Color,
+    String,
+    String,
+    String?,
+    VoidCallback?,
+  ) _resolve(BuildContext context, WidgetRef ref) {
+    // Priority 1: no modules at all
+    if (moduleCount == 0) {
+      return (
+        Icons.add_box_outlined,
+        AppColors.primary,
+        const Color(0xFFEFF6FF),
+        'Start by creating your first module',
+        'A module is the building block of your course. Add at least one to unlock materials, questions, and learner delivery.',
+        'Create Module',
+        () {},
+      );
+    }
+
+    // Priority 2: modules exist but no materials
+    if (materialCount == 0) {
+      return (
+        Icons.upload_file_outlined,
+        const Color(0xFF7C3AED),
+        const Color(0xFFF5F3FF),
+        'Upload your first learning material',
+        'You have $moduleCount module${moduleCount == 1 ? '' : 's'} ready. Add PDFs, slides, or documents to give your course substance.',
+        'Upload',
+        () {},
+      );
+    }
+
+    // Priority 3: materials exist but no questions
+    if (questionCount == 0) {
+      return (
+        Icons.auto_awesome_rounded,
+        const Color(0xFF7C3AED),
+        const Color(0xFFF5F3FF),
+        'Your content is ready — build the question bank',
+        'You have $materialCount material${materialCount == 1 ? '' : 's'} uploaded. Generate or create questions to activate assessments.',
+        'Generate',
+        () => showDialog(
+          context: context,
+          builder: (_) => GenerateQuestionsDialog(courseId: courseId),
+        ),
+      );
+    }
+
+    // Priority 4: draft modules lingering
+    if (draftModules > 0) {
+      return (
+        Icons.edit_note_rounded,
+        const Color(0xFFD97706),
+        const Color(0xFFFFFBEB),
+        '$draftModules module${draftModules == 1 ? '' : 's'} still in draft',
+        'Review and publish your draft modules so enrolled students can access the full curriculum.',
+        null,
+        null,
+      );
+    }
+
+    // Priority 5: no students yet
+    if (studentCount == 0) {
+      return (
+        Icons.person_add_outlined,
+        const Color(0xFF0EA5E9),
+        const Color(0xFFEFF9FF),
+        'Your course is ready — invite students',
+        'Modules, materials, and questions are in place. Start enrolling learners to put the course to work.',
+        'Invite',
+        () {},
+      );
+    }
+
+    // All good
+    return (
+      Icons.verified_rounded,
+      const Color(0xFF16A34A),
+      const Color(0xFFF0FDF4),
+      'Course is live and running',
+      '$studentCount student${studentCount == 1 ? '' : 's'} enrolled · $questionCount question${questionCount == 1 ? '' : 's'} in bank · All modules published.',
+      null,
+      null,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Wide / narrow layout extracted to avoid duplicate inline trees
+// ─────────────────────────────────────────────────────────────────────────────
+class _WideLayout extends StatelessWidget {
+  final MyCourseItem course;
+  final int moduleCount, materialCount, questionCount, studentCount;
+  final int publishedModules, draftModules;
+  final double setupProgress;
+  final bool hasContent, modulesLoading;
+  final List<dynamic> modules;
+  final Map<int, List<dynamic>> materials;
+
+  const _WideLayout({
+    required this.course,
+    required this.moduleCount,
+    required this.materialCount,
+    required this.questionCount,
+    required this.studentCount,
+    required this.publishedModules,
+    required this.draftModules,
+    required this.setupProgress,
+    required this.hasContent,
+    required this.modulesLoading,
+    required this.modules,
+    required this.materials,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 7,
+          child: Column(
+            children: [
+              _SectionCard(
+                title: 'Setup progress',
+                subtitle:
+                    'Track what is ready and what still needs attention before the course is fully prepared.',
+                icon: Icons.track_changes_rounded,
+                iconColor: AppColors.primary,
+                child: _SetupProgressSection(
+                  moduleCount: moduleCount,
+                  materialCount: materialCount,
+                  questionCount: questionCount,
+                  studentCount: studentCount,
+                  setupProgress: setupProgress,
+                ),
+              ),
+              const SizedBox(height: 14),
+              _SectionCard(
+                title: 'Recent insights',
+                subtitle:
+                    'A quick operational snapshot of this course based on the content already created.',
+                icon: Icons.insights_rounded,
+                iconColor: const Color(0xFF7C3AED),
+                child: _RecentInsightsSection(
+                  course: course,
+                  moduleCount: moduleCount,
+                  materialCount: materialCount,
+                  questionCount: questionCount,
+                  studentCount: studentCount,
+                  publishedModules: publishedModules,
+                  draftModules: draftModules,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          flex: 5,
+          child: Column(
+            children: [
+              _SectionCard(
+                title: 'Course structure',
+                subtitle:
+                    'Browse the modules currently shaping this course.',
+                icon: Icons.account_tree_rounded,
+                iconColor: const Color(0xFF0EA5E9),
+                trailing: modulesLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child:
+                            CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : null,
+                child: _CourseStructureSection(
+                  modulesLoading: modulesLoading,
+                  modules: modules,
+                  materials: materials,
+                ),
+              ),
+              const SizedBox(height: 14),
+              _SectionCard(
+                title: 'Quick actions',
+                subtitle:
+                    'Jump into the most common instructor workflows without leaving the overview.',
+                icon: Icons.bolt_rounded,
+                iconColor: const Color(0xFFD97706),
+                child: _QuickActions(
+                  courseId: course.id,
+                  hasContent: hasContent,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NarrowLayout extends StatelessWidget {
+  final MyCourseItem course;
+  final int moduleCount, materialCount, questionCount, studentCount;
+  final int publishedModules, draftModules;
+  final double setupProgress;
+  final bool hasContent, modulesLoading;
+  final List<dynamic> modules;
+  final Map<int, List<dynamic>> materials;
+
+  const _NarrowLayout({
+    required this.course,
+    required this.moduleCount,
+    required this.materialCount,
+    required this.questionCount,
+    required this.studentCount,
+    required this.publishedModules,
+    required this.draftModules,
+    required this.setupProgress,
+    required this.hasContent,
+    required this.modulesLoading,
+    required this.modules,
+    required this.materials,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _SectionCard(
+          title: 'Setup progress',
+          subtitle:
+              'Track what is ready and what still needs attention before the course is fully prepared.',
+          icon: Icons.track_changes_rounded,
+          iconColor: AppColors.primary,
+          child: _SetupProgressSection(
+            moduleCount: moduleCount,
+            materialCount: materialCount,
+            questionCount: questionCount,
+            studentCount: studentCount,
+            setupProgress: setupProgress,
+          ),
+        ),
+        const SizedBox(height: 14),
+        _SectionCard(
+          title: 'Quick actions',
+          subtitle:
+              'Jump into the most common instructor workflows without leaving the overview.',
+          icon: Icons.bolt_rounded,
+          iconColor: const Color(0xFFD97706),
+          child: _QuickActions(
+            courseId: course.id,
+            hasContent: hasContent,
+          ),
+        ),
+        const SizedBox(height: 14),
+        _SectionCard(
+          title: 'Course structure',
+          subtitle: 'Browse the modules currently shaping this course.',
+          icon: Icons.account_tree_rounded,
+          iconColor: const Color(0xFF0EA5E9),
+          trailing: modulesLoading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : null,
+          child: _CourseStructureSection(
+            modulesLoading: modulesLoading,
+            modules: modules,
+            materials: materials,
+          ),
+        ),
+        const SizedBox(height: 14),
+        _SectionCard(
+          title: 'Recent insights',
+          subtitle:
+              'A quick operational snapshot of this course based on the content already created.',
+          icon: Icons.insights_rounded,
+          iconColor: const Color(0xFF7C3AED),
+          child: _RecentInsightsSection(
+            course: course,
+            moduleCount: moduleCount,
+            materialCount: materialCount,
+            questionCount: questionCount,
+            studentCount: studentCount,
+            publishedModules: publishedModules,
+            draftModules: draftModules,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Hero
+// ─────────────────────────────────────────────────────────────────────────────
 class _OverviewHero extends StatelessWidget {
   final MyCourseItem course;
   final int moduleCount;
@@ -284,8 +704,6 @@ class _OverviewHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final summaryText = _buildSummary();
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -307,72 +725,79 @@ class _OverviewHero extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 760;
-          final info = [
+          final stats = [
             _HeroStat(label: 'Modules', value: '$moduleCount'),
             _HeroStat(label: 'Materials', value: '$materialCount'),
             _HeroStat(label: 'Students', value: '$studentCount'),
             _HeroStat(label: 'Questions', value: '$questionCount'),
           ];
 
-          final content = [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _HeroBadge(_statusLabel(course.status), _statusSoft(course.status), _statusAccent(course.status)),
-                      _HeroBadge(course.safeCourseCode, Colors.white.withOpacity(0.18), Colors.white),
-                      _HeroBadge(_titleCase(course.courseType), Colors.white.withOpacity(0.18), Colors.white),
-                      _HeroBadge(course.isPrivate ? 'Private' : 'Public', Colors.white.withOpacity(0.18), Colors.white),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    course.safeTitle,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      height: 1.15,
+          final leftCol = Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _HeroBadge(
+                      _H.statusLabel(course.status),
+                      _H.statusSoft(course.status),
+                      _H.statusAccent(course.status),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    summaryText,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white.withOpacity(0.86),
-                      height: 1.55,
-                    ),
-                  ),
-                  if ((course.category ?? '').trim().isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      'Category: ${course.category!.trim()}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withOpacity(0.72),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    _HeroBadge(course.safeCourseCode,
+                        Colors.white.withOpacity(0.18), Colors.white),
+                    _HeroBadge(_H.titleCase(course.courseType),
+                        Colors.white.withOpacity(0.18), Colors.white),
+                    _HeroBadge(
+                        course.isPrivate ? 'Private' : 'Public',
+                        Colors.white.withOpacity(0.18),
+                        Colors.white),
                   ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  course.safeTitle,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _buildSummary(),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withOpacity(0.86),
+                    height: 1.55,
+                  ),
+                ),
+                if ((course.category ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    'Category: ${course.category!.trim()}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.72),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
-              ),
+              ],
             ),
-            const SizedBox(width: 20),
-            SizedBox(
-              width: compact ? double.infinity : 320,
-              child: _HeroProgressPanel(
-                setupProgress: setupProgress,
-                setupLabel: setupLabel,
-                createdAt: course.createdAt,
-                updatedAt: course.updatedAt,
-              ),
+          );
+
+          final progressPanel = SizedBox(
+            width: compact ? double.infinity : 320,
+            child: _HeroProgressPanel(
+              setupProgress: setupProgress,
+              setupLabel: setupLabel,
+              createdAt: course.createdAt,
+              updatedAt: course.updatedAt,
             ),
-          ];
+          );
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,14 +805,25 @@ class _OverviewHero extends StatelessWidget {
               compact
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [content[0], const SizedBox(height: 18), content[2]],
+                      children: [
+                        leftCol,
+                        const SizedBox(height: 18),
+                        progressPanel,
+                      ],
                     )
-                  : Row(crossAxisAlignment: CrossAxisAlignment.start, children: content),
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        leftCol,
+                        const SizedBox(width: 20),
+                        progressPanel,
+                      ],
+                    ),
               const SizedBox(height: 18),
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
-                children: info,
+                children: stats,
               ),
             ],
           );
@@ -398,11 +834,9 @@ class _OverviewHero extends StatelessWidget {
 
   String _buildSummary() {
     final pieces = <String>[];
-    if (moduleCount > 0) {
-      pieces.add('$moduleCount module${moduleCount == 1 ? '' : 's'}');
-    } else {
-      pieces.add('no modules yet');
-    }
+    pieces.add(moduleCount > 0
+        ? '$moduleCount module${moduleCount == 1 ? '' : 's'}'
+        : 'no modules yet');
     if (materialCount > 0) {
       pieces.add('$materialCount material${materialCount == 1 ? '' : 's'}');
     }
@@ -410,10 +844,11 @@ class _OverviewHero extends StatelessWidget {
       pieces.add('$studentCount student${studentCount == 1 ? '' : 's'}');
     }
     if (questionCount > 0) {
-      pieces.add('$questionCount question${questionCount == 1 ? '' : 's'} in the current bank');
+      pieces.add(
+          '$questionCount question${questionCount == 1 ? '' : 's'} in the current bank');
     }
-
-    return 'This ${_titleCase(course.courseType)} course currently has ${pieces.join(', ')}. Use the overview to monitor structure, readiness, and the next best instructor actions.';
+    return 'This ${_H.titleCase(course.courseType)} course currently has ${pieces.join(', ')}. '
+        'Use the overview to monitor structure, readiness, and the next best instructor actions.';
   }
 }
 
@@ -438,19 +873,17 @@ class _HeroStat extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: Colors.white),
           ),
           const SizedBox(height: 2),
           Text(
             label,
             style: TextStyle(
-              fontSize: 11.5,
-              color: Colors.white.withOpacity(0.72),
-              fontWeight: FontWeight.w600,
-            ),
+                fontSize: 11.5,
+                color: Colors.white.withOpacity(0.72),
+                fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -492,7 +925,8 @@ class _HeroProgressPanel extends StatelessWidget {
                   color: Colors.white.withOpacity(0.14),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.timeline_rounded, color: Colors.white, size: 18),
+                child: const Icon(Icons.timeline_rounded,
+                    color: Colors.white, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -502,17 +936,15 @@ class _HeroProgressPanel extends StatelessWidget {
                     const Text(
                       'Course readiness',
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white),
                     ),
                     Text(
                       setupLabel,
                       style: TextStyle(
-                        fontSize: 11.5,
-                        color: Colors.white.withOpacity(0.74),
-                      ),
+                          fontSize: 11.5,
+                          color: Colors.white.withOpacity(0.74)),
                     ),
                   ],
                 ),
@@ -526,11 +958,10 @@ class _HeroProgressPanel extends StatelessWidget {
               Text(
                 '${(setupProgress * 100).round()}%',
                 style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  height: 1,
-                ),
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    height: 1),
               ),
               const SizedBox(width: 8),
               Padding(
@@ -538,10 +969,9 @@ class _HeroProgressPanel extends StatelessWidget {
                 child: Text(
                   'completed',
                   style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.76),
-                    fontWeight: FontWeight.w600,
-                  ),
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.76),
+                      fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -563,7 +993,7 @@ class _HeroProgressPanel extends StatelessWidget {
                 child: _MetaChip(
                   icon: Icons.calendar_today_rounded,
                   label: 'Created',
-                  value: _formatDate(createdAt),
+                  value: _H.formatDate(createdAt),
                 ),
               ),
               const SizedBox(width: 10),
@@ -571,7 +1001,7 @@ class _HeroProgressPanel extends StatelessWidget {
                 child: _MetaChip(
                   icon: Icons.update_rounded,
                   label: 'Updated',
-                  value: _formatDate(updatedAt),
+                  value: _H.formatDate(updatedAt),
                 ),
               ),
             ],
@@ -586,7 +1016,8 @@ class _MetaChip extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  const _MetaChip({required this.icon, required this.label, required this.value});
+  const _MetaChip(
+      {required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -607,19 +1038,17 @@ class _MetaChip extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 10.5,
-                    color: Colors.white.withOpacity(0.68),
-                    fontWeight: FontWeight.w600,
-                  ),
+                      fontSize: 10.5,
+                      color: Colors.white.withOpacity(0.68),
+                      fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
                   style: const TextStyle(
-                    fontSize: 11.5,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
+                      fontSize: 11.5,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -630,6 +1059,9 @@ class _MetaChip extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Stat cards grid
+// ─────────────────────────────────────────────────────────────────────────────
 class _ResponsiveStatsGrid extends StatelessWidget {
   final bool isWide;
   final bool isMedium;
@@ -653,29 +1085,23 @@ class _ResponsiveStatsGrid extends StatelessWidget {
         ],
       );
     }
-
     if (isMedium) {
       return Column(
         children: [
-          Row(
-            children: [
-              Expanded(child: children[0]),
-              const SizedBox(width: 12),
-              Expanded(child: children[1]),
-            ],
-          ),
+          Row(children: [
+            Expanded(child: children[0]),
+            const SizedBox(width: 12),
+            Expanded(child: children[1]),
+          ]),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: children[2]),
-              const SizedBox(width: 12),
-              Expanded(child: children[3]),
-            ],
-          ),
+          Row(children: [
+            Expanded(child: children[2]),
+            const SizedBox(width: 12),
+            Expanded(child: children[3]),
+          ]),
         ],
       );
     }
-
     return Column(
       children: [
         for (var i = 0; i < children.length; i++) ...[
@@ -712,14 +1138,7 @@ class _InsightStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(color: Color(0x09000000), blurRadius: 12, offset: Offset(0, 3)),
-        ],
-      ),
+      decoration: _H.cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -738,7 +1157,8 @@ class _InsightStatCard extends StatelessWidget {
               Container(
                 width: 8,
                 height: 8,
-                decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+                decoration:
+                    BoxDecoration(color: accent, shape: BoxShape.circle),
               ),
             ],
           ),
@@ -759,29 +1179,26 @@ class _InsightStatCard extends StatelessWidget {
                   ),
                 ),
           const SizedBox(height: 6),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textTitle,
-            ),
-          ),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textTitle)),
           const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 11.5,
-              color: AppColors.textMuted,
-              height: 1.45,
-            ),
-          ),
+          Text(subtitle,
+              style: const TextStyle(
+                  fontSize: 11.5,
+                  color: AppColors.textMuted,
+                  height: 1.45)),
         ],
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Section card
+// ─────────────────────────────────────────────────────────────────────────────
 class _SectionCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -803,14 +1220,7 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(color: Color(0x07000000), blurRadius: 12, offset: Offset(0, 2)),
-        ],
-      ),
+      decoration: _H.cardDecoration(radius: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -834,23 +1244,17 @@ class _SectionCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textTitle,
-                        ),
-                      ),
+                      Text(title,
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textTitle)),
                       const SizedBox(height: 3),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          color: AppColors.textMuted,
-                          height: 1.4,
-                        ),
-                      ),
+                      Text(subtitle,
+                          style: const TextStyle(
+                              fontSize: 11.5,
+                              color: AppColors.textMuted,
+                              height: 1.4)),
                     ],
                   ),
                 ),
@@ -872,6 +1276,9 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Setup progress section
+// ─────────────────────────────────────────────────────────────────────────────
 class _SetupProgressSection extends StatelessWidget {
   final int moduleCount;
   final int materialCount;
@@ -932,7 +1339,9 @@ class _SetupProgressSection extends StatelessWidget {
                   value: setupProgress,
                   minHeight: 8,
                   backgroundColor: AppColors.pageBg,
-                  color: setupProgress == 1 ? const Color(0xFF16A34A) : AppColors.primary,
+                  color: setupProgress == 1
+                      ? const Color(0xFF16A34A)
+                      : AppColors.primary,
                 ),
               ),
             ),
@@ -940,21 +1349,16 @@ class _SetupProgressSection extends StatelessWidget {
             Text(
               '${(setupProgress * 100).round()}%',
               style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textTitle,
-              ),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textTitle),
             ),
           ],
         ),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFAFBFD),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
-          ),
+          decoration: _H.surfaceDecoration(),
           child: Column(
             children: [
               for (var i = 0; i < steps.length; i++) ...[
@@ -989,9 +1393,10 @@ class _SetupProgressTile extends StatelessWidget {
   final _SetupStep step;
   const _SetupProgressTile({required this.step});
 
+  static const _doneColor = Color(0xFF16A34A);
+
   @override
   Widget build(BuildContext context) {
-    final doneColor = const Color(0xFF16A34A);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1001,12 +1406,13 @@ class _SetupProgressTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: step.done ? const Color(0xFFDCFCE7) : AppColors.pageBg,
             shape: BoxShape.circle,
-            border: Border.all(color: step.done ? doneColor : AppColors.border),
+            border: Border.all(
+                color: step.done ? _doneColor : AppColors.border),
           ),
           child: Icon(
             step.done ? Icons.check_rounded : step.icon,
             size: 15,
-            color: step.done ? doneColor : AppColors.textHint,
+            color: step.done ? _doneColor : AppColors.textHint,
           ),
         ),
         const SizedBox(width: 12),
@@ -1023,15 +1429,20 @@ class _SetupProgressTile extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textTitle,
-                        decoration: step.done ? TextDecoration.lineThrough : null,
+                        decoration: step.done
+                            ? TextDecoration.lineThrough
+                            : null,
                         decorationColor: AppColors.textHint,
                       ),
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: step.done ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
+                      color: step.done
+                          ? const Color(0xFFDCFCE7)
+                          : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
@@ -1039,7 +1450,7 @@ class _SetupProgressTile extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
-                        color: step.done ? doneColor : AppColors.textMuted,
+                        color: step.done ? _doneColor : AppColors.textMuted,
                       ),
                     ),
                   ),
@@ -1049,10 +1460,9 @@ class _SetupProgressTile extends StatelessWidget {
               Text(
                 step.description,
                 style: const TextStyle(
-                  fontSize: 11.5,
-                  color: AppColors.textMuted,
-                  height: 1.4,
-                ),
+                    fontSize: 11.5,
+                    color: AppColors.textMuted,
+                    height: 1.4),
               ),
             ],
           ),
@@ -1062,6 +1472,9 @@ class _SetupProgressTile extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Course structure section
+// ─────────────────────────────────────────────────────────────────────────────
 class _CourseStructureSection extends StatelessWidget {
   final bool modulesLoading;
   final List<dynamic> modules;
@@ -1076,16 +1489,17 @@ class _CourseStructureSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (modulesLoading && modules.isEmpty) {
-      return const _SectionPlaceholder(message: 'Loading modules and materials...');
+      return const _SectionPlaceholder(
+          message: 'Loading modules and materials...');
     }
     if (modules.isEmpty) {
       return const _FriendlyEmptyState(
         icon: Icons.view_module_rounded,
         title: 'No modules yet',
-        message: 'Once you add modules, the course structure will appear here with file counts and publish status.',
+        message:
+            'Once you add modules, the course structure will appear here with file counts and publish status.',
       );
     }
-
     return Column(
       children: [
         for (var i = 0; i < modules.length; i++) ...[
@@ -1102,14 +1516,13 @@ class _CourseStructureSection extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Recent insights section
+// ─────────────────────────────────────────────────────────────────────────────
 class _RecentInsightsSection extends StatelessWidget {
   final MyCourseItem course;
-  final int moduleCount;
-  final int materialCount;
-  final int questionCount;
-  final int studentCount;
-  final int publishedModules;
-  final int draftModules;
+  final int moduleCount, materialCount, questionCount, studentCount;
+  final int publishedModules, draftModules;
 
   const _RecentInsightsSection({
     required this.course,
@@ -1123,77 +1536,7 @@ class _RecentInsightsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final insights = <({IconData icon, Color color, String title, String description})>[];
-
-    insights.add((
-      icon: Icons.schedule_rounded,
-      color: const Color(0xFF0EA5E9),
-      title: 'Last updated ${_relativeDate(course.updatedAt)}',
-      description: 'Your course shell was created on ${_formatDate(course.createdAt)} and is being actively maintained.',
-    ));
-
-    if (moduleCount == 0) {
-      insights.add((
-        icon: Icons.lightbulb_outline_rounded,
-        color: const Color(0xFFF59E0B),
-        title: 'Start by building the course structure',
-        description: 'Create your first module to unlock materials, topics, and a richer course overview.',
-      ));
-    } else if (draftModules > 0) {
-      insights.add((
-        icon: Icons.edit_note_rounded,
-        color: const Color(0xFFF59E0B),
-        title: '$draftModules module${draftModules == 1 ? '' : 's'} still in draft',
-        description: 'Review unpublished modules before learners access the full curriculum.',
-      ));
-    } else {
-      insights.add((
-        icon: Icons.verified_rounded,
-        color: const Color(0xFF16A34A),
-        title: 'All modules are published',
-        description: 'Your instructional structure is visible and ready for enrolled learners.',
-      ));
-    }
-
-    if (materialCount == 0) {
-      insights.add((
-        icon: Icons.folder_off_rounded,
-        color: const Color(0xFF7C3AED),
-        title: 'No learning materials uploaded yet',
-        description: 'Add PDFs, slides, or videos to give the course substance and support AI-assisted workflows.',
-      ));
-    } else if (questionCount == 0) {
-      insights.add((
-        icon: Icons.quiz_outlined,
-        color: const Color(0xFFEA580C),
-        title: 'Materials are ready for assessment design',
-        description: 'You have uploaded content. Next, create or generate questions to activate the question bank.',
-      ));
-    } else {
-      insights.add((
-        icon: Icons.auto_graph_rounded,
-        color: const Color(0xFFEA580C),
-        title: '$questionCount question${questionCount == 1 ? '' : 's'} prepared',
-        description: 'Your question bank has started taking shape and can support upcoming quizzes or exams.',
-      ));
-    }
-
-    if (studentCount == 0) {
-      insights.add((
-        icon: Icons.people_outline_rounded,
-        color: const Color(0xFF16A34A),
-        title: 'No students enrolled yet',
-        description: 'Invite learners once the course content and question bank are ready for delivery.',
-      ));
-    } else {
-      insights.add((
-        icon: Icons.groups_rounded,
-        color: const Color(0xFF16A34A),
-        title: '$studentCount student${studentCount == 1 ? '' : 's'} enrolled',
-        description: 'Learner reach has started. Keep refining materials and assessments to support engagement.',
-      ));
-    }
-
+    final insights = _buildInsights();
     return Column(
       children: [
         for (var i = 0; i < insights.length; i++) ...[
@@ -1207,6 +1550,91 @@ class _RecentInsightsSection extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  List<({IconData icon, Color color, String title, String description})>
+      _buildInsights() {
+    final list = <({IconData icon, Color color, String title, String description})>[];
+
+    list.add((
+      icon: Icons.schedule_rounded,
+      color: const Color(0xFF0EA5E9),
+      title: 'Last updated ${_H.relativeDate(course.updatedAt)}',
+      description:
+          'Your course shell was created on ${_H.formatDate(course.createdAt)} and is being actively maintained.',
+    ));
+
+    if (moduleCount == 0) {
+      list.add((
+        icon: Icons.lightbulb_outline_rounded,
+        color: const Color(0xFFF59E0B),
+        title: 'Start by building the course structure',
+        description:
+            'Create your first module to unlock materials, topics, and a richer course overview.',
+      ));
+    } else if (draftModules > 0) {
+      list.add((
+        icon: Icons.edit_note_rounded,
+        color: const Color(0xFFF59E0B),
+        title: '$draftModules module${draftModules == 1 ? '' : 's'} still in draft',
+        description:
+            'Review unpublished modules before learners access the full curriculum.',
+      ));
+    } else {
+      list.add((
+        icon: Icons.verified_rounded,
+        color: const Color(0xFF16A34A),
+        title: 'All modules are published',
+        description:
+            'Your instructional structure is visible and ready for enrolled learners.',
+      ));
+    }
+
+    if (materialCount == 0) {
+      list.add((
+        icon: Icons.folder_off_rounded,
+        color: const Color(0xFF7C3AED),
+        title: 'No learning materials uploaded yet',
+        description:
+            'Add PDFs, slides, or videos to give the course substance and support AI-assisted workflows.',
+      ));
+    } else if (questionCount == 0) {
+      list.add((
+        icon: Icons.quiz_outlined,
+        color: const Color(0xFFEA580C),
+        title: 'Materials are ready for assessment design',
+        description:
+            'You have uploaded content. Next, create or generate questions to activate the question bank.',
+      ));
+    } else {
+      list.add((
+        icon: Icons.auto_graph_rounded,
+        color: const Color(0xFFEA580C),
+        title: '$questionCount question${questionCount == 1 ? '' : 's'} prepared',
+        description:
+            'Your question bank has started taking shape and can support upcoming quizzes or exams.',
+      ));
+    }
+
+    if (studentCount == 0) {
+      list.add((
+        icon: Icons.people_outline_rounded,
+        color: const Color(0xFF16A34A),
+        title: 'No students enrolled yet',
+        description:
+            'Invite learners once the course content and question bank are ready for delivery.',
+      ));
+    } else {
+      list.add((
+        icon: Icons.groups_rounded,
+        color: const Color(0xFF16A34A),
+        title: '$studentCount student${studentCount == 1 ? '' : 's'} enrolled',
+        description:
+            'Learner reach has started. Keep refining materials and assessments to support engagement.',
+      ));
+    }
+
+    return list;
   }
 }
 
@@ -1227,11 +1655,7 @@ class _InsightRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAFBFD),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: _H.surfaceDecoration(),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1250,23 +1674,17 @@ class _InsightRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textTitle,
-                  ),
-                ),
+                Text(title,
+                    style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textTitle)),
                 const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    color: AppColors.textMuted,
-                    height: 1.45,
-                  ),
-                ),
+                Text(description,
+                    style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.textMuted,
+                        height: 1.45)),
               ],
             ),
           ),
@@ -1276,6 +1694,9 @@ class _InsightRow extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Module tile
+// ─────────────────────────────────────────────────────────────────────────────
 class _ModuleTile extends StatelessWidget {
   final String title;
   final int materialCount;
@@ -1291,17 +1712,16 @@ class _ModuleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = isPublished ? AppColors.primary : const Color(0xFFD97706);
-    final chipBg = isPublished ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7);
-    final chipFg = isPublished ? const Color(0xFF16A34A) : const Color(0xFFD97706);
+    final accent =
+        isPublished ? AppColors.primary : const Color(0xFFD97706);
+    final chipBg =
+        isPublished ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7);
+    final chipFg =
+        isPublished ? const Color(0xFF16A34A) : const Color(0xFFD97706);
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAFBFD),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: _H.surfaceDecoration(),
       child: Row(
         children: [
           Container(
@@ -1324,25 +1744,23 @@ class _ModuleTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textTitle,
-                  ),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textTitle),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Module ${orderIndex + 1} · $materialCount file${materialCount == 1 ? '' : 's'}',
                   style: const TextStyle(
-                    fontSize: 11.5,
-                    color: AppColors.textMuted,
-                  ),
+                      fontSize: 11.5, color: AppColors.textMuted),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 10),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
             decoration: BoxDecoration(
               color: chipBg,
               borderRadius: BorderRadius.circular(999),
@@ -1350,10 +1768,9 @@ class _ModuleTile extends StatelessWidget {
             child: Text(
               isPublished ? 'Published' : 'Draft',
               style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-                color: chipFg,
-              ),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  color: chipFg),
             ),
           ),
         ],
@@ -1362,6 +1779,9 @@ class _ModuleTile extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Quick actions
+// ─────────────────────────────────────────────────────────────────────────────
 class _QuickActions extends ConsumerWidget {
   final int courseId;
   final bool hasContent;
@@ -1371,7 +1791,8 @@ class _QuickActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(courseDetailsControllerProvider(courseId));
-    final materialCount = state.materials.values.fold<int>(0, (sum, list) => sum + list.length);
+    final materialCount =
+        state.materials.values.fold<int>(0, (sum, list) => sum + list.length);
     final canGenerate = materialCount > 0;
 
     final actions = [
@@ -1407,7 +1828,9 @@ class _QuickActions extends ConsumerWidget {
         const Color(0xFF7C3AED),
         const Color(0xFFF3E8FF),
         'Generate Questions',
-        canGenerate ? 'Select mixed course content scope' : 'Add materials before generating questions',
+        canGenerate
+            ? 'Select mixed course content scope'
+            : 'Add materials before generating questions',
         () {
           if (!canGenerate) return;
           showDialog(
@@ -1452,35 +1875,37 @@ class _QuickActions extends ConsumerWidget {
             child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFD97706)),
+                Icon(Icons.info_outline_rounded,
+                    size: 16, color: Color(0xFFD97706)),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'This course is still empty. Start with modules and materials so the overview can surface richer insights.',
                     style: TextStyle(
-                      fontSize: 11.5,
-                      color: AppColors.textMuted,
-                      height: 1.45,
-                    ),
+                        fontSize: 11.5,
+                        color: AppColors.textMuted,
+                        height: 1.45),
                   ),
                 ),
               ],
             ),
           ),
         ...List.generate(actions.length, (i) {
-          final action = actions[i];
-          final enabled = action.$7;
+          final a = actions[i];
+          final enabled = a.$7;
           return Padding(
-            padding: EdgeInsets.only(bottom: i == actions.length - 1 ? 0 : 8),
+            padding:
+                EdgeInsets.only(bottom: i == actions.length - 1 ? 0 : 8),
             child: Opacity(
               opacity: enabled ? 1 : 0.58,
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap: enabled ? action.$6 : null,
+                  onTap: enabled ? a.$6 : null,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 11),
                     decoration: BoxDecoration(
                       border: Border.all(color: AppColors.border),
                       borderRadius: BorderRadius.circular(12),
@@ -1492,40 +1917,36 @@ class _QuickActions extends ConsumerWidget {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: action.$3,
+                            color: a.$3,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           alignment: Alignment.center,
-                          child: Icon(action.$1, size: 17, color: action.$2),
+                          child: Icon(a.$1, size: 17, color: a.$2),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                action.$4,
-                                style: const TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textTitle,
-                                ),
-                              ),
+                              Text(a.$4,
+                                  style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textTitle)),
                               const SizedBox(height: 2),
-                              Text(
-                                action.$5,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
+                              Text(a.$5,
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textMuted)),
                             ],
                           ),
                         ),
                         Icon(
                           Icons.arrow_forward_ios_rounded,
                           size: 11,
-                          color: enabled ? AppColors.textHint : AppColors.border,
+                          color: enabled
+                              ? AppColors.textHint
+                              : AppColors.border,
                         ),
                       ],
                     ),
@@ -1540,6 +1961,9 @@ class _QuickActions extends ConsumerWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Shared small widgets
+// ─────────────────────────────────────────────────────────────────────────────
 class _FriendlyEmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -1556,11 +1980,7 @@ class _FriendlyEmptyState extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAFBFD),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: _H.surfaceDecoration(),
       child: Column(
         children: [
           Container(
@@ -1573,23 +1993,17 @@ class _FriendlyEmptyState extends StatelessWidget {
             child: Icon(icon, color: AppColors.primary),
           ),
           const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textTitle,
-            ),
-          ),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textTitle)),
           const SizedBox(height: 4),
           Text(
             message,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 11.5,
-              color: AppColors.textMuted,
-              height: 1.5,
-            ),
+                fontSize: 11.5, color: AppColors.textMuted, height: 1.5),
           ),
         ],
       ),
@@ -1606,13 +2020,9 @@ class _SectionPlaceholder extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Center(
-        child: Text(
-          message,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textMuted,
-          ),
-        ),
+        child: Text(message,
+            style: const TextStyle(
+                fontSize: 12, color: AppColors.textMuted)),
       ),
     );
   }
@@ -1637,79 +2047,10 @@ class _HeroBadge extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: foreground,
-        ),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: foreground),
       ),
     );
   }
-}
-
-String _titleCase(String value) {
-  final normalized = value.trim();
-  if (normalized.isEmpty) return value;
-  return normalized[0].toUpperCase() + normalized.substring(1);
-}
-
-String _statusLabel(String value) {
-  final normalized = value.trim().toLowerCase();
-  switch (normalized) {
-    case 'published':
-    case 'active':
-      return 'Active';
-    case 'draft':
-      return 'Draft';
-    case 'archived':
-      return 'Archived';
-    default:
-      return _titleCase(normalized.isEmpty ? 'Unknown' : normalized);
-  }
-}
-
-Color _statusAccent(String value) {
-  final normalized = value.trim().toLowerCase();
-  switch (normalized) {
-    case 'published':
-    case 'active':
-      return const Color(0xFF16A34A);
-    case 'draft':
-      return const Color(0xFFD97706);
-    case 'archived':
-      return const Color(0xFF64748B);
-    default:
-      return AppColors.primary;
-  }
-}
-
-Color _statusSoft(String value) {
-  final normalized = value.trim().toLowerCase();
-  switch (normalized) {
-    case 'published':
-    case 'active':
-      return const Color(0xFFDCFCE7);
-    case 'draft':
-      return const Color(0xFFFEF3C7);
-    case 'archived':
-      return const Color(0xFFE2E8F0);
-    default:
-      return const Color(0xFFEFF6FF);
-  }
-}
-
-String _formatDate(DateTime date) {
-  return '${date.day}/${date.month}/${date.year}';
-}
-
-String _relativeDate(DateTime date) {
-  final now = DateTime.now();
-  final difference = now.difference(date);
-  if (difference.inDays <= 0) return 'today';
-  if (difference.inDays == 1) return '1 day ago';
-  if (difference.inDays < 30) return '${difference.inDays} days ago';
-  final months = (difference.inDays / 30).floor();
-  if (months <= 1) return '1 month ago';
-  if (months < 12) return '$months months ago';
-  final years = (months / 12).floor();
-  return years <= 1 ? '1 year ago' : '$years years ago';
 }

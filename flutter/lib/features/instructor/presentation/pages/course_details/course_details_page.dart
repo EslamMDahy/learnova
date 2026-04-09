@@ -42,28 +42,28 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
   late final _session = createSessionStore();
   int _currentIndex = 0;
 
-  // Build the tab pages only once the course item is available.
   List<Widget> _buildPages(MyCourseItem course) => [
-    CourseOverviewTab(
-        key: const PageStorageKey('course-overview-tab'), course: course),
-    CourseMaterialsTab(
-        key: const PageStorageKey('course-materials-tab'), course: course),
-    CourseOutcomesTab(
-        key: const PageStorageKey('course-outcomes-tab'), course: course),
-    CourseQuestionBankTab(
-        key: const PageStorageKey('course-question-bank-tab'), course: course),
-    CourseStudentsTab(
-        key: const PageStorageKey('course-students-tab'), course: course),
-  ];
+        CourseOverviewTab(
+            key: const PageStorageKey('course-overview-tab'), course: course),
+        CourseMaterialsTab(
+            key: const PageStorageKey('course-materials-tab'), course: course),
+        CourseOutcomesTab(
+            key: const PageStorageKey('course-outcomes-tab'), course: course),
+        CourseQuestionBankTab(
+            key: const PageStorageKey('course-question-bank-tab'),
+            course: course),
+        CourseStudentsTab(
+            key: const PageStorageKey('course-students-tab'), course: course),
+      ];
 
   String get _tabKey =>
       'course:${widget.cachedCourse?.id ?? widget.cachedCourseId ?? widget.courseSlug}:active_tab';
 
   static const _tabs = [
-    _TabDef(icon: Icons.dashboard_outlined,     label: 'Overview'),
-    _TabDef(icon: Icons.folder_open_outlined,   label: 'Materials'),
-    _TabDef(icon: Icons.flag_outlined,          label: 'Outcomes'),
-    _TabDef(icon: Icons.quiz_outlined,          label: 'Question Bank'),
+    _TabDef(icon: Icons.dashboard_outlined, label: 'Overview'),
+    _TabDef(icon: Icons.folder_open_outlined, label: 'Materials'),
+    _TabDef(icon: Icons.flag_outlined, label: 'Outcomes'),
+    _TabDef(icon: Icons.quiz_outlined, label: 'Question Bank'),
     _TabDef(icon: Icons.people_outline_rounded, label: 'Students'),
   ];
 
@@ -85,11 +85,9 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
       }
     });
 
-    // If we already have the course in memory, kick off data loading now.
     if (widget.cachedCourse != null) {
       _loadCourseData(widget.cachedCourse!);
     }
-    // Otherwise the FutureBuilder below will call _loadCourseData once ready.
   }
 
   void _loadCourseData(MyCourseItem course) {
@@ -109,16 +107,12 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
     super.dispose();
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
-    // Hot path: course already available (normal in-app navigation)
     if (widget.cachedCourse != null) {
       return _buildContent(widget.cachedCourse!);
     }
 
-    // Cold path: browser refresh — reload via API
     if (widget.cachedCourseId != null) {
       final asyncCourse =
           ref.watch(selectedCourseByIdProvider(widget.cachedCourseId!));
@@ -126,7 +120,6 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
         loading: () => _buildLoadingShell(),
         error: (e, _) => _buildErrorShell(e.toString()),
         data: (course) {
-          // Side-effect: kick off tab data loading once course is available
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) _loadCourseData(course);
           });
@@ -135,7 +128,6 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
       );
     }
 
-    // Edge case: neither cache nor id — should not normally happen.
     return _buildErrorShell(
       'Course could not be loaded. Please go back and reopen it.',
     );
@@ -214,29 +206,26 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
     ]);
   }
 
-  // ── Main content (tabs) ─────────────────────────────────────────────────────
+  // ── Main content ────────────────────────────────────────────────────────────
 
   Widget _buildContent(MyCourseItem course) {
     final pages = _buildPages(course);
     return Column(children: [
+      // ── Tab header — stretches to full width ──────────────────────────────
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: const BoxDecoration(
           color: Colors.white,
           border: Border(bottom: BorderSide(color: AppColors.border)),
         ),
-        // ── Responsive: ScrollView so tabs don't overflow on narrow screens ──
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: _PillTabBar(
-            tabs: _tabs,
-            currentIndex: _currentIndex,
-            onTap: (i) {
-              setState(() => _currentIndex = i);
-              _session.setString(_tabKey, i.toString());
-              _tabController.animateTo(i);
-            },
-          ),
+        child: _PillTabBar(
+          tabs: _tabs,
+          currentIndex: _currentIndex,
+          onTap: (i) {
+            setState(() => _currentIndex = i);
+            _session.setString(_tabKey, i.toString());
+            _tabController.animateTo(i);
+          },
         ),
       ),
       Expanded(
@@ -250,7 +239,7 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Pill tab bar
+//  Pill tab bar — stretches to fill the header width
 // ─────────────────────────────────────────────────────────────────────────────
 class _PillTabBar extends StatelessWidget {
   final List<_TabDef> tabs;
@@ -266,6 +255,7 @@ class _PillTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: AppColors.pageBg,
@@ -273,13 +263,14 @@ class _PillTabBar extends StatelessWidget {
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: List.generate(tabs.length, (i) {
-          return _PillTab(
-            icon: tabs[i].icon,
-            label: tabs[i].label,
-            selected: i == currentIndex,
-            onTap: () => onTap(i),
+          return Expanded(
+            child: _PillTab(
+              icon: tabs[i].icon,
+              label: tabs[i].label,
+              selected: i == currentIndex,
+              onTap: () => onTap(i),
+            ),
           );
         }),
       ),
@@ -315,13 +306,13 @@ class _PillTabState extends State<_PillTab> {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           decoration: BoxDecoration(
             color: widget.selected
                 ? Colors.white
@@ -340,6 +331,7 @@ class _PillTabState extends State<_PillTab> {
                 : [],
           ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
@@ -350,19 +342,25 @@ class _PillTabState extends State<_PillTab> {
                     : AppColors.textMuted,
               ),
               const SizedBox(width: 6),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 150),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontFamily: 'Inter',
-                  fontWeight: widget.selected
-                      ? FontWeight.w700
-                      : FontWeight.w500,
-                  color: widget.selected
-                      ? AppColors.textTitle
-                      : AppColors.textMuted,
+              Flexible(
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 150),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontFamily: 'Inter',
+                    fontWeight: widget.selected
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                    color: widget.selected
+                        ? AppColors.textTitle
+                        : AppColors.textMuted,
+                  ),
+                  child: Text(
+                    widget.label,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ),
-                child: Text(widget.label),
               ),
             ],
           ),
