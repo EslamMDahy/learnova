@@ -1,0 +1,439 @@
+import 'package:flutter/material.dart';
+import 'materials_explorer_constants.dart';
+import 'materials_explorer_micro_widgets.dart';
+
+// =============================================================================
+//  RIGHT PANEL COMPONENTS
+// =============================================================================
+
+// ── Upload zone ───────────────────────────────────────────────────────────────
+class _UploadZone extends StatefulWidget {
+  final VoidCallback onTap;
+  const _UploadZone({required this.onTap});
+  @override State<_UploadZone> createState() => _UploadZoneState();
+}
+
+class _UploadZoneState extends State<_UploadZone> {
+  bool _h = false;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: widget.onTap,
+    child: MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _h = true),
+      onExit:  (_) => setState(() => _h = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        decoration: BoxDecoration(
+          color: _h ? const Color(0xFFE4F2FE) : _K.white,
+          border: Border.all(
+            color: _h ? _K.blue : _K.border,
+            width: _h ? 1.5 : 1),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            width: 54, height: 54,
+            decoration: BoxDecoration(
+              color: _h ? _K.blue : _K.blueSoft,
+              borderRadius: BorderRadius.circular(16)),
+            child: Icon(Icons.cloud_upload_rounded, size: 26,
+              color: _h ? Colors.white : _K.blue),
+          ),
+          const SizedBox(height: 14),
+          Text('Upload materials to this module',
+            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700,
+              color: _h ? _K.blue : _K.text)),
+          const SizedBox(height: 5),
+          const Text('PDF, DOCX, PPTX, MP4  ·  Max 500 MB',
+            style: TextStyle(fontSize: 12.5, color: _K.muted)),
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+            decoration: BoxDecoration(
+              color: _K.blue,
+              borderRadius: BorderRadius.circular(9)),
+            child: const Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.upload_rounded, size: 15, color: Colors.white),
+              SizedBox(width: 7),
+              Text('Browse Files',
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700,
+                  color: Colors.white)),
+            ]),
+          ),
+        ]),
+      ),
+    ),
+  );
+}
+
+// ── Material list card (inside module panel) ──────────────────────────────────
+class _MaterialListCard extends StatefulWidget {
+  final _Node mat;
+  final VoidCallback onTap, onRename, onDelete;
+  const _MaterialListCard({
+    required this.mat,
+    required this.onTap,
+    required this.onRename,
+    required this.onDelete,
+  });
+  @override State<_MaterialListCard> createState() => _MaterialListCardState();
+}
+
+class _MaterialListCardState extends State<_MaterialListCard> {
+  bool _h = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = widget.mat;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _h = true),
+      onExit:  (_) => setState(() => _h = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+          decoration: BoxDecoration(
+            color: _h ? const Color(0xFFF0F5FF) : _K.white,
+            border: Border.all(color: _h ? _K.blueBorder : _K.border),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(children: [
+            _MatIcon(mk: m.mk, size: 42),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(m.title,
+                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700,
+                  color: _K.text),
+                maxLines: 1, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 3),
+              Text(_mkLabel(m.mk),
+                style: const TextStyle(fontSize: 12, color: _K.muted)),
+            ])),
+            if (m.children.isNotEmpty) ...[
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _K.purpleSoft, borderRadius: BorderRadius.circular(999)),
+                child: Text(
+                  '${m.children.length} topic${m.children.length == 1 ? "" : "s"}',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                    color: _K.purple)),
+              ),
+            ],
+            _IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: widget.onRename),
+            _IcBtn(icon: Icons.delete_outline, tip: 'Delete', onTap: widget.onDelete, col: _K.red),
+            const Icon(Icons.chevron_right_rounded, size: 16, color: _K.hint),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  static String _mkLabel(_MK? k) {
+    switch (k) {
+      case _MK.video: return 'Video lecture';
+      case _MK.doc:   return 'Word document';
+      case _MK.ppt:   return 'Presentation';
+      default:        return 'PDF document';
+    }
+  }
+}
+
+// ── Material detail header ────────────────────────────────────────────────────
+class _MatHeader extends StatelessWidget {
+  final _Node mat;
+  final VoidCallback onRename, onDelete;
+  const _MatHeader({required this.mat, required this.onRename, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Row(children: [
+      _MatBadge(mat.mk),
+      if (mat.qualityScore > 0 && mat.qualityScore < 60) ...[
+        const SizedBox(width: 8),
+        const _Pill('⚠ REVIEW NEEDED', _K.badgeRevBg, _K.badgeRevFg),
+      ],
+    ]),
+    const SizedBox(height: 12),
+    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _MatIcon(mk: mat.mk, size: 48),
+      const SizedBox(width: 14),
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(mat.title,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: _K.text)),
+        const SizedBox(height: 4),
+        Text(_mkLabel(mat.mk),
+          style: const TextStyle(fontSize: 12.5, color: _K.muted, fontWeight: FontWeight.w600)),
+      ])),
+      _IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: onRename),
+      _IcBtn(icon: Icons.delete_outline, tip: 'Delete', onTap: onDelete, col: _K.red),
+    ]),
+  ]);
+
+  static String _mkLabel(_MK? k) {
+    switch (k) {
+      case _MK.video: return 'Video lecture';
+      case _MK.doc:   return 'Word document';
+      case _MK.ppt:   return 'Presentation';
+      default:        return 'PDF document';
+    }
+  }
+}
+
+// ── Topics section ────────────────────────────────────────────────────────────
+class _TopicsSection extends StatelessWidget {
+  final _Node mat;
+  final List<_Node> topics;
+  final bool generating;
+  final VoidCallback onAddManual, onGenerateAI;
+  final ValueChanged<_Node> onRenameTopic, onDeleteTopic;
+
+  const _TopicsSection({
+    required this.mat, required this.topics, required this.generating,
+    required this.onAddManual, required this.onGenerateAI,
+    required this.onRenameTopic, required this.onDeleteTopic,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      color: _K.white,
+      border: Border.all(color: _K.border),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+        child: Row(children: [
+          Container(
+            width: 32, height: 32,
+            decoration: BoxDecoration(
+              color: _K.purpleSoft, borderRadius: BorderRadius.circular(8)),
+            child: const Icon(Icons.label_rounded, size: 16, color: _K.purple),
+          ),
+          const SizedBox(width: 10),
+          const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Topics',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _K.text)),
+            Text('Organise this material into topics',
+              style: TextStyle(fontSize: 11.5, color: _K.muted)),
+          ])),
+          _BtnAI(generating: generating, onTap: onGenerateAI),
+          const SizedBox(width: 8),
+          _BtnOutline(label: 'Add', icon: Icons.add_rounded, onTap: onAddManual, small: true),
+        ]),
+      ),
+      const Divider(height: 1, color: _K.border),
+      if (topics.isEmpty && !generating)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 22, 16, 22),
+          child: Column(children: [
+            const Icon(Icons.label_off_outlined, size: 30, color: _K.hint),
+            const SizedBox(height: 10),
+            const Text('No topics yet',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _K.text)),
+            const SizedBox(height: 4),
+            const Text(
+              'Add topics manually or let AI generate them from the material content.',
+              style: TextStyle(fontSize: 12, color: _K.muted, height: 1.5),
+              textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              _BtnAI(generating: generating, onTap: onGenerateAI, labeled: true),
+              const SizedBox(width: 10),
+              _BtnOutline(label: 'Add manually', icon: Icons.add_rounded,
+                onTap: onAddManual, small: true),
+            ]),
+          ]),
+        )
+      else if (generating)
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 18, 16, 18),
+          child: _AIGeneratingRow(),
+        )
+      else
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+          child: Wrap(spacing: 8, runSpacing: 8, children: [
+            ...topics.map((t) => _TopicChip(
+              topic: t,
+              onRename: () => onRenameTopic(t),
+              onDelete: () => onDeleteTopic(t),
+            )),
+          ]),
+        ),
+    ]),
+  );
+}
+
+class _TopicChip extends StatefulWidget {
+  final _Node topic;
+  final VoidCallback onRename, onDelete;
+  const _TopicChip({required this.topic, required this.onRename, required this.onDelete});
+  @override State<_TopicChip> createState() => _TopicChipState();
+}
+
+class _TopicChipState extends State<_TopicChip> {
+  bool _h = false;
+
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    cursor: SystemMouseCursors.click,
+    onEnter: (_) => setState(() => _h = true),
+    onExit:  (_) => setState(() => _h = false),
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 110),
+      padding: const EdgeInsets.fromLTRB(10, 6, 8, 6),
+      decoration: BoxDecoration(
+        color: _h ? _K.purpleSoft : const Color(0xFFFAFAFF),
+        border: Border.all(color: _h ? _K.purple : _K.border),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.label_rounded, size: 12, color: _K.purple),
+        const SizedBox(width: 5),
+        Text(widget.topic.title,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _K.text)),
+        const SizedBox(width: 6),
+        GestureDetector(onTap: widget.onRename,
+          child: const Icon(Icons.edit_outlined, size: 11, color: _K.muted)),
+        const SizedBox(width: 3),
+        GestureDetector(onTap: widget.onDelete,
+          child: const Icon(Icons.close_rounded, size: 11, color: _K.muted)),
+      ]),
+    ),
+  );
+}
+
+class _AIGeneratingRow extends StatelessWidget {
+  const _AIGeneratingRow();
+
+  @override
+  Widget build(BuildContext context) => Row(children: [
+    Container(
+      width: 30, height: 30,
+      decoration: BoxDecoration(color: _K.blueSoft, borderRadius: BorderRadius.circular(8)),
+      child: const Icon(Icons.auto_awesome_rounded, size: 14, color: _K.blue),
+    ),
+    const SizedBox(width: 12),
+    const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('AI is analysing the content and generating topics…',
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _K.text)),
+      SizedBox(height: 6),
+      LinearProgressIndicator(minHeight: 3, color: _K.blue, backgroundColor: _K.blueSoft),
+    ])),
+  ]);
+}
+
+// ── Transcript card ────────────────────────────────────────────────────────────
+class _TranscriptCard extends StatelessWidget {
+  final _Node mat;
+  const _TranscriptCard({required this.mat});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+    decoration: BoxDecoration(
+      color: _K.white,
+      border: Border.all(color: _K.border),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Container(
+          width: 28, height: 28,
+          decoration: BoxDecoration(color: _K.blueSoft, borderRadius: BorderRadius.circular(7)),
+          child: const Icon(Icons.article_outlined, size: 14, color: _K.blue)),
+        const SizedBox(width: 10),
+        const Expanded(child: Text('Transcript & Content',
+          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: _K.text))),
+        const _TxBtn(label: 'B', bold: true),
+        const SizedBox(width: 3),
+        const _TxBtn(label: 'I', italic: true),
+        const SizedBox(width: 3),
+        const _TxBtn(label: 'S̶'),
+        const SizedBox(width: 3),
+        const _TxBtn(label: '↗'),
+      ]),
+      const Divider(height: 20, color: _K.border),
+      Text(
+        mat.transcript.isNotEmpty
+          ? mat.transcript
+          : 'Transcript will appear here once the material has been processed.',
+        style: const TextStyle(fontSize: 13, height: 1.75, color: Color(0xFF1E293B))),
+      const SizedBox(height: 12),
+      const Row(children: [
+        Icon(Icons.auto_fix_high_rounded, size: 12, color: _K.blue),
+        SizedBox(width: 6),
+        Text('Suggestion: Simplify sentence structure?',
+          style: TextStyle(fontSize: 11.5, color: _K.blue, fontWeight: FontWeight.w600)),
+      ]),
+    ]),
+  );
+}
+
+// ── AI sidebar ────────────────────────────────────────────────────────────────
+class _AISidebar extends StatelessWidget {
+  final _Node mat;
+  final VoidCallback onRegen;
+  const _AISidebar({required this.mat, required this.onRegen});
+
+  @override
+  Widget build(BuildContext context) {
+    final score = mat.qualityScore.clamp(0, 100);
+    final val   = score / 100.0;
+    final col   = val >= 0.8 ? _K.green : val >= 0.5 ? _K.yellow : _K.red;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Container(
+          width: 28, height: 28,
+          decoration: BoxDecoration(color: _K.blueSoft, borderRadius: BorderRadius.circular(7)),
+          child: const Icon(Icons.auto_awesome_rounded, size: 13, color: _K.blue)),
+        const SizedBox(width: 9),
+        const Text('AI Analysis',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: _K.text)),
+      ]),
+      const SizedBox(height: 16),
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        const Text('Quality Score',
+          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: _K.muted)),
+        Text('$score/100',
+          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: col)),
+      ]),
+      const SizedBox(height: 6),
+      ClipRRect(
+        borderRadius: BorderRadius.circular(999),
+        child: LinearProgressIndicator(value: val, minHeight: 6,
+          backgroundColor: _K.bg, color: col)),
+      const SizedBox(height: 16),
+      const Text('Suggested Tags',
+        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: _K.muted)),
+      const SizedBox(height: 8),
+      Wrap(spacing: 6, runSpacing: 6, children: [
+        ...mat.tags.map((t) => _Tag(t)),
+        const _Tag('+', dashed: true),
+      ]),
+      const SizedBox(height: 16),
+      SizedBox(width: double.infinity, child: OutlinedButton.icon(
+        onPressed: onRegen,
+        icon: const Icon(Icons.refresh_rounded, size: 13),
+        label: const Text('Regenerate',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: _K.muted,
+          side: const BorderSide(color: _K.border),
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+      )),
+    ]);
+  }
+}
