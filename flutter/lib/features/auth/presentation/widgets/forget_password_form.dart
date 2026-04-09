@@ -73,11 +73,11 @@ class _ForgetPasswordFormState extends ConsumerState<ForgetPasswordForm> {
             ),
             const SizedBox(height: 24),
 
-            if (state.sent && state.message != null) ...[
+            if (state.sent && state.successMessage != null) ...[
               AppInfoCard(
                 type: AppInfoType.success,
                 title: 'Check your inbox',
-                message: state.message!,
+                message: state.successMessage!,
               ),
               const SizedBox(height: 18),
             ],
