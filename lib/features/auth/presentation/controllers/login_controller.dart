@@ -8,7 +8,7 @@ import '../../domain/i_auth_repository.dart';
 import 'login_state.dart';
 
 /// Auth controller for the login screen.
-/// Uses the Riverpod 2.x [Notifier] API (replaces the deprecated [StateNotifier]).
+/// Uses the Riverpod 2.x [Notifier] API with [AsyncValue]-backed [LoginState].
 final loginControllerProvider =
     NotifierProvider<LoginController, LoginState>(LoginController.new);
 
@@ -19,8 +19,8 @@ class LoginController extends Notifier<LoginState> {
   IAuthRepository get _repo => ref.read(authRepositoryProvider);
 
   void clearError() {
-    if (state.error != null) {
-      state = state.copyWith(clearError: true);
+    if (state.async.hasError) {
+      state = state.clearError();
     }
   }
 
@@ -30,7 +30,7 @@ class LoginController extends Notifier<LoginState> {
     required bool persist,
   }) async {
     clearError();
-    state = state.copyWith(loading: true);
+    state = state.toLoading();
 
     try {
       await _repo.login(
@@ -39,26 +39,26 @@ class LoginController extends Notifier<LoginState> {
         persist: persist,
       );
 
-      state = state.copyWith(loading: false);
+      state = state.toSuccess();
       return LoginResult.success;
-    } catch (e) {
+    } catch (e, st) {
       final failure = mapApiFailure(e, email: email.trim());
 
       // Email not verified → store pending email + redirect to verify screen.
       if (failure.isEmailNotVerified) {
         TokenStorage.setPendingVerificationEmail(email.trim());
-        state = state.copyWith(loading: false, clearError: true);
+        state = state.clearError();
         return LoginResult.emailNotVerified;
       }
 
       // Stale session + auth issue → global handler (logout + login redirect).
       if (TokenStorage.hasToken && failure.isAuthIssue) {
-        state = state.copyWith(loading: false, clearError: true);
+        state = state.clearError();
         AppErrorReporter.report(ref, failure);
         return LoginResult.authError;
       }
 
-      state = state.copyWith(loading: false, error: failure.message);
+      state = state.toError(failure, st);
       return LoginResult.error;
     }
   }
