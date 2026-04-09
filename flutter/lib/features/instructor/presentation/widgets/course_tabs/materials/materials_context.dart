@@ -1,9 +1,9 @@
 // ignore_for_file: unused_element
 import 'package:flutter/material.dart';
 
-import '../../../../../data/modules_models.dart';
-import '../../../../../data/materials_models.dart';
-import '../../../../../data/topics_models.dart';
+import '../../../../data/modules_models.dart';
+import '../../../../data/materials_models.dart';
+import '../../../../data/topics_models.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Color palette (shared across all materials sub-widgets)

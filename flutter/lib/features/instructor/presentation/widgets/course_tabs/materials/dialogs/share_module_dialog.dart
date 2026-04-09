@@ -5,5 +5,5 @@
 //
 // This file is a placeholder to satisfy the planned folder structure.
 // Future: extract once coursesApiProvider is injectable without BuildContext.
-export '../../../../../widgets/course_tabs/materials_tab.dart'
+export '../../../../widgets/course_tabs/materials_tab.dart'
     show ShareModuleDialogAccessor;
