@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../core/storage/key_value_store_factory.dart';
+import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/ui/toast.dart';
 import '../../../../../shared/widgets/app_ui_components.dart';
 import '../../../data/courses_models.dart';
@@ -25,42 +26,43 @@ import '../upload_material_sheet.dart';
 import '../generate_questions_dialog.dart';
 import '../module_selector_sheet.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Color palette
-// ─────────────────────────────────────────────────────────────────────────────
-class _K {
-  _K._();
-  static const purple     = Color(0xFF7C3AED);
-  static const purpleSoft = Color(0xFFF5F3FF);
-  static const purpleBd   = Color(0xFFDDD6FE);
-  static const amber      = Color(0xFFD97706);
-  static const amberSoft  = Color(0xFFFFFBEB);
-  static const green      = Color(0xFF16A34A);
-  static const greenSoft  = Color(0xFFF0FDF4);
-  static const redSoft    = Color(0xFFFFF1F2);
-  static const blue       = Color(0xFF2563EB);
-  static const blueSoft   = Color(0xFFEFF6FF);
-  static const blueMid    = Color(0xFFDBEAFE);
-  static const div        = Color(0xFFEEEEEE);
-  static const bg         = Color(0xFFF6F7F9);
-  static const sidebar    = Color(0xFFFAFAFA);
-}
+// ── Extracted sub-widgets ────────────────────────────────────────────────────
+import 'materials/materials_context.dart';
+import 'materials/footer_widget.dart';
+import 'materials/panels/empty_state_panel.dart';
+import 'materials/dialogs/confirm_delete_dialog.dart';
+import 'materials/dialogs/change_position_dialog.dart';
+import 'materials/dialogs/rename_module_dialog.dart';
+import 'materials/dialogs/edit_description_dialog.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Context types
+//  Internal aliases — map old private names to the new public classes so the
+//  rest of this file compiles without touching every call-site.
 // ─────────────────────────────────────────────────────────────────────────────
-enum _CType { module, material, topic }
+typedef _K                        = MatK;
+typedef _CType                    = MatCType;
+typedef _Ctx                      = MatCtx;
+typedef _FooterWidget             = MatFooterWidget;
+typedef _EmptyStateWidget         = MatEmptyStatePanel;
+typedef _ConfirmDialogWidget      = MatConfirmDeleteDialog;
+typedef _ChangeModulePositionDialog = MatChangePositionDialog;
+typedef _SimpleDialog             = MatRenameModuleDialog;
+typedef _DescriptionDialog        = MatEditDescriptionDialog;
 
-class _Ctx {
-  final _CType       type;
-  final ModuleItem?  module;
-  final MaterialItem? material;
-  final TopicItem?   topic;
-  const _Ctx._({required this.type, this.module, this.material, this.topic});
-  factory _Ctx.module(ModuleItem m)                     => _Ctx._(type: _CType.module, module: m);
-  factory _Ctx.material(ModuleItem m, MaterialItem mat) => _Ctx._(type: _CType.material, module: m, material: mat);
-  factory _Ctx.topic(ModuleItem m, MaterialItem mat, TopicItem t) =>
-      _Ctx._(type: _CType.topic, module: m, material: mat, topic: t);
+// ─────────────────────────────────────────────────────────────────────────────
+//  Public types that add_topic_dialog.dart re-exports
+// ─────────────────────────────────────────────────────────────────────────────
+enum TopicCreateMode { manual, ai }
+
+class TopicDialogResult {
+  final String title;
+  final TopicCreateMode mode;
+  final List<int> learningOutcomeIds;
+  const TopicDialogResult({
+    required this.title,
+    required this.mode,
+    this.learningOutcomeIds = const [],
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -117,7 +119,6 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
       if (mounted) setState(() => _dialogOpen = false);
     }
   }
-
 
   void _persistUiState() {
     final sel = _sel;
@@ -443,48 +444,45 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
   }
 
   // ── Dialogs ──────────────────────────────────────────────────────────────
-Future<void> _showAddSubtopicDialog(
-  ModuleItem m,
-  MaterialItem mat,
-  TopicItem parent,
-) async {
-  final outcomes = ref.read(courseLOProvider(widget.course.id));
+  Future<void> _showAddSubtopicDialog(
+    ModuleItem m,
+    MaterialItem mat,
+    TopicItem parent,
+  ) async {
+    final outcomes = ref.read(courseLOProvider(widget.course.id));
 
-  final result = await _showManagedDialog<_TopicDialogResult>(
-    barrierColor: Colors.black.withOpacity(0.42),
-    builder: (_) => _AddTopicDialogV2(outcomes: outcomes),
-  );
+    final result = await _showManagedDialog<TopicDialogResult>(
+      barrierColor: Colors.black.withOpacity(0.42),
+      builder: (_) => _AddTopicDialogV2(outcomes: outcomes),
+    );
 
-  if (result == null || !mounted) return;
+    if (result == null || !mounted) return;
 
-  final title = result.title.trim();
-  if (title.isEmpty) return;
+    final title = result.title.trim();
+    if (title.isEmpty) return;
 
-  final notifier =
-      ref.read(courseDetailsControllerProvider(widget.course.id).notifier);
+    final notifier =
+        ref.read(courseDetailsControllerProvider(widget.course.id).notifier);
 
-  final topic = await notifier.createTopic(
-    moduleId: m.id,
-    materialId: mat.id,
-    payload: TopicCreateRequest(
-      title: title,
-      parentTopicId: parent.id,
-      learningOutcomeIds: result.learningOutcomeIds,
-    ),
-  );
+    final topic = await notifier.createTopic(
+      moduleId: m.id,
+      materialId: mat.id,
+      payload: TopicCreateRequest(
+        title: title,
+        parentTopicId: parent.id,
+        learningOutcomeIds: result.learningOutcomeIds,
+      ),
+    );
 
-  if (!mounted) return;
+    if (!mounted) return;
 
-  if (topic != null) {
-    AppToast.success(context,
-        title: 'Subtopic added', message: '"${topic.title}" created.');
+    if (topic != null) {
+      AppToast.success(context,
+          title: 'Subtopic added', message: '"${topic.title}" created.');
+    }
   }
-}
 
   // ── Create / copy module dialog ──────────────────────────────────────────
-  //
-  // FIX: the original implementation used result.existingModule which does not
-  // exist on ModuleSelectorResult. The correct field name is result.existing.
   Future<void> _showCreateModuleDialog() async {
     final currentModules =
         ref.read(courseDetailsControllerProvider(widget.course.id)).modules;
@@ -505,7 +503,6 @@ Future<void> _showAddSubtopicDialog(
         ref.read(courseDetailsControllerProvider(widget.course.id).notifier);
 
     if (result.isNew) {
-      // ── Branch A: create a brand-new module ──────────────────────────────
       final m = await notifier.createModule(
         result.newTitle!,
         description: result.newDescription,
@@ -517,11 +514,6 @@ Future<void> _showAddSubtopicDialog(
             title: 'Module created', message: '"${m.title}" added.');
       }
     } else {
-      // ── Branch B: copy an existing module from another course ────────────
-      //
-      // result.existing    – the ModuleItem the instructor chose
-      // result.sourceCourseId – the course it currently lives in
-      // widget.course.id   – the destination (current) course
       final sourceModule   = result.existing!;
       final sourceCourseId = result.sourceCourseId!;
 
@@ -603,9 +595,8 @@ Future<void> _showAddSubtopicDialog(
       barrierColor: Colors.black.withOpacity(0.35),
       builder: (_) => _SimpleDialog(
         title: 'Rename Module',
-        ctrl: c,
-        confirm: 'Save',
-        confirmColor: AppColors.primary,
+        controller: c,
+        confirmLabel: 'Save',
       ),
     );
     final title = c.text.trim();
@@ -632,7 +623,7 @@ Future<void> _showAddSubtopicDialog(
     final ok = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black.withOpacity(0.35),
-      builder: (_) => _DescriptionDialog(ctrl: c),
+      builder: (_) => _DescriptionDialog(controller: c),
     );
     final description = c.text.trim();
     final normalizedExisting = (m.description ?? '').trim();
@@ -708,9 +699,11 @@ Future<void> _showAddSubtopicDialog(
   Future<void> _confirmDelete(ModuleItem m) async {
     final ok = await _showManagedDialog<bool>(
         barrierColor: Colors.black.withOpacity(0.35),
-        builder: (_) => _ConfirmDialogWidget(title: 'Delete Module',
+        builder: (_) => _ConfirmDialogWidget(
+            title: 'Delete Module',
             body: 'Delete "${m.title}"? This will also remove all its materials.',
-            confirm: 'Delete', confirmColor: const Color(0xFFEF4444)));
+            confirmLabel: 'Delete',
+            confirmColor: const Color(0xFFEF4444)));
     if (ok != true || !mounted) return;
 
     final success = await ref.read(courseDetailsControllerProvider(widget.course.id).notifier)
@@ -733,14 +726,14 @@ Future<void> _showAddSubtopicDialog(
 
   Future<void> _showAddTopicDialog(ModuleItem m, MaterialItem mat) async {
     final outcomes = ref.read(courseLOProvider(widget.course.id));
-    final result = await _showManagedDialog<_TopicDialogResult>(
+    final result = await _showManagedDialog<TopicDialogResult>(
       barrierColor: Colors.black.withOpacity(0.42),
       builder: (_) => _AddTopicDialogV2(outcomes: outcomes),
     );
 
     if (result == null || !mounted) return;
 
-    if (result.mode == _TopicCreateMode.ai) {
+    if (result.mode == TopicCreateMode.ai) {
       _openGenerateDialog(moduleId: m.id, materialId: mat.id);
       return;
     }
@@ -776,6 +769,7 @@ Future<void> _showAddSubtopicDialog(
       );
     }
   }
+
   Future<void> _showEditTopicDialog(ModuleItem m, MaterialItem mat, TopicItem topic) async {
     final outcomes = ref.read(courseLOProvider(widget.course.id));
     final notifier = ref.read(courseDetailsControllerProvider(widget.course.id).notifier);
@@ -793,7 +787,7 @@ Future<void> _showAddSubtopicDialog(
             builder: (_) => _ConfirmDialogWidget(
               title: 'Delete Topic',
               body: 'Delete "${topic.title}"? This action cannot be undone.',
-              confirm: 'Delete',
+              confirmLabel: 'Delete',
               confirmColor: const Color(0xFFDC2626),
             ),
           ) ??
@@ -1359,3 +1353,307 @@ Future<void> _showAddSubtopicDialog(
         initialTopicId: topicId,
       ));
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Private helper widgets (still live here — not yet extracted)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _TopicStatusChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color fg;
+  final Color bg;
+  const _TopicStatusChip({required this.icon, required this.label, required this.fg, required this.bg});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: fg),
+          const SizedBox(width: 5),
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: fg)),
+        ],
+      ),
+    );
+  }
+}
+
+class _CardWidget extends StatelessWidget {
+  final Widget child;
+  const _CardWidget({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: const [
+          BoxShadow(color: Color(0x05000000), blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _AddTopicDialogV2 extends StatefulWidget {
+  final List<LearningOutcomeItem> outcomes;
+  const _AddTopicDialogV2({required this.outcomes});
+
+  @override
+  State<_AddTopicDialogV2> createState() => _AddTopicDialogV2State();
+}
+
+class _AddTopicDialogV2State extends State<_AddTopicDialogV2> {
+  final _ctrl = TextEditingController();
+  TopicCreateMode _mode = TopicCreateMode.manual;
+  final Set<int> _selectedIds = {};
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Add Topic', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+              const SizedBox(height: 16),
+              Row(
+                children: TopicCreateMode.values.map((m) {
+                  final sel = _mode == m;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _mode = m),
+                      child: Container(
+                        margin: EdgeInsets.only(right: m == TopicCreateMode.manual ? 8 : 0),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: sel ? AppColors.primary : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Text(
+                            m == TopicCreateMode.manual ? 'Manual' : 'AI Generate',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: sel ? Colors.white : AppColors.textMuted,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              if (_mode == TopicCreateMode.manual) ...[
+                TextField(
+                  controller: _ctrl,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: 'Topic title',
+                    hintText: 'e.g. Introduction to Recursion',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                if (widget.outcomes.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  const Text('Link outcomes (optional)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: widget.outcomes.map((lo) {
+                      final sel = _selectedIds.contains(lo.id);
+                      return FilterChip(
+                        selected: sel,
+                        label: Text('${lo.code} • ${lo.title}'),
+                        onSelected: (v) => setState(() => v ? _selectedIds.add(lo.id) : _selectedIds.remove(lo.id)),
+                        selectedColor: const Color(0xFFE0ECFF),
+                        backgroundColor: Colors.white,
+                        labelStyle: TextStyle(fontSize: 12, color: sel ? AppColors.primary : AppColors.textTitle, fontWeight: FontWeight.w600),
+                        side: BorderSide(color: sel ? MatK.blue : const Color(0xFFE5E7EB)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ] else
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(color: const Color(0xFFF0FDF4), borderRadius: BorderRadius.circular(12)),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.auto_awesome_rounded, color: Color(0xFF16A34A), size: 16),
+                      SizedBox(width: 8),
+                      Expanded(child: Text('AI will analyse the uploaded material and generate topics automatically.', style: TextStyle(fontSize: 13, color: Color(0xFF15803D)))),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: MatK.div),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 3,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(
+                        context,
+                        TopicDialogResult(
+                          title: _ctrl.text,
+                          mode: _mode,
+                          learningOutcomeIds: _selectedIds.toList(),
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Text(_mode == TopicCreateMode.manual ? 'Add Topic' : 'Generate'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShareModuleDialog extends ConsumerStatefulWidget {
+  final ModuleItem module;
+  final int currentCourseId;
+  const _ShareModuleDialog({required this.module, required this.currentCourseId});
+
+  @override
+  ConsumerState<_ShareModuleDialog> createState() => _ShareModuleDialogState();
+}
+
+class _ShareModuleDialogState extends ConsumerState<_ShareModuleDialog> {
+  MyCourseItem? _selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final courses = ref.watch(myCoursesProvider);
+
+    final otherCourses = courses.when(
+      data: (list) => list.where((c) => c.id != widget.currentCourseId).toList(),
+      loading: () => <MyCourseItem>[],
+      error: (_, __) => <MyCourseItem>[],
+    );
+
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Copy Module to Another Course',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+              const SizedBox(height: 6),
+              Text('Copying "${widget.module.title}" — choose a destination course.',
+                  style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+              const SizedBox(height: 16),
+              if (courses.isLoading)
+                const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()))
+              else if (otherCourses.isEmpty)
+                const Text('No other courses available.', style: TextStyle(color: AppColors.textMuted))
+              else
+                DropdownButtonFormField<MyCourseItem>(
+                  value: _selected,
+                  hint: const Text('Select a course'),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  ),
+                  items: otherCourses.map((c) => DropdownMenuItem(
+                    value: c,
+                    child: Text(c.safeTitle, overflow: TextOverflow.ellipsis),
+                  )).toList(),
+                  onChanged: (v) => setState(() => _selected = v),
+                ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: MatK.div),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 3,
+                    child: ElevatedButton(
+                      onPressed: _selected == null ? null : () => Navigator.pop(context, _selected),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Copy Module'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Stub widgets — _SidebarWidget, _ModulePanelWidget, _MaterialPanelWidget,
+//  _TopicPanelWidget are defined in their own files and imported via the
+//  panels/ directory. They are referenced here by name only.
+// ─────────────────────────────────────────────────────────────────────────────
