@@ -35,7 +35,11 @@ class ResetPasswordController extends Notifier<ResetPasswordState> {
         token: token,
         newPassword: newPassword,
       );
-      state = state.copyWith(loading: false, successMessage: message);
+      state = state.copyWith(
+        loading: false,
+        success: true,
+        successMessage: message,
+      );
       return true;
     } catch (e) {
       final failure = mapApiFailure(e);

@@ -23,6 +23,12 @@ class VerifyEmailSentController extends Notifier<VerifyEmailSentState> {
     }
   }
 
+  /// Short alias used by [VerifyEmailSentPage].
+  Future<bool> resend(String email) => resendVerificationEmail(email);
+
+  /// Short alias used by [VerifyEmailSentPage].
+  Future<bool> checkVerified(String email) => checkEmailVerified(email);
+
   Future<bool> resendVerificationEmail(String email) async {
     clearError();
     state = state.copyWith(loading: true);

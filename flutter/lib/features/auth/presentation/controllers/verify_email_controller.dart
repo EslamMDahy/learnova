@@ -17,12 +17,25 @@ class VerifyEmailController extends Notifier<VerifyEmailState> {
 
   IAuthRepository get _repo => ref.read(authRepositoryProvider);
 
+  /// Sets an error message without making any API call.
+  /// Used by the page when the token is missing/invalid before hitting the API.
+  void setError(String message) {
+    state = state.copyWith(error: message);
+  }
+
+  /// Alias kept for backward compatibility with page call-sites.
+  Future<bool> verify(String token) => verifyEmail(token);
+
   Future<bool> verifyEmail(String token) async {
     state = state.copyWith(loading: true, clearError: true);
 
     try {
       final message = await _repo.verifyEmail(token);
-      state = state.copyWith(loading: false, successMessage: message);
+      state = state.copyWith(
+        loading: false,
+        success: true,
+        successMessage: message,
+      );
       return true;
     } catch (e) {
       final failure = mapApiFailure(e);
