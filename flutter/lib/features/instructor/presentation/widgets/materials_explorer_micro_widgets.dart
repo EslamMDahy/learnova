@@ -6,11 +6,11 @@ import 'materials_explorer_constants.dart';
 // =============================================================================
 
 /// Material icon — correct icon + color per type
-class _MatIcon extends StatelessWidget {
+class MatIcon extends StatelessWidget {
   final MK? mk;
   final bool isModule;
   final double size;
-  const _MatIcon({this.mk, this.isModule = false, required this.size});
+  const MatIcon({super.key, this.mk, this.isModule = false, required this.size});
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +41,9 @@ class _MatIcon extends StatelessWidget {
 }
 
 /// Material badge pill
-class _MatBadge extends StatelessWidget {
+class MatBadge extends StatelessWidget {
   final MK? mk;
-  const _MatBadge(this.mk);
+  const MatBadge(this.mk, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -58,13 +58,13 @@ class _MatBadge extends StatelessWidget {
       default:
         label = 'PDF'; bg = K.badgePdfBg; fg = K.badgePdfFg; break;
     }
-    return _Pill(label, bg, fg);
+    return Pill(label, bg, fg);
   }
 }
 
-class _Pill extends StatelessWidget {
+class Pill extends StatelessWidget {
   final String label; final Color bg, fg;
-  const _Pill(this.label, this.bg, this.fg);
+  const Pill(this.label, this.bg, this.fg, {super.key});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -77,14 +77,14 @@ class _Pill extends StatelessWidget {
 }
 
 /// Blue primary button
-class _BtnPrimary extends StatefulWidget {
+class BtnPrimary extends StatefulWidget {
   final String label; final IconData icon; final VoidCallback onTap; final bool full;
-  const _BtnPrimary({required this.label, required this.icon,
+  const BtnPrimary({super.key, required this.label, required this.icon,
     required this.onTap, this.full = false,});
-  @override State<_BtnPrimary> createState() => _BtnPrimaryState();
+  @override State<BtnPrimary> createState() => _BtnPrimaryState();
 }
 
-class _BtnPrimaryState extends State<_BtnPrimary> {
+class _BtnPrimaryState extends State<BtnPrimary> {
   bool _h = false;
   @override
   Widget build(BuildContext context) => MouseRegion(
@@ -113,14 +113,14 @@ class _BtnPrimaryState extends State<_BtnPrimary> {
 }
 
 /// Outline button
-class _BtnOutline extends StatefulWidget {
+class BtnOutline extends StatefulWidget {
   final String label; final IconData icon; final VoidCallback onTap; final bool small;
-  const _BtnOutline({required this.label, required this.icon,
+  const BtnOutline({super.key, required this.label, required this.icon,
     required this.onTap, this.small = false,});
-  @override State<_BtnOutline> createState() => _BtnOutlineState();
+  @override State<BtnOutline> createState() => _BtnOutlineState();
 }
 
-class _BtnOutlineState extends State<_BtnOutline> {
+class _BtnOutlineState extends State<BtnOutline> {
   bool _h = false;
   @override
   Widget build(BuildContext context) => MouseRegion(
@@ -148,13 +148,13 @@ class _BtnOutlineState extends State<_BtnOutline> {
 }
 
 /// Danger outline button
-class _BtnDanger extends StatefulWidget {
+class BtnDanger extends StatefulWidget {
   final String label; final IconData icon; final VoidCallback onTap;
-  const _BtnDanger({required this.label, required this.icon, required this.onTap});
-  @override State<_BtnDanger> createState() => _BtnDangerState();
+  const BtnDanger({super.key, required this.label, required this.icon, required this.onTap});
+  @override State<BtnDanger> createState() => _BtnDangerState();
 }
 
-class _BtnDangerState extends State<_BtnDanger> {
+class _BtnDangerState extends State<BtnDanger> {
   bool _h = false;
   @override
   Widget build(BuildContext context) => MouseRegion(
@@ -179,13 +179,13 @@ class _BtnDangerState extends State<_BtnDanger> {
 }
 
 /// Generate Question button
-class _BtnGenerate extends StatefulWidget {
+class BtnGenerate extends StatefulWidget {
   final String label; final IconData icon; final VoidCallback? onTap;
-  const _BtnGenerate({required this.label, required this.icon, this.onTap});
-  @override State<_BtnGenerate> createState() => _BtnGenerateState();
+  const BtnGenerate({super.key, required this.label, required this.icon, this.onTap});
+  @override State<BtnGenerate> createState() => _BtnGenerateState();
 }
 
-class _BtnGenerateState extends State<_BtnGenerate> {
+class _BtnGenerateState extends State<BtnGenerate> {
   bool _h = false;
   @override
   Widget build(BuildContext context) => MouseRegion(
@@ -209,15 +209,15 @@ class _BtnGenerateState extends State<_BtnGenerate> {
 }
 
 /// AI generate button
-class _BtnAI extends StatefulWidget {
+class BtnAI extends StatefulWidget {
   final bool generating;
   final VoidCallback onTap;
   final bool labeled;
-  const _BtnAI({required this.generating, required this.onTap, this.labeled = false});
-  @override State<_BtnAI> createState() => _BtnAIState();
+  const BtnAI({super.key, required this.generating, required this.onTap, this.labeled = false});
+  @override State<BtnAI> createState() => _BtnAIState();
 }
 
-class _BtnAIState extends State<_BtnAI> {
+class _BtnAIState extends State<BtnAI> {
   bool _h = false;
   @override
   Widget build(BuildContext context) => MouseRegion(
@@ -255,9 +255,9 @@ class _BtnAIState extends State<_BtnAI> {
 }
 
 /// Icon button (edit / delete / etc)
-class _IcBtn extends StatelessWidget {
+class IcBtn extends StatelessWidget {
   final IconData icon; final String tip; final VoidCallback onTap; final Color col;
-  const _IcBtn({required this.icon, required this.tip, required this.onTap,
+  const IcBtn({super.key, required this.icon, required this.tip, required this.onTap,
     this.col = K.muted,});
 
   @override
@@ -278,13 +278,13 @@ class _IcBtn extends StatelessWidget {
 }
 
 /// Toolbar icon button
-class _TbBtn extends StatefulWidget {
+class TbBtn extends StatefulWidget {
   final IconData icon; final String tip; final VoidCallback onTap;
-  const _TbBtn({required this.icon, required this.tip, required this.onTap});
-  @override State<_TbBtn> createState() => _TbBtnState();
+  const TbBtn({super.key, required this.icon, required this.tip, required this.onTap});
+  @override State<TbBtn> createState() => _TbBtnState();
 }
 
-class _TbBtnState extends State<_TbBtn> {
+class _TbBtnState extends State<TbBtn> {
   bool _h = false;
   @override
   Widget build(BuildContext context) => Tooltip(
@@ -306,13 +306,13 @@ class _TbBtnState extends State<_TbBtn> {
 }
 
 /// Transcript toolbar button
-class _TxBtn extends StatefulWidget {
+class TxBtn extends StatefulWidget {
   final String label; final bool bold; final bool italic;
-  const _TxBtn({required this.label, this.bold = false, this.italic = false});
-  @override State<_TxBtn> createState() => _TxBtnState();
+  const TxBtn({super.key, required this.label, this.bold = false, this.italic = false});
+  @override State<TxBtn> createState() => _TxBtnState();
 }
 
-class _TxBtnState extends State<_TxBtn> {
+class _TxBtnState extends State<TxBtn> {
   bool _h = false;
   @override
   Widget build(BuildContext context) => MouseRegion(
@@ -334,9 +334,9 @@ class _TxBtnState extends State<_TxBtn> {
 }
 
 /// Count badge
-class _CountBadge extends StatelessWidget {
+class CountBadge extends StatelessWidget {
   final String label;
-  const _CountBadge(this.label);
+  const CountBadge(this.label, {super.key});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -348,9 +348,9 @@ class _CountBadge extends StatelessWidget {
 }
 
 /// Tag chip
-class _Tag extends StatelessWidget {
+class TagChip extends StatelessWidget {
   final String label; final bool dashed;
-  const _Tag(this.label, {this.dashed = false});
+  const TagChip(this.label, {super.key, this.dashed = false});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -365,30 +365,30 @@ class _Tag extends StatelessWidget {
 }
 
 // ── Context menu ──────────────────────────────────────────────────────────────
-class _MItem {
+class MItem {
   final IconData icon; final String label; final Color? color; final VoidCallback onTap;
-  const _MItem({required this.icon, required this.label, this.color, required this.onTap});
+  const MItem({required this.icon, required this.label, this.color, required this.onTap});
 }
 
-class _MDivider { const _MDivider(); }
+class MDivider { const MDivider(); }
 
-class _CtxMenu extends StatelessWidget {
+class CtxMenu extends StatelessWidget {
   final List<dynamic> items;
-  const _CtxMenu({required this.items});
+  const CtxMenu({super.key, required this.items});
 
   @override
   Widget build(BuildContext context) => PopupMenuButton<int>(
     tooltip: '',
     icon: const Icon(Icons.more_horiz_rounded, size: 14, color: K.hint),
     padding: EdgeInsets.zero, iconSize: 14,
-    onSelected: (i) => (items[i] as _MItem).onTap(),
+    onSelected: (i) => (items[i] as MItem).onTap(),
     itemBuilder: (_) {
       final out = <PopupMenuEntry<int>>[];
       for (var i = 0; i < items.length; i++) {
         final item = items[i];
-        if (item is _MDivider) {
+        if (item is MDivider) {
           out.add(const PopupMenuDivider());
-        } else if (item is _MItem) {
+        } else if (item is MItem) {
           out.add(PopupMenuItem<int>(value: i, child: Row(children: [
             Icon(item.icon, size: 14, color: item.color ?? K.text),
             const SizedBox(width: 9),
