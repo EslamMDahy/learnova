@@ -39,7 +39,7 @@ import 'materials/dialogs/edit_description_dialog.dart';
 //  Internal aliases — map old private names to the new public classes so the
 //  rest of this file compiles without touching every call-site.
 // ─────────────────────────────────────────────────────────────────────────────
-typedef _K                        = MatK;
+typedef K                        = MatK;
 typedef _CType                    = MatCType;
 typedef _Ctx                      = MatCtx;
 typedef _FooterWidget             = MatFooterWidget;
@@ -801,9 +801,9 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
           Color readinessFg(TopicReadiness value) {
             switch (value) {
               case TopicReadiness.ready:
-                return _K.green;
+                return K.green;
               case TopicReadiness.review:
-                return _K.amber;
+                return K.amber;
               case TopicReadiness.draft:
                 return AppColors.textMuted;
             }
@@ -812,9 +812,9 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
           Color readinessBg(TopicReadiness value) {
             switch (value) {
               case TopicReadiness.ready:
-                return _K.greenSoft;
+                return K.greenSoft;
               case TopicReadiness.review:
-                return _K.amberSoft;
+                return K.amberSoft;
               case TopicReadiness.draft:
                 return const Color(0xFFF1F5F9);
             }
@@ -825,9 +825,9 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
               case TopicDifficulty.advanced:
                 return const Color(0xFFDC2626);
               case TopicDifficulty.intermediate:
-                return _K.amber;
+                return K.amber;
               case TopicDifficulty.beginner:
-                return _K.blue;
+                return K.blue;
             }
           }
 
@@ -945,8 +945,8 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
                               label: selectedOutcomeIds.isEmpty
                                   ? 'No outcomes linked'
                                   : '${selectedOutcomeIds.length} outcome(s) linked',
-                              fg: _K.blue,
-                              bg: _K.blueSoft,
+                              fg: K.blue,
+                              bg: K.blueSoft,
                             ),
                           ],
                         ),
@@ -1175,9 +1175,9 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
                                               (lo) => Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                                 decoration: BoxDecoration(
-                                                  color: _K.blueSoft,
+                                                  color: K.blueSoft,
                                                   borderRadius: BorderRadius.circular(999),
-                                                  border: Border.all(color: _K.blueMid),
+                                                  border: Border.all(color: K.blueMid),
                                                 ),
                                                 child: Text(
                                                   '${lo.code} • ${lo.title}',
@@ -1215,12 +1215,12 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
                                           selectedColor: const Color(0xFFE0ECFF),
                                           backgroundColor: Colors.white,
                                           side: BorderSide(
-                                            color: selected ? _K.blue : const Color(0xFFE5E7EB),
+                                            color: selected ? K.blue : const Color(0xFFE5E7EB),
                                           ),
                                           avatar: Icon(
                                             selected ? Icons.check_circle_rounded : Icons.flag_outlined,
                                             size: 16,
-                                            color: selected ? _K.blue : AppColors.textMuted,
+                                            color: selected ? K.blue : AppColors.textMuted,
                                           ),
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                                         );

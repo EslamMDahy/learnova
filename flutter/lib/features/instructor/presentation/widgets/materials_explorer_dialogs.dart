@@ -50,14 +50,14 @@ class _DlgInputState extends State<_DlgInput> {
             Container(
               width: 34, height: 34,
               decoration: BoxDecoration(
-                color: _K.blueSoft, borderRadius: BorderRadius.circular(9),),
-              child: const Icon(Icons.edit_rounded, size: 17, color: _K.blue),),
+                color: K.blueSoft, borderRadius: BorderRadius.circular(9),),
+              child: const Icon(Icons.edit_rounded, size: 17, color: K.blue),),
             const SizedBox(width: 12),
             Expanded(child: Text(widget.title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _K.text),),),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: K.text),),),
             GestureDetector(
               onTap: () => Navigator.of(context).pop(),
-              child: const Icon(Icons.close_rounded, size: 17, color: _K.muted),),
+              child: const Icon(Icons.close_rounded, size: 17, color: K.muted),),
           ],),
           const SizedBox(height: 18),
           TextField(
@@ -65,18 +65,18 @@ class _DlgInputState extends State<_DlgInput> {
             autofocus: true,
             onSubmitted: (_) => _submit(),
             onChanged: (_) { if (_err) setState(() => _err = false); },
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _K.text),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: K.text),
             decoration: InputDecoration(
               hintText: widget.hint,
-              hintStyle: const TextStyle(color: _K.hint, fontWeight: FontWeight.w400),
+              hintStyle: const TextStyle(color: K.hint, fontWeight: FontWeight.w400),
               filled: true, fillColor: const Color(0xFFF8FAFC),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: _err ? _K.red : _K.border),),
+                borderSide: BorderSide(color: _err ? K.red : K.border),),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: _err ? _K.red : _K.blue, width: 1.5),),
+                borderSide: BorderSide(color: _err ? K.red : K.blue, width: 1.5),),
               errorText: _err ? 'Name cannot be empty' : null,),
           ),
           const SizedBox(height: 18),
@@ -84,8 +84,8 @@ class _DlgInputState extends State<_DlgInput> {
             OutlinedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: OutlinedButton.styleFrom(
-                foregroundColor: _K.muted,
-                side: const BorderSide(color: _K.border),
+                foregroundColor: K.muted,
+                side: const BorderSide(color: K.border),
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),),
               child: const Text('Cancel',
@@ -95,7 +95,7 @@ class _DlgInputState extends State<_DlgInput> {
             ElevatedButton(
               onPressed: _submit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _K.blue,
+                backgroundColor: K.blue,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
@@ -134,26 +134,26 @@ class _DlgConfirm extends StatelessWidget {
             Container(
               width: 34, height: 34,
               decoration: BoxDecoration(
-                color: danger ? _K.redSoft : _K.blueSoft,
+                color: danger ? K.redSoft : K.blueSoft,
                 borderRadius: BorderRadius.circular(9),),
               child: Icon(
                 danger ? Icons.delete_outline_rounded : Icons.help_outline_rounded,
                 size: 17,
-                color: danger ? _K.red : _K.blue,),),
+                color: danger ? K.red : K.blue,),),
             const SizedBox(width: 12),
             Expanded(child: Text(body,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: _K.text),),),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: K.text),),),
             GestureDetector(
               onTap: () => Navigator.of(context).pop(false),
-              child: const Icon(Icons.close_rounded, size: 17, color: _K.muted),),
+              child: const Icon(Icons.close_rounded, size: 17, color: K.muted),),
           ],),
           const SizedBox(height: 22),
           Row(mainAxisAlignment: MainAxisAlignment.end, children: [
             OutlinedButton(
               onPressed: () => Navigator.of(context).pop(false),
               style: OutlinedButton.styleFrom(
-                foregroundColor: _K.muted,
-                side: const BorderSide(color: _K.border),
+                foregroundColor: K.muted,
+                side: const BorderSide(color: K.border),
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),),
               child: const Text('Cancel',
@@ -163,7 +163,7 @@ class _DlgConfirm extends StatelessWidget {
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: danger ? _K.red : _K.blue,
+                backgroundColor: danger ? K.red : K.blue,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),

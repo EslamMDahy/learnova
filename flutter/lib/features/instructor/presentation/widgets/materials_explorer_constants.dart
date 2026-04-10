@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 //  Design tokens
 // ─────────────────────────────────────────────────────────────────────────────
-class _K {
+class K {
   static const bg         = Color(0xFFF5F7FA);
   static const white      = Colors.white;
   static const border     = Color(0xFFE8EAED);
@@ -41,20 +41,20 @@ class _K {
 // ─────────────────────────────────────────────────────────────────────────────
 //  Enums
 // ─────────────────────────────────────────────────────────────────────────────
-enum _NK { module, material, topic }
-enum _MK { video, pdf, doc, ppt }
+enum NK { module, material, topic }
+enum MK { video, pdf, doc, ppt }
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Data model   Module → [Material → [Topic]]
 // ─────────────────────────────────────────────────────────────────────────────
-class _Node {
+class Node {
   final String id;
-  _NK   nk;
+  NK   nk;
   String title;
   bool   isExpanded;
-  List<_Node> children;
+  List<Node> children;
   // material-only fields
-  _MK?  mk;
+  MK?  mk;
   int   qualityScore;
   List<String> tags;
   String transcript;
@@ -62,21 +62,21 @@ class _Node {
   int? backendId;
   int? moduleId;
 
-  _Node.module({
+  Node.module({
     required this.id, required this.title,
-    this.isExpanded = true, List<_Node>? children, this.backendId,
-  }) : nk = _NK.module, children = children ?? [],
+    this.isExpanded = true, List<Node>? children, this.backendId,
+  }) : nk = NK.module, children = children ?? [],
        mk = null, qualityScore = 0, tags = const [], transcript = '';
 
-  _Node.material({
-    required this.id, required this.title, required _MK kind,
-    this.isExpanded = false, List<_Node>? children,
+  Node.material({
+    required this.id, required this.title, required MK kind,
+    this.isExpanded = false, List<Node>? children,
     this.qualityScore = 0, this.tags = const [],
     this.transcript = '', this.backendId, this.moduleId,
-  }) : nk = _NK.material, children = children ?? [], mk = kind;
+  }) : nk = NK.material, children = children ?? [], mk = kind;
 
-  _Node.topic({
+  Node.topic({
     required this.id, required this.title, this.backendId, this.moduleId,
-  }) : nk = _NK.topic, children = [], isExpanded = false,
+  }) : nk = NK.topic, children = [], isExpanded = false,
        mk = null, qualityScore = 0, tags = const [], transcript = '';
 }

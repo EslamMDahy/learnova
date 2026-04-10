@@ -6,7 +6,6 @@ import '../session/session_providers.dart';
 import '../session/session_snapshot.dart';
 import '../storage/token_storage.dart';
 import '../storage/user_storage.dart';
-import '../theme/app_theme.dart';
 
 import '../../features/auth/presentation/pages/forget_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
@@ -24,7 +23,6 @@ import '../../features/instructor/presentation/pages/instructor_shell.dart';
 import '../../features/instructor/presentation/pages/instructor_route_pages.dart';
 import '../../features/instructor/presentation/pages/course_details/course_details_page.dart';
 import '../../features/instructor/presentation/controllers/selected_course_provider.dart';
-import '../../features/instructor/data/courses_providers.dart';
 import '../../shared/pages/error_page.dart';
 import '../../shared/widgets/empty_state_page.dart';
 

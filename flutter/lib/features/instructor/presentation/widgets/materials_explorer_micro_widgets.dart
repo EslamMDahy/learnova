@@ -7,7 +7,7 @@ import 'materials_explorer_constants.dart';
 
 /// Material icon — correct icon + color per type
 class _MatIcon extends StatelessWidget {
-  final _MK? mk;
+  final MK? mk;
   final bool isModule;
   final double size;
   const _MatIcon({this.mk, this.isModule = false, required this.size});
@@ -16,18 +16,18 @@ class _MatIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     IconData ic; Color col, bg;
     if (isModule) {
-      ic = Icons.folder_rounded; col = _K.blue; bg = _K.blueSoft;
+      ic = Icons.folder_rounded; col = K.blue; bg = K.blueSoft;
     } else {
       switch (mk) {
-        case _MK.video:
-          ic = Icons.play_circle_rounded; col = _K.blue; bg = _K.blueSoft; break;
-        case _MK.doc:
+        case MK.video:
+          ic = Icons.play_circle_rounded; col = K.blue; bg = K.blueSoft; break;
+        case MK.doc:
           ic = Icons.description_rounded;
-          col = const Color(0xFF1E40AF); bg = _K.badgeDocBg; break;
-        case _MK.ppt:
-          ic = Icons.slideshow_rounded; col = _K.orange; bg = _K.orangeSoft; break;
+          col = const Color(0xFF1E40AF); bg = K.badgeDocBg; break;
+        case MK.ppt:
+          ic = Icons.slideshow_rounded; col = K.orange; bg = K.orangeSoft; break;
         default:
-          ic = Icons.picture_as_pdf_rounded; col = _K.red; bg = _K.redSoft; break;
+          ic = Icons.picture_as_pdf_rounded; col = K.red; bg = K.redSoft; break;
       }
     }
     final r = size * 0.27;
@@ -42,21 +42,21 @@ class _MatIcon extends StatelessWidget {
 
 /// Material badge pill
 class _MatBadge extends StatelessWidget {
-  final _MK? mk;
+  final MK? mk;
   const _MatBadge(this.mk);
 
   @override
   Widget build(BuildContext context) {
     String label; Color bg, fg;
     switch (mk) {
-      case _MK.video:
-        label = 'VIDEO'; bg = _K.badgeVidBg; fg = _K.badgeVidFg; break;
-      case _MK.doc:
-        label = 'DOCUMENT'; bg = _K.badgeDocBg; fg = _K.badgeDocFg; break;
-      case _MK.ppt:
-        label = 'PRESENTATION'; bg = _K.badgePptBg; fg = _K.badgePptFg; break;
+      case MK.video:
+        label = 'VIDEO'; bg = K.badgeVidBg; fg = K.badgeVidFg; break;
+      case MK.doc:
+        label = 'DOCUMENT'; bg = K.badgeDocBg; fg = K.badgeDocFg; break;
+      case MK.ppt:
+        label = 'PRESENTATION'; bg = K.badgePptBg; fg = K.badgePptFg; break;
       default:
-        label = 'PDF'; bg = _K.badgePdfBg; fg = _K.badgePdfFg; break;
+        label = 'PDF'; bg = K.badgePdfBg; fg = K.badgePdfFg; break;
     }
     return _Pill(label, bg, fg);
   }
@@ -96,7 +96,7 @@ class _BtnPrimaryState extends State<_BtnPrimary> {
       width: widget.full ? double.infinity : null,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
-        color: _h ? _K.blueHov : _K.blue,
+        color: _h ? K.blueHov : K.blue,
         borderRadius: BorderRadius.circular(8),),
       child: Row(
         mainAxisSize: widget.full ? MainAxisSize.max : MainAxisSize.min,
@@ -133,15 +133,15 @@ class _BtnOutlineState extends State<_BtnOutline> {
         horizontal: widget.small ? 10 : 14,
         vertical:   widget.small ? 6  : 9,),
       decoration: BoxDecoration(
-        color: _h ? const Color(0xFFF1F5F9) : _K.white,
-        border: Border.all(color: _K.border),
+        color: _h ? const Color(0xFFF1F5F9) : K.white,
+        border: Border.all(color: K.border),
         borderRadius: BorderRadius.circular(8),),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(widget.icon, size: 13, color: _K.text),
+        Icon(widget.icon, size: 13, color: K.text),
         const SizedBox(width: 5),
         Text(widget.label,
           style: TextStyle(fontSize: widget.small ? 12 : 12.5,
-            fontWeight: FontWeight.w600, color: _K.text,),),
+            fontWeight: FontWeight.w600, color: K.text,),),
       ],),
     ),),
   );
@@ -165,14 +165,14 @@ class _BtnDangerState extends State<_BtnDanger> {
       duration: const Duration(milliseconds: 110),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
-        color: _h ? _K.redSoft : _K.white,
-        border: Border.all(color: _h ? _K.red : _K.border),
+        color: _h ? K.redSoft : K.white,
+        border: Border.all(color: _h ? K.red : K.border),
         borderRadius: BorderRadius.circular(8),),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(widget.icon, size: 13, color: _K.red),
+        Icon(widget.icon, size: 13, color: K.red),
         const SizedBox(width: 5),
         Text(widget.label,
-          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _K.red),),
+          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: K.red),),
       ],),
     ),),
   );
@@ -196,7 +196,7 @@ class _BtnGenerateState extends State<_BtnGenerate> {
       duration: const Duration(milliseconds: 110),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
       decoration: BoxDecoration(
-        color: _h ? _K.blueHov : _K.blue,
+        color: _h ? K.blueHov : K.blue,
         borderRadius: BorderRadius.circular(8),),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(widget.icon, size: 14, color: Colors.white),
@@ -234,19 +234,19 @@ class _BtnAIState extends State<_BtnAI> {
         decoration: BoxDecoration(
           color: _h && !widget.generating
             ? const Color(0xFFD2E9FD)
-            : _K.blueSoft,
+            : K.blueSoft,
           border: Border.all(
-            color: _h && !widget.generating ? _K.blue : _K.blueBorder,),
+            color: _h && !widget.generating ? K.blue : K.blueBorder,),
           borderRadius: BorderRadius.circular(8),),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           widget.generating
             ? const SizedBox(width: 12, height: 12,
-                child: CircularProgressIndicator(strokeWidth: 1.5, color: _K.blue),)
-            : const Icon(Icons.auto_awesome_rounded, size: 13, color: _K.blue),
+                child: CircularProgressIndicator(strokeWidth: 1.5, color: K.blue),)
+            : const Icon(Icons.auto_awesome_rounded, size: 13, color: K.blue),
           if (widget.labeled) ...[
             const SizedBox(width: 6),
             const Text('Generate with AI',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _K.blue),),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: K.blue),),
           ],
         ],),
       ),
@@ -258,7 +258,7 @@ class _BtnAIState extends State<_BtnAI> {
 class _IcBtn extends StatelessWidget {
   final IconData icon; final String tip; final VoidCallback onTap; final Color col;
   const _IcBtn({required this.icon, required this.tip, required this.onTap,
-    this.col = _K.muted,});
+    this.col = K.muted,});
 
   @override
   Widget build(BuildContext context) => Tooltip(
@@ -297,9 +297,9 @@ class _TbBtnState extends State<_TbBtn> {
         duration: const Duration(milliseconds: 110),
         width: 26, height: 26,
         decoration: BoxDecoration(
-          color: _h ? _K.bg : Colors.transparent,
+          color: _h ? K.bg : Colors.transparent,
           borderRadius: BorderRadius.circular(6),),
-        child: Icon(widget.icon, size: 14, color: _K.hint),
+        child: Icon(widget.icon, size: 14, color: K.hint),
       ),),
     ),
   );
@@ -322,13 +322,13 @@ class _TxBtnState extends State<_TxBtn> {
       duration: const Duration(milliseconds: 110),
       width: 26, height: 26,
       decoration: BoxDecoration(
-        color: _h ? _K.bg : Colors.transparent,
+        color: _h ? K.bg : Colors.transparent,
         borderRadius: BorderRadius.circular(5),),
       child: Center(child: Text(widget.label, style: TextStyle(
         fontSize: 12,
         fontWeight: widget.bold ? FontWeight.w900 : FontWeight.w500,
         fontStyle: widget.italic ? FontStyle.italic : FontStyle.normal,
-        color: _K.muted,),),),
+        color: K.muted,),),),
     ),
   );
 }
@@ -341,9 +341,9 @@ class _CountBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-    decoration: BoxDecoration(color: _K.blueSoft, borderRadius: BorderRadius.circular(999)),
+    decoration: BoxDecoration(color: K.blueSoft, borderRadius: BorderRadius.circular(999)),
     child: Text(label, style: const TextStyle(fontSize: 11,
-      fontWeight: FontWeight.w700, color: _K.blue,),),
+      fontWeight: FontWeight.w700, color: K.blue,),),
   );
 }
 
@@ -357,10 +357,10 @@ class _Tag extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(
       color: dashed ? Colors.transparent : const Color(0xFFF1F5F9),
-      border: Border.all(color: _K.border),
+      border: Border.all(color: K.border),
       borderRadius: BorderRadius.circular(999),),
     child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-      color: dashed ? _K.hint : _K.sub,),),
+      color: dashed ? K.hint : K.sub,),),
   );
 }
 
@@ -379,7 +379,7 @@ class _CtxMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) => PopupMenuButton<int>(
     tooltip: '',
-    icon: const Icon(Icons.more_horiz_rounded, size: 14, color: _K.hint),
+    icon: const Icon(Icons.more_horiz_rounded, size: 14, color: K.hint),
     padding: EdgeInsets.zero, iconSize: 14,
     onSelected: (i) => (items[i] as _MItem).onTap(),
     itemBuilder: (_) {
@@ -390,10 +390,10 @@ class _CtxMenu extends StatelessWidget {
           out.add(const PopupMenuDivider());
         } else if (item is _MItem) {
           out.add(PopupMenuItem<int>(value: i, child: Row(children: [
-            Icon(item.icon, size: 14, color: item.color ?? _K.text),
+            Icon(item.icon, size: 14, color: item.color ?? K.text),
             const SizedBox(width: 9),
             Text(item.label,
-              style: TextStyle(fontSize: 13, color: item.color ?? _K.text),),
+              style: TextStyle(fontSize: 13, color: item.color ?? K.text),),
           ],),),);
         }
       }

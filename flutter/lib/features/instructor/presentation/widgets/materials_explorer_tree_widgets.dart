@@ -8,9 +8,9 @@ import 'materials_explorer_micro_widgets.dart';
 
 /// One complete module row + its children
 class _ModuleTreeItem extends StatelessWidget {
-  final _Node module;
+  final Node module;
   final String? selectedId;
-  final ValueChanged<_Node> onModule, onMaterial, onTopic, onRename, onDelete;
+  final ValueChanged<Node> onModule, onMaterial, onTopic, onRename, onDelete;
 
   const _ModuleTreeItem({
     required this.module, required this.selectedId,
@@ -30,7 +30,7 @@ class _ModuleTreeItem extends StatelessWidget {
             module.isExpanded
               ? Icons.keyboard_arrow_down_rounded
               : Icons.keyboard_arrow_right_rounded,
-            size: 14, color: _K.muted,
+            size: 14, color: K.muted,
           ),
           const SizedBox(width: 5),
           Container(
@@ -44,15 +44,15 @@ class _ModuleTreeItem extends StatelessWidget {
         title: module.title,
         titleStyle: TextStyle(
           fontSize: 12.5, fontWeight: FontWeight.w700,
-          color: sel ? _K.blue : _K.text,),
+          color: sel ? K.blue : K.text,),
         trailing: _CtxMenu(items: [
           _MItem(icon: Icons.upload_rounded, label: 'Upload material',
-            color: _K.blue, onTap: () => onModule(module),),
+            color: K.blue, onTap: () => onModule(module),),
           const _MDivider(),
           _MItem(icon: Icons.edit_outlined, label: 'Rename',
             onTap: () => onRename(module),),
           _MItem(icon: Icons.delete_outline, label: 'Delete',
-            color: _K.red, onTap: () => onDelete(module),),
+            color: K.red, onTap: () => onDelete(module),),
         ],),
         onTap: () => onModule(module),
       ),
@@ -68,9 +68,9 @@ class _ModuleTreeItem extends StatelessWidget {
 }
 
 class _MaterialTreeItem extends StatelessWidget {
-  final _Node mat;
+  final Node mat;
   final String? selectedId;
-  final ValueChanged<_Node> onMaterial, onTopic, onRename, onDelete;
+  final ValueChanged<Node> onMaterial, onTopic, onRename, onDelete;
 
   const _MaterialTreeItem({
     required this.mat, required this.selectedId,
@@ -81,10 +81,10 @@ class _MaterialTreeItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sel    = selectedId == mat.id;
-    final icon   = _mkIcon(mat.mk);
-    final col    = _mkColor(mat.mk);
-    final bg     = _mkBg(mat.mk);
-    final topics = mat.children.where((c) => c.nk == _NK.topic).toList();
+    final icon   = MKIcon(mat.mk);
+    final col    = MKColor(mat.mk);
+    final bg     = MKBg(mat.mk);
+    final topics = mat.children.where((c) => c.nk == NK.topic).toList();
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _SidebarRow(
@@ -96,7 +96,7 @@ class _MaterialTreeItem extends StatelessWidget {
                   ? Icons.keyboard_arrow_down_rounded
                   : Icons.keyboard_arrow_right_rounded)
               : Icons.remove_rounded,
-            size: 13, color: _K.hint,
+            size: 13, color: K.hint,
           ),
           const SizedBox(width: 5),
           Container(
@@ -108,16 +108,16 @@ class _MaterialTreeItem extends StatelessWidget {
         title: mat.title,
         titleStyle: TextStyle(
           fontSize: 12, fontWeight: FontWeight.w600,
-          color: sel ? _K.blue : const Color(0xFF2D3748),),
+          color: sel ? K.blue : const Color(0xFF2D3748),),
         trailing: _CtxMenu(items: [
           _MItem(icon: Icons.label_outline_rounded, label: 'Add topic manually',
-            color: _K.purple, onTap: () => onMaterial(mat),),
+            color: K.purple, onTap: () => onMaterial(mat),),
           _MItem(icon: Icons.auto_awesome_rounded, label: 'Generate topics with AI',
-            color: _K.blue, onTap: () => onMaterial(mat),),
+            color: K.blue, onTap: () => onMaterial(mat),),
           const _MDivider(),
           _MItem(icon: Icons.edit_outlined, label: 'Rename', onTap: () => onRename(mat)),
           _MItem(icon: Icons.delete_outline, label: 'Delete',
-            color: _K.red, onTap: () => onDelete(mat),),
+            color: K.red, onTap: () => onDelete(mat),),
         ],),
         onTap: () => onMaterial(mat),
       ),
@@ -130,43 +130,43 @@ class _MaterialTreeItem extends StatelessWidget {
             leading: Container(
               width: 18, height: 18,
               decoration: BoxDecoration(
-                color: _K.purpleSoft, borderRadius: BorderRadius.circular(4),),
-              child: const Icon(Icons.label_rounded, size: 10, color: _K.purple),
+                color: K.purpleSoft, borderRadius: BorderRadius.circular(4),),
+              child: const Icon(Icons.label_rounded, size: 10, color: K.purple),
             ),
             title: t.title,
             titleStyle: TextStyle(
               fontSize: 11.5, fontWeight: FontWeight.w500,
-              color: tsel ? _K.purple : _K.muted,),
+              color: tsel ? K.purple : K.muted,),
             onTap: () => onTopic(t),
           );
         }),
     ],);
   }
 
-  static IconData _mkIcon(_MK? k) {
+  static IconData MKIcon(MK? k) {
     switch (k) {
-      case _MK.video: return Icons.play_circle_rounded;
-      case _MK.doc:   return Icons.description_rounded;
-      case _MK.ppt:   return Icons.slideshow_rounded;
+      case MK.video: return Icons.play_circle_rounded;
+      case MK.doc:   return Icons.description_rounded;
+      case MK.ppt:   return Icons.slideshow_rounded;
       default:        return Icons.picture_as_pdf_rounded;
     }
   }
 
-  static Color _mkColor(_MK? k) {
+  static Color MKColor(MK? k) {
     switch (k) {
-      case _MK.video: return _K.blue;
-      case _MK.doc:   return const Color(0xFF1E40AF);
-      case _MK.ppt:   return _K.orange;
-      default:        return _K.red;
+      case MK.video: return K.blue;
+      case MK.doc:   return const Color(0xFF1E40AF);
+      case MK.ppt:   return K.orange;
+      default:        return K.red;
     }
   }
 
-  static Color _mkBg(_MK? k) {
+  static Color MKBg(MK? k) {
     switch (k) {
-      case _MK.video: return _K.blueSoft;
-      case _MK.doc:   return _K.badgeDocBg;
-      case _MK.ppt:   return _K.orangeSoft;
-      default:        return _K.redSoft;
+      case MK.video: return K.blueSoft;
+      case MK.doc:   return K.badgeDocBg;
+      case MK.ppt:   return K.orangeSoft;
+      default:        return K.redSoft;
     }
   }
 }
@@ -212,7 +212,7 @@ class _SidebarRowState extends State<_SidebarRow> {
             widget.isSelected ? lp - 4 : lp, 7, 8, 7,),
           decoration: BoxDecoration(
             color: widget.isSelected
-              ? _K.blueSoft
+              ? K.blueSoft
               : (_h ? const Color(0xFFF4F6F8) : Colors.transparent),
             borderRadius: widget.isSelected
               ? BorderRadius.circular(8) : null,

@@ -28,8 +28,8 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   final _searchCtrl  = TextEditingController();
   final _treeScroll  = ScrollController();
   int   _uid         = 0;
-  List<_Node> _roots = [];
-  _Node? _selected;
+  List<Node> _roots = [];
+  Node? _selected;
   bool _loadingTree      = true;
   bool _generatingTopics = false;
   DateTime _lastSaved    = DateTime.now().subtract(const Duration(minutes: 2));
@@ -62,18 +62,18 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     }
     st = ref.read(courseDetailsControllerProvider(cid));
     if (!mounted) return;
-    final roots = <_Node>[];
+    final roots = <Node>[];
     for (final mod in st.modules) {
       await ctrl.loadMaterials(mod.id);
       final fresh = ref.read(courseDetailsControllerProvider(cid));
       final mats  = fresh.materials[mod.id] ?? [];
-      final matNodes = mats.map((m) => _Node.material(
+      final matNodes = mats.map((m) => Node.material(
         id: 'mat_${m.id}', title: m.displayTitle,
-        kind: m.type == 'video' ? _MK.video : _MK.pdf,
+        kind: m.type == 'video' ? MK.video : MK.pdf,
         backendId: m.id, moduleId: mod.id,
         transcript: m.description ?? '',
       ),).toList();
-      roots.add(_Node.module(
+      roots.add(Node.module(
         id: 'mod_${mod.id}', title: mod.title,
         children: matNodes, backendId: mod.id,
       ),);
@@ -85,8 +85,8 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   // ── helpers ──────────────────────────────────────────────────────────────
   String _nid() => '${DateTime.now().microsecondsSinceEpoch}_${_uid++}';
 
-  void _removeNode(_Node t) {
-    void rm(List<_Node> l) {
+  void _removeNode(Node t) {
+    void rm(List<Node> l) {
       l.removeWhere((n) => n.id == t.id);
       for (final n in l) { rm(n.children); }
     }
@@ -94,7 +94,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   }
 
   void _setAllExpanded(bool v) {
-    void walk(List<_Node> ns) { for (final n in ns) { n.isExpanded = v; walk(n.children); } }
+    void walk(List<Node> ns) { for (final n in ns) { n.isExpanded = v; walk(n.children); } }
     setState(() => walk(_roots));
   }
 
@@ -106,23 +106,23 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     final created = await ctrl.createModule(name);
     if (!mounted || created == null) return;
     setState(() {
-      final n = _Node.module(id: 'mod_${created.id}', title: created.title, backendId: created.id);
+      final n = Node.module(id: 'mod_${created.id}', title: created.title, backendId: created.id);
       _roots.add(n);
       _selected = n;
       _lastSaved = DateTime.now();
     });
   }
 
-  Future<void> _addTopicToMaterial(_Node mat, {String? prefill}) async {
+  Future<void> _addTopicToMaterial(Node mat, {String? prefill}) async {
     final name = await _dlgInput('New Topic', 'e.g. Binary Trees', prefill ?? '', 'Add Topic');
     if (name == null || !mounted) return;
     setState(() {
-      mat.children.add(_Node.topic(id: _nid(), title: name));
+      mat.children.add(Node.topic(id: _nid(), title: name));
       mat.isExpanded = true;
     });
   }
 
-  Future<void> _generateTopicsWithAI(_Node mat) async {
+  Future<void> _generateTopicsWithAI(Node mat) async {
     if (_generatingTopics) return;
     setState(() => _generatingTopics = true);
     await Future.delayed(const Duration(milliseconds: 1900));
@@ -132,7 +132,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     setState(() {
       for (final t in suggest) {
         if (!mat.children.any((c) => c.title == t)) {
-          mat.children.add(_Node.topic(id: _nid(), title: t));
+          mat.children.add(Node.topic(id: _nid(), title: t));
         }
       }
       mat.isExpanded = true;
@@ -140,13 +140,13 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     });
   }
 
-  Future<void> _rename(_Node n) async {
+  Future<void> _rename(Node n) async {
     final name = await _dlgInput('Rename', 'New name', n.title, 'Save');
     if (name == null) return;
     setState(() => n.title = name);
   }
 
-  Future<void> _delete(_Node n) async {
+  Future<void> _delete(Node n) async {
     final ok = await _dlgConfirm('Delete "${n.title}"?', 'Delete', danger: true);
     if (!ok || !mounted) return;
     setState(() { _removeNode(n); if (_selected?.id == n.id) _selected = null; });
@@ -185,7 +185,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     return Column(children: [
       Expanded(child: Row(children: [
         _buildSidebar(),
-        Container(width: 1, color: _K.border),
+        Container(width: 1, color: K.border),
         Expanded(child: _buildRightPanel()),
       ],),),
       _buildBottomBar(),
@@ -198,18 +198,18 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   Widget _buildSidebar() => SizedBox(
     width: 284,
     child: Container(
-      color: _K.white,
+      color: K.white,
       child: Column(children: [
         // Toolbar
         Container(
           height: 46,
           padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
           decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: _K.border)),),
+            border: Border(bottom: BorderSide(color: K.border)),),
           child: Row(children: [
             const Text('HIERARCHY',
               style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800,
-                color: _K.hint, letterSpacing: 0.9,),),
+                color: K.hint, letterSpacing: 0.9,),),
             const Spacer(),
             _TbBtn(icon: Icons.unfold_less_rounded, tip: 'Collapse all',
               onTap: () => _setAllExpanded(false),),
@@ -221,7 +221,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         Expanded(
           child: _loadingTree
             ? const Center(
-                child: CircularProgressIndicator(strokeWidth: 2, color: _K.blue),)
+                child: CircularProgressIndicator(strokeWidth: 2, color: K.blue),)
             : _roots.isEmpty
               ? _emptyTreeState()
               : ListView(
@@ -242,7 +242,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         Container(
           padding: const EdgeInsets.all(10),
           decoration: const BoxDecoration(
-            border: Border(top: BorderSide(color: _K.border)),),
+            border: Border(top: BorderSide(color: K.border)),),
           child: _BtnPrimary(
             label: 'Create New Module',
             icon: Icons.add_rounded,
@@ -260,16 +260,16 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
       Container(
         width: 56, height: 56,
         decoration: BoxDecoration(
-          color: _K.blueSoft, borderRadius: BorderRadius.circular(14),),
-        child: const Icon(Icons.folder_open_rounded, size: 26, color: _K.blue),
+          color: K.blueSoft, borderRadius: BorderRadius.circular(14),),
+        child: const Icon(Icons.folder_open_rounded, size: 26, color: K.blue),
       ),
       const SizedBox(height: 14),
       const Text('No modules yet',
-        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _K.text),
+        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: K.text),
         textAlign: TextAlign.center,),
       const SizedBox(height: 6),
       const Text('Create a module to start adding course materials.',
-        style: TextStyle(fontSize: 12, color: _K.muted, height: 1.5),
+        style: TextStyle(fontSize: 12, color: K.muted, height: 1.5),
         textAlign: TextAlign.center,),
     ],),
   );
@@ -280,64 +280,64 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   Widget _buildRightPanel() {
     final sel = _selected;
     if (sel == null)            return _panelEmpty();
-    if (sel.nk == _NK.module)   return _panelModule(sel);
-    if (sel.nk == _NK.material) return _panelMaterial(sel);
+    if (sel.nk == NK.module)   return _panelModule(sel);
+    if (sel.nk == NK.material) return _panelMaterial(sel);
     return _panelTopic(sel);
   }
 
   // ── nothing selected ────────────────────────────────────────────────────
   Widget _panelEmpty() => Container(
-    color: _K.bg,
+    color: K.bg,
     child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
       Container(
         width: 64, height: 64,
         decoration: BoxDecoration(
-          color: _K.white,
+          color: K.white,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [BoxShadow(
             color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 20, offset: const Offset(0, 4),),],
         ),
-        child: const Icon(Icons.touch_app_outlined, size: 28, color: _K.blue),
+        child: const Icon(Icons.touch_app_outlined, size: 28, color: K.blue),
       ),
       const SizedBox(height: 18),
       const Text('Select a module or material',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _K.text),),
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: K.text),),
       const SizedBox(height: 6),
       const Text('Use the hierarchy panel on the left to navigate.',
-        style: TextStyle(fontSize: 13, color: _K.muted),),
+        style: TextStyle(fontSize: 13, color: K.muted),),
       const SizedBox(height: 20),
       _BtnOutline(label: 'Upload Material', icon: Icons.upload_rounded, onTap: _showUpload),
     ],),),
   );
 
   // ── MODULE panel ─────────────────────────────────────────────────────────
-  Widget _panelModule(_Node mod) {
-    final mats = mod.children.where((c) => c.nk == _NK.material).toList();
+  Widget _panelModule(Node mod) {
+    final mats = mod.children.where((c) => c.nk == NK.material).toList();
     return Container(
-      color: _K.bg,
+      color: K.bg,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
           padding: const EdgeInsets.fromLTRB(24, 16, 20, 16),
           decoration: const BoxDecoration(
-            color: _K.white,
-            border: Border(bottom: BorderSide(color: _K.border)),
+            color: K.white,
+            border: Border(bottom: BorderSide(color: K.border)),
           ),
           child: Row(children: [
             const _MatIcon(isModule: true, size: 44),
             const SizedBox(width: 14),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(mod.title,
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _K.text),
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: K.text),
                 maxLines: 1, overflow: TextOverflow.ellipsis,),
               const SizedBox(height: 3),
               Text('Module  ·  ${mats.length} material${mats.length == 1 ? "" : "s"}',
-                style: const TextStyle(fontSize: 12.5, color: _K.muted),),
+                style: const TextStyle(fontSize: 12.5, color: K.muted),),
             ],),),
             _IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: () => _rename(mod)),
             const SizedBox(width: 2),
             _IcBtn(icon: Icons.delete_outline, tip: 'Delete',
-              onTap: () => _delete(mod), col: _K.red,),
+              onTap: () => _delete(mod), col: K.red,),
           ],),
         ),
         Expanded(child: SingleChildScrollView(
@@ -349,7 +349,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
               Row(children: [
                 const Text('MATERIALS IN THIS MODULE',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800,
-                    color: _K.muted, letterSpacing: 0.7,),),
+                    color: K.muted, letterSpacing: 0.7,),),
                 const SizedBox(width: 8),
                 _CountBadge('${mats.length}'),
               ],),
@@ -368,8 +368,8 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   }
 
   // ── MATERIAL panel ───────────────────────────────────────────────────────
-  Widget _panelMaterial(_Node mat) {
-    final topics = mat.children.where((c) => c.nk == _NK.topic).toList();
+  Widget _panelMaterial(Node mat) {
+    final topics = mat.children.where((c) => c.nk == NK.topic).toList();
     return Row(children: [
       Expanded(child: Container(
         color: const Color(0xFFF8FAFC),
@@ -395,8 +395,8 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
       Container(
         width: 228,
         decoration: const BoxDecoration(
-          color: _K.white,
-          border: Border(left: BorderSide(color: _K.border)),
+          color: K.white,
+          border: Border(left: BorderSide(color: K.border)),
         ),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(18),
@@ -409,21 +409,21 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   }
 
   // ── TOPIC panel (leaf) ───────────────────────────────────────────────────
-  Widget _panelTopic(_Node t) => Container(
-    color: _K.bg,
+  Widget _panelTopic(Node t) => Container(
+    color: K.bg,
     child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
       Container(
         width: 54, height: 54,
         decoration: BoxDecoration(
-          color: _K.purpleSoft, borderRadius: BorderRadius.circular(16),),
-        child: const Icon(Icons.label_rounded, size: 26, color: _K.purple),
+          color: K.purpleSoft, borderRadius: BorderRadius.circular(16),),
+        child: const Icon(Icons.label_rounded, size: 26, color: K.purple),
       ),
       const SizedBox(height: 16),
       Text(t.title,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _K.text),
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: K.text),
         textAlign: TextAlign.center,),
       const SizedBox(height: 6),
-      const Text('Topic', style: TextStyle(fontSize: 13, color: _K.muted)),
+      const Text('Topic', style: TextStyle(fontSize: 13, color: K.muted)),
       const SizedBox(height: 22),
       Row(mainAxisSize: MainAxisSize.min, children: [
         _BtnOutline(label: 'Rename', icon: Icons.edit_outlined, onTap: () => _rename(t)),
@@ -444,14 +444,14 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: const BoxDecoration(
-        color: _K.white,
-        border: Border(top: BorderSide(color: _K.border)),
+        color: K.white,
+        border: Border(top: BorderSide(color: K.border)),
       ),
       child: Row(children: [
-        const Icon(Icons.check_circle_outline_rounded, size: 14, color: _K.green),
+        const Icon(Icons.check_circle_outline_rounded, size: 14, color: K.green),
         const SizedBox(width: 6),
         Text(txt, style: const TextStyle(
-          fontSize: 12, color: _K.muted, fontWeight: FontWeight.w600,),),
+          fontSize: 12, color: K.muted, fontWeight: FontWeight.w600,),),
         const Spacer(),
         _BtnGenerate(
           label: 'Generate Question',
