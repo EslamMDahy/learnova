@@ -6,14 +6,14 @@ import 'materials_explorer_micro_widgets.dart';
 //  RIGHT PANEL COMPONENTS
 // =============================================================================
 
-// ── Upload zone ───────────────────────────────────────────────────────────────
-class _UploadZone extends StatefulWidget {
+// ── Upload zone ────────────────────────────────────────────────────────────
+class UploadZone extends StatefulWidget {
   final VoidCallback onTap;
-  const _UploadZone({required this.onTap});
-  @override State<_UploadZone> createState() => _UploadZoneState();
+  const UploadZone({super.key, required this.onTap});
+  @override State<UploadZone> createState() => _UploadZoneState();
 }
 
-class _UploadZoneState extends State<_UploadZone> {
+class _UploadZoneState extends State<UploadZone> {
   bool _h = false;
 
   @override
@@ -71,20 +71,21 @@ class _UploadZoneState extends State<_UploadZone> {
   );
 }
 
-// ── Material list card (inside module panel) ──────────────────────────────────
-class _MaterialListCard extends StatefulWidget {
+// ── Material list card (inside module panel) ────────────────────────────────────
+class MaterialListCard extends StatefulWidget {
   final Node mat;
   final VoidCallback onTap, onRename, onDelete;
-  const _MaterialListCard({
+  const MaterialListCard({
+    super.key,
     required this.mat,
     required this.onTap,
     required this.onRename,
     required this.onDelete,
   });
-  @override State<_MaterialListCard> createState() => _MaterialListCardState();
+  @override State<MaterialListCard> createState() => _MaterialListCardState();
 }
 
-class _MaterialListCardState extends State<_MaterialListCard> {
+class _MaterialListCardState extends State<MaterialListCard> {
   bool _h = false;
 
   @override
@@ -106,7 +107,7 @@ class _MaterialListCardState extends State<_MaterialListCard> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(children: [
-            _MatIcon(mk: m.mk, size: 42),
+            MatIcon(mk: m.mk, size: 42),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(m.title,
@@ -114,7 +115,7 @@ class _MaterialListCardState extends State<_MaterialListCard> {
                   color: K.text,),
                 maxLines: 1, overflow: TextOverflow.ellipsis,),
               const SizedBox(height: 3),
-              Text(MKLabel(m.mk),
+              Text(_mkLabel(m.mk),
                 style: const TextStyle(fontSize: 12, color: K.muted),),
             ],),),
             if (m.children.isNotEmpty) ...[
@@ -129,8 +130,8 @@ class _MaterialListCardState extends State<_MaterialListCard> {
                     color: K.purple,),),
               ),
             ],
-            _IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: widget.onRename),
-            _IcBtn(icon: Icons.delete_outline, tip: 'Delete', onTap: widget.onDelete, col: K.red),
+            IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: widget.onRename),
+            IcBtn(icon: Icons.delete_outline, tip: 'Delete', onTap: widget.onDelete, col: K.red),
             const Icon(Icons.chevron_right_rounded, size: 16, color: K.hint),
           ],),
         ),
@@ -138,7 +139,7 @@ class _MaterialListCardState extends State<_MaterialListCard> {
     );
   }
 
-  static String MKLabel(MK? k) {
+  static String _mkLabel(MK? k) {
     switch (k) {
       case MK.video: return 'Video lecture';
       case MK.doc:   return 'Word document';
@@ -148,38 +149,38 @@ class _MaterialListCardState extends State<_MaterialListCard> {
   }
 }
 
-// ── Material detail header ────────────────────────────────────────────────────
-class _MatHeader extends StatelessWidget {
+// ── Material detail header ───────────────────────────────────────────────────
+class MatHeader extends StatelessWidget {
   final Node mat;
   final VoidCallback onRename, onDelete;
-  const _MatHeader({required this.mat, required this.onRename, required this.onDelete});
+  const MatHeader({super.key, required this.mat, required this.onRename, required this.onDelete});
 
   @override
   Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
     Row(children: [
-      _MatBadge(mat.mk),
+      MatBadge(mat.mk),
       if (mat.qualityScore > 0 && mat.qualityScore < 60) ...[
         const SizedBox(width: 8),
-        const _Pill('⚠ REVIEW NEEDED', K.badgeRevBg, K.badgeRevFg),
+        const Pill('⚠ REVIEW NEEDED', K.badgeRevBg, K.badgeRevFg),
       ],
     ],),
     const SizedBox(height: 12),
     Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _MatIcon(mk: mat.mk, size: 48),
+      MatIcon(mk: mat.mk, size: 48),
       const SizedBox(width: 14),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(mat.title,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: K.text),),
         const SizedBox(height: 4),
-        Text(MKLabel(mat.mk),
+        Text(_mkLabel(mat.mk),
           style: const TextStyle(fontSize: 12.5, color: K.muted, fontWeight: FontWeight.w600),),
       ],),),
-      _IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: onRename),
-      _IcBtn(icon: Icons.delete_outline, tip: 'Delete', onTap: onDelete, col: K.red),
+      IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: onRename),
+      IcBtn(icon: Icons.delete_outline, tip: 'Delete', onTap: onDelete, col: K.red),
     ],),
   ],);
 
-  static String MKLabel(MK? k) {
+  static String _mkLabel(MK? k) {
     switch (k) {
       case MK.video: return 'Video lecture';
       case MK.doc:   return 'Word document';
@@ -189,15 +190,16 @@ class _MatHeader extends StatelessWidget {
   }
 }
 
-// ── Topics section ────────────────────────────────────────────────────────────
-class _TopicsSection extends StatelessWidget {
+// ── Topics section ────────────────────────────────────────────────────────────────
+class TopicsSection extends StatelessWidget {
   final Node mat;
   final List<Node> topics;
   final bool generating;
   final VoidCallback onAddManual, onGenerateAI;
   final ValueChanged<Node> onRenameTopic, onDeleteTopic;
 
-  const _TopicsSection({
+  const TopicsSection({
+    super.key,
     required this.mat, required this.topics, required this.generating,
     required this.onAddManual, required this.onGenerateAI,
     required this.onRenameTopic, required this.onDeleteTopic,
@@ -227,9 +229,9 @@ class _TopicsSection extends StatelessWidget {
             Text('Organise this material into topics',
               style: TextStyle(fontSize: 11.5, color: K.muted),),
           ],),),
-          _BtnAI(generating: generating, onTap: onGenerateAI),
+          BtnAI(generating: generating, onTap: onGenerateAI),
           const SizedBox(width: 8),
-          _BtnOutline(label: 'Add', icon: Icons.add_rounded, onTap: onAddManual, small: true),
+          BtnOutline(label: 'Add', icon: Icons.add_rounded, onTap: onAddManual, small: true),
         ],),
       ),
       const Divider(height: 1, color: K.border),
@@ -248,9 +250,9 @@ class _TopicsSection extends StatelessWidget {
               textAlign: TextAlign.center,),
             const SizedBox(height: 16),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              _BtnAI(generating: generating, onTap: onGenerateAI, labeled: true),
+              BtnAI(generating: generating, onTap: onGenerateAI, labeled: true),
               const SizedBox(width: 10),
-              _BtnOutline(label: 'Add manually', icon: Icons.add_rounded,
+              BtnOutline(label: 'Add manually', icon: Icons.add_rounded,
                 onTap: onAddManual, small: true,),
             ],),
           ],),
@@ -258,13 +260,13 @@ class _TopicsSection extends StatelessWidget {
       else if (generating)
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 18, 16, 18),
-          child: _AIGeneratingRow(),
+          child: AIGeneratingRow(),
         )
       else
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
           child: Wrap(spacing: 8, runSpacing: 8, children: [
-            ...topics.map((t) => _TopicChip(
+            ...topics.map((t) => TopicChip(
               topic: t,
               onRename: () => onRenameTopic(t),
               onDelete: () => onDeleteTopic(t),
@@ -275,14 +277,14 @@ class _TopicsSection extends StatelessWidget {
   );
 }
 
-class _TopicChip extends StatefulWidget {
+class TopicChip extends StatefulWidget {
   final Node topic;
   final VoidCallback onRename, onDelete;
-  const _TopicChip({required this.topic, required this.onRename, required this.onDelete});
-  @override State<_TopicChip> createState() => _TopicChipState();
+  const TopicChip({super.key, required this.topic, required this.onRename, required this.onDelete});
+  @override State<TopicChip> createState() => _TopicChipState();
 }
 
-class _TopicChipState extends State<_TopicChip> {
+class _TopicChipState extends State<TopicChip> {
   bool _h = false;
 
   @override
@@ -314,8 +316,8 @@ class _TopicChipState extends State<_TopicChip> {
   );
 }
 
-class _AIGeneratingRow extends StatelessWidget {
-  const _AIGeneratingRow();
+class AIGeneratingRow extends StatelessWidget {
+  const AIGeneratingRow({super.key});
 
   @override
   Widget build(BuildContext context) => Row(children: [
@@ -334,10 +336,10 @@ class _AIGeneratingRow extends StatelessWidget {
   ],);
 }
 
-// ── Transcript card ────────────────────────────────────────────────────────────
-class _TranscriptCard extends StatelessWidget {
+// ── Transcript card ───────────────────────────────────────────────────────────────
+class TranscriptCard extends StatelessWidget {
   final Node mat;
-  const _TranscriptCard({required this.mat});
+  const TranscriptCard({super.key, required this.mat});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -356,13 +358,13 @@ class _TranscriptCard extends StatelessWidget {
         const SizedBox(width: 10),
         const Expanded(child: Text('Transcript & Content',
           style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: K.text),),),
-        const _TxBtn(label: 'B', bold: true),
+        const TxBtn(label: 'B', bold: true),
         const SizedBox(width: 3),
-        const _TxBtn(label: 'I', italic: true),
+        const TxBtn(label: 'I', italic: true),
         const SizedBox(width: 3),
-        const _TxBtn(label: 'S̶'),
+        const TxBtn(label: 'S̶'),
         const SizedBox(width: 3),
-        const _TxBtn(label: '↗'),
+        const TxBtn(label: '↗'),
       ],),
       const Divider(height: 20, color: K.border),
       Text(
@@ -381,11 +383,11 @@ class _TranscriptCard extends StatelessWidget {
   );
 }
 
-// ── AI sidebar ────────────────────────────────────────────────────────────────
-class _AISidebar extends StatelessWidget {
+// ── AI sidebar ─────────────────────────────────────────────────────────────────────
+class AISidebar extends StatelessWidget {
   final Node mat;
   final VoidCallback onRegen;
-  const _AISidebar({required this.mat, required this.onRegen});
+  const AISidebar({super.key, required this.mat, required this.onRegen});
 
   @override
   Widget build(BuildContext context) {
@@ -419,8 +421,8 @@ class _AISidebar extends StatelessWidget {
         style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: K.muted),),
       const SizedBox(height: 8),
       Wrap(spacing: 6, runSpacing: 6, children: [
-        ...mat.tags.map((t) => _Tag(t)),
-        const _Tag('+', dashed: true),
+        ...mat.tags.map((t) => TagChip(t)),
+        const TagChip('+', dashed: true),
       ],),
       const SizedBox(height: 16),
       SizedBox(width: double.infinity, child: OutlinedButton.icon(
