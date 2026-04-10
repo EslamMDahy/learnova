@@ -72,11 +72,11 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         kind: m.type == 'video' ? _MK.video : _MK.pdf,
         backendId: m.id, moduleId: mod.id,
         transcript: m.description ?? '',
-      )).toList();
+      ),).toList();
       roots.add(_Node.module(
         id: 'mod_${mod.id}', title: mod.title,
         children: matNodes, backendId: mod.id,
-      ));
+      ),);
     }
     if (!mounted) return;
     setState(() { _roots = roots; _loadingTree = false; _lastSaved = DateTime.now(); });
@@ -128,7 +128,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     await Future.delayed(const Duration(milliseconds: 1900));
     if (!mounted) { setState(() => _generatingTopics = false); return; }
     final suggest = ['Core Concepts', 'Key Definitions', 'Practical Examples',
-                     'Common Mistakes', 'Summary & Review'];
+                     'Common Mistakes', 'Summary & Review',];
     setState(() {
       for (final t in suggest) {
         if (!mat.children.any((c) => c.title == t)) {
@@ -153,7 +153,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   }
 
   void _showUpload() => showDialog(
-    context: context, builder: (_) => const UploadMaterialsDialog());
+    context: context, builder: (_) => const UploadMaterialsDialog(),);
 
   void _openExam() {
     _examStep = 1;
@@ -172,7 +172,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
               if (_examStep < 3) { ss(() => _examStep++); }
               else { Navigator.pop(ctx); }
             },
-          )),
+          ),),
         ),
       ),
     );
@@ -187,9 +187,9 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         _buildSidebar(),
         Container(width: 1, color: _K.border),
         Expanded(child: _buildRightPanel()),
-      ])),
+      ],),),
       _buildBottomBar(),
-    ]);
+    ],);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -205,23 +205,23 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
           height: 46,
           padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
           decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: _K.border))),
+            border: Border(bottom: BorderSide(color: _K.border)),),
           child: Row(children: [
             const Text('HIERARCHY',
               style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800,
-                color: _K.hint, letterSpacing: 0.9)),
+                color: _K.hint, letterSpacing: 0.9,),),
             const Spacer(),
             _TbBtn(icon: Icons.unfold_less_rounded, tip: 'Collapse all',
-              onTap: () => _setAllExpanded(false)),
+              onTap: () => _setAllExpanded(false),),
             _TbBtn(icon: Icons.unfold_more_rounded, tip: 'Expand all',
-              onTap: () => _setAllExpanded(true)),
-          ]),
+              onTap: () => _setAllExpanded(true),),
+          ],),
         ),
         // Tree
         Expanded(
           child: _loadingTree
             ? const Center(
-                child: CircularProgressIndicator(strokeWidth: 2, color: _K.blue))
+                child: CircularProgressIndicator(strokeWidth: 2, color: _K.blue),)
             : _roots.isEmpty
               ? _emptyTreeState()
               : ListView(
@@ -235,14 +235,14 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
                     onTopic:    (n) => setState(() => _selected = n),
                     onRename:   _rename,
                     onDelete:   _delete,
-                  )).toList(),
+                  ),).toList(),
                 ),
         ),
         // Footer button
         Container(
           padding: const EdgeInsets.all(10),
           decoration: const BoxDecoration(
-            border: Border(top: BorderSide(color: _K.border))),
+            border: Border(top: BorderSide(color: _K.border)),),
           child: _BtnPrimary(
             label: 'Create New Module',
             icon: Icons.add_rounded,
@@ -250,7 +250,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
             full: true,
           ),
         ),
-      ]),
+      ],),
     ),
   );
 
@@ -260,18 +260,18 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
       Container(
         width: 56, height: 56,
         decoration: BoxDecoration(
-          color: _K.blueSoft, borderRadius: BorderRadius.circular(14)),
+          color: _K.blueSoft, borderRadius: BorderRadius.circular(14),),
         child: const Icon(Icons.folder_open_rounded, size: 26, color: _K.blue),
       ),
       const SizedBox(height: 14),
       const Text('No modules yet',
         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _K.text),
-        textAlign: TextAlign.center),
+        textAlign: TextAlign.center,),
       const SizedBox(height: 6),
       const Text('Create a module to start adding course materials.',
         style: TextStyle(fontSize: 12, color: _K.muted, height: 1.5),
-        textAlign: TextAlign.center),
-    ]),
+        textAlign: TextAlign.center,),
+    ],),
   );
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -296,19 +296,19 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
           borderRadius: BorderRadius.circular(18),
           boxShadow: [BoxShadow(
             color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 20, offset: const Offset(0, 4))],
+            blurRadius: 20, offset: const Offset(0, 4),),],
         ),
         child: const Icon(Icons.touch_app_outlined, size: 28, color: _K.blue),
       ),
       const SizedBox(height: 18),
       const Text('Select a module or material',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _K.text)),
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _K.text),),
       const SizedBox(height: 6),
       const Text('Use the hierarchy panel on the left to navigate.',
-        style: TextStyle(fontSize: 13, color: _K.muted)),
+        style: TextStyle(fontSize: 13, color: _K.muted),),
       const SizedBox(height: 20),
       _BtnOutline(label: 'Upload Material', icon: Icons.upload_rounded, onTap: _showUpload),
-    ])),
+    ],),),
   );
 
   // ── MODULE panel ─────────────────────────────────────────────────────────
@@ -329,16 +329,16 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(mod.title,
                 style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _K.text),
-                maxLines: 1, overflow: TextOverflow.ellipsis),
+                maxLines: 1, overflow: TextOverflow.ellipsis,),
               const SizedBox(height: 3),
               Text('Module  ·  ${mats.length} material${mats.length == 1 ? "" : "s"}',
-                style: const TextStyle(fontSize: 12.5, color: _K.muted)),
-            ])),
+                style: const TextStyle(fontSize: 12.5, color: _K.muted),),
+            ],),),
             _IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: () => _rename(mod)),
             const SizedBox(width: 2),
             _IcBtn(icon: Icons.delete_outline, tip: 'Delete',
-              onTap: () => _delete(mod), col: _K.red),
-          ]),
+              onTap: () => _delete(mod), col: _K.red,),
+          ],),
         ),
         Expanded(child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 22, 24, 32),
@@ -349,21 +349,21 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
               Row(children: [
                 const Text('MATERIALS IN THIS MODULE',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800,
-                    color: _K.muted, letterSpacing: 0.7)),
+                    color: _K.muted, letterSpacing: 0.7,),),
                 const SizedBox(width: 8),
                 _CountBadge('${mats.length}'),
-              ]),
+              ],),
               const SizedBox(height: 12),
               ...mats.map((m) => _MaterialListCard(
                 mat: m,
                 onTap: () => setState(() { m.isExpanded = !m.isExpanded; _selected = m; }),
                 onRename: () => _rename(m),
                 onDelete: () => _delete(m),
-              )),
+              ),),
             ],
-          ]),
-        )),
-      ]),
+          ],),
+        ),),
+      ],),
     );
   }
 
@@ -389,9 +389,9 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
             ),
             const SizedBox(height: 20),
             _TranscriptCard(mat: mat),
-          ]),
+          ],),
         ),
-      )),
+      ),),
       Container(
         width: 228,
         decoration: const BoxDecoration(
@@ -402,10 +402,10 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
           padding: const EdgeInsets.all(18),
           child: _AISidebar(mat: mat, onRegen: () => setState(() {
             mat.qualityScore = 65 + DateTime.now().second % 35;
-          })),
+          }),),
         ),
       ),
-    ]);
+    ],);
   }
 
   // ── TOPIC panel (leaf) ───────────────────────────────────────────────────
@@ -415,13 +415,13 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
       Container(
         width: 54, height: 54,
         decoration: BoxDecoration(
-          color: _K.purpleSoft, borderRadius: BorderRadius.circular(16)),
+          color: _K.purpleSoft, borderRadius: BorderRadius.circular(16),),
         child: const Icon(Icons.label_rounded, size: 26, color: _K.purple),
       ),
       const SizedBox(height: 16),
       Text(t.title,
         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _K.text),
-        textAlign: TextAlign.center),
+        textAlign: TextAlign.center,),
       const SizedBox(height: 6),
       const Text('Topic', style: TextStyle(fontSize: 13, color: _K.muted)),
       const SizedBox(height: 22),
@@ -429,8 +429,8 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         _BtnOutline(label: 'Rename', icon: Icons.edit_outlined, onTap: () => _rename(t)),
         const SizedBox(width: 10),
         _BtnDanger(label: 'Delete', icon: Icons.delete_outline, onTap: () => _delete(t)),
-      ]),
-    ])),
+      ],),
+    ],),),
   );
 
   // ── bottom bar ────────────────────────────────────────────────────────────
@@ -451,13 +451,13 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         const Icon(Icons.check_circle_outline_rounded, size: 14, color: _K.green),
         const SizedBox(width: 6),
         Text(txt, style: const TextStyle(
-          fontSize: 12, color: _K.muted, fontWeight: FontWeight.w600)),
+          fontSize: 12, color: _K.muted, fontWeight: FontWeight.w600,),),
         const Spacer(),
         _BtnGenerate(
           label: 'Generate Question',
           icon: Icons.auto_awesome_rounded,
-          onTap: _openExam),
-      ]),
+          onTap: _openExam,),
+      ],),
     );
   }
 
@@ -465,12 +465,12 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   Future<String?> _dlgInput(String t, String h, String init, String act) =>
     showDialog<String>(
       context: context, barrierDismissible: false,
-      builder: (_) => _DlgInput(title: t, hint: h, init: init, action: act));
+      builder: (_) => _DlgInput(title: t, hint: h, init: init, action: act),);
 
   Future<bool> _dlgConfirm(String body, String act, {bool danger = false}) async {
     final r = await showDialog<bool>(
       context: context, barrierDismissible: false,
-      builder: (_) => _DlgConfirm(body: body, action: act, danger: danger));
+      builder: (_) => _DlgConfirm(body: body, action: act, danger: danger),);
     return r ?? false;
   }
 }

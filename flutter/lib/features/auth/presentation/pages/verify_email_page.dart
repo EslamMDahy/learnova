@@ -346,7 +346,7 @@ class _SuccessState extends StatelessWidget {
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 32),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(10),),
             ),
             onPressed: onGoLogin,
             child: const Text(
@@ -431,7 +431,7 @@ class _FailureState extends StatelessWidget {
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),),
                 ),
                 onPressed: onGoLogin,
                 child: const Text(
@@ -449,7 +449,7 @@ class _FailureState extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),),
                 ),
                 onPressed: onGoSignup,
                 child: const Text(

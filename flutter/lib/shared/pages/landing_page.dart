@@ -116,7 +116,7 @@ class _NavBar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
             child: const Text('Login',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
@@ -127,10 +127,10 @@ class _NavBar extends StatelessWidget {
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(8),),
             ),
             child: const Text('Sign Up',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),),
           ),
         ],
       ),
@@ -250,10 +250,10 @@ class _HeroText extends StatelessWidget {
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(8),),
               ),
               child: const Text('Get Started',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),),
             ),
             const SizedBox(width: 16),
             TextButton(
@@ -263,7 +263,7 @@ class _HeroText extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
               child: const Text('Login',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),),
             ),
           ],
         ),
@@ -319,7 +319,7 @@ class _HeroMockup extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.2)),
+                    color: Colors.white.withValues(alpha: 0.2),),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -359,7 +359,7 @@ class _HeroMockup extends StatelessWidget {
                                 minHeight: 8,
                                 backgroundColor: Colors.white.withValues(alpha: 0.2),
                                 valueColor: const AlwaysStoppedAnimation<Color>(
-                                    Color(0xFF137FEC)),
+                                    Color(0xFF137FEC),),
                               ),
                             ),
                           ),
@@ -370,7 +370,7 @@ class _HeroMockup extends StatelessWidget {
                   // Completed badge
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
+                        horizontal: 12, vertical: 6,),
                     decoration: BoxDecoration(
                       color: const Color(0xFF22C55E),
                       borderRadius: BorderRadius.circular(20),
@@ -379,7 +379,7 @@ class _HeroMockup extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.check_circle,
-                            size: 14, color: Colors.white),
+                            size: 14, color: Colors.white,),
                         SizedBox(width: 6),
                         Text(
                           'Completed in 1.2x',
@@ -456,7 +456,7 @@ class _AudienceSection extends StatelessWidget {
                       'Track student performance analytics',
                       'Reduce grading time by 80%',
                     ],
-                  )),
+                  ),),
                   SizedBox(width: 20),
                   Expanded(child: _AudienceCard(
                     icon: Icons.person_outline_rounded,
@@ -467,7 +467,7 @@ class _AudienceSection extends StatelessWidget {
                       'Instant feedback on quizzes',
                       'AI-powered study assistant',
                     ],
-                  )),
+                  ),),
                   SizedBox(width: 20),
                   Expanded(child: _AudienceCard(
                     icon: Icons.business_outlined,
@@ -478,7 +478,7 @@ class _AudienceSection extends StatelessWidget {
                       'Deep analytics & global insights',
                       'Scalable & secure assessment',
                     ],
-                  )),
+                  ),),
                 ],
               );
             }
@@ -518,7 +518,7 @@ class _AudienceSection extends StatelessWidget {
                 ),
               ],
             );
-          }),
+          },),
         ],
       ),
     );
@@ -604,7 +604,7 @@ class _AudienceCard extends StatelessWidget {
                     ),
                   ],
                 ),
-              )),
+              ),),
         ],
       ),
     );
@@ -650,7 +650,7 @@ class _FeaturesSection extends StatelessWidget {
           LayoutBuilder(builder: (_, constraints) {
             final cols = constraints.maxWidth > 900 ? 3 : (constraints.maxWidth > 600 ? 2 : 1);
             return _FeatureGrid(columns: cols, onExplore: onExplore);
-          }),
+          },),
         ],
       ),
     );
@@ -700,7 +700,7 @@ class _FeatureGrid extends StatelessWidget {
     final rows = <Widget>[];
     for (var i = 0; i < _features.length; i += columns) {
       final rowItems = _features.sublist(
-          i, i + columns > _features.length ? _features.length : i + columns);
+          i, i + columns > _features.length ? _features.length : i + columns,);
       rows.add(Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -717,7 +717,7 @@ class _FeatureGrid extends StatelessWidget {
               const Expanded(child: SizedBox()),
           ],
         ],
-      ));
+      ),);
       rows.add(const SizedBox(height: 20));
     }
     // If features filled all cells evenly, add CTA as its own row
@@ -730,7 +730,7 @@ class _FeatureGrid extends StatelessWidget {
             const Expanded(child: SizedBox()),
           ],
         ],
-      ));
+      ),);
     }
     return Column(children: rows);
   }
@@ -914,10 +914,10 @@ class _WorkflowSection extends StatelessWidget {
                   .map((s) => Padding(
                         padding: const EdgeInsets.only(bottom: 20),
                         child: _StepCard(step: s),
-                      ))
+                      ),)
                   .toList(),
             );
-          }),
+          },),
         ],
       ),
     );
@@ -997,7 +997,7 @@ class _PortalsSection extends StatelessWidget {
     return Container(
       color: Colors.white,
       padding: EdgeInsets.symmetric(
-          vertical: 72, horizontal: isMobile ? 24 : 80),
+          vertical: 72, horizontal: isMobile ? 24 : 80,),
       child: isMobile
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1087,13 +1087,13 @@ class _PortalRow extends StatelessWidget {
                   style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A))),
+                      color: Color(0xFF0F172A),),),
               const SizedBox(height: 3),
               Text(desc,
                   style: const TextStyle(
                       fontSize: 13,
                       color: Color(0xFF475569),
-                      height: 1.5)),
+                      height: 1.5,),),
             ],
           ),
         ),
@@ -1143,7 +1143,7 @@ class _PortalsMockup extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.hub_outlined,
-                      size: 36, color: Colors.white.withValues(alpha: 0.8)),
+                      size: 36, color: Colors.white.withValues(alpha: 0.8),),
                   const SizedBox(height: 10),
                   const Text(
                     'Unified Learning Ecosystem',
@@ -1173,13 +1173,13 @@ class _StatsBar extends StatelessWidget {
   Widget build(BuildContext context) {
     const stats = [
       _Stat('Saves Time',
-          'Instructors save hours weekly on grading and question creation.'),
+          'Instructors save hours weekly on grading and question creation.',),
       _Stat('Better Outcomes',
-          'Instant feedback loops help students learn from mistakes faster.'),
+          'Instant feedback loops help students learn from mistakes faster.',),
       _Stat('Fair Assessment',
-          'Standardized, objective grading eliminates unconscious bias.'),
+          'Standardized, objective grading eliminates unconscious bias.',),
       _Stat('Scalable',
-          'Effortlessly manage classes of 15 or 10,000 students.'),
+          'Effortlessly manage classes of 15 or 10,000 students.',),
     ];
 
     return Container(
@@ -1192,7 +1192,7 @@ class _StatsBar extends StatelessWidget {
               if (s != stats.first) {
                 yield Container(
                     width: 1, height: 48, color: const Color(0xFFE2E8F0),
-                    margin: const EdgeInsets.symmetric(horizontal: 20));
+                    margin: const EdgeInsets.symmetric(horizontal: 20),);
               }
               yield Expanded(child: _StatChip(stat: s));
             }).toList(),
@@ -1202,9 +1202,9 @@ class _StatsBar extends StatelessWidget {
           children: stats.map((s) => Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: _StatChip(stat: s),
-          )).toList(),
+          ),).toList(),
         );
-      }),
+      },),
     );
   }
 }
@@ -1228,11 +1228,11 @@ class _StatChip extends StatelessWidget {
             style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A))),
+                color: Color(0xFF0F172A),),),
         const SizedBox(height: 4),
         Text(stat.desc,
             style: const TextStyle(
-                fontSize: 12, color: Color(0xFF64748B), height: 1.4)),
+                fontSize: 12, color: Color(0xFF64748B), height: 1.4,),),
       ],
     );
   }
@@ -1287,12 +1287,12 @@ class _CtaBanner extends StatelessWidget {
                   foregroundColor: const Color(0xFF137FEC),
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 28, vertical: 14),
+                      horizontal: 28, vertical: 14,),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),),
                 ),
                 child: const Text('Sign Up',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),),
               ),
               OutlinedButton(
                 onPressed: onLogin,
@@ -1300,12 +1300,12 @@ class _CtaBanner extends StatelessWidget {
                   foregroundColor: Colors.white,
                   side: const BorderSide(color: Colors.white60, width: 1.5),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 28, vertical: 14),
+                      horizontal: 28, vertical: 14,),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),),
                 ),
                 child: const Text('Login',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),),
               ),
             ],
           ),
@@ -1349,15 +1349,15 @@ class _Footer extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F172A))),
-                        ]),
+                                  color: Color(0xFF0F172A),),),
+                        ],),
                         const SizedBox(height: 10),
                         const Text(
                           'Empowering education through fast, intelligent, flexible, scalable, and secure tools.',
                           style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF64748B),
-                              height: 1.5),
+                              height: 1.5,),
                         ),
                       ],
                     ),
@@ -1377,13 +1377,13 @@ class _Footer extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A))),
-                ]),
+                          color: Color(0xFF0F172A),),),
+                ],),
                 const SizedBox(height: 24),
                 _FooterLinks(),
               ],
             );
-          }),
+          },),
           const SizedBox(height: 36),
           const Divider(color: Color(0xFFE2E8F0)),
           const SizedBox(height: 16),
@@ -1430,7 +1430,7 @@ class _FooterLinks extends StatelessWidget {
           _FooterCol(title: 'Legal', links: ['Privacy Policy', 'Terms of Service', 'Security']),
         ],
       );
-    });
+    },);
   }
 }
 
@@ -1448,14 +1448,14 @@ class _FooterCol extends StatelessWidget {
             style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A))),
+                color: Color(0xFF0F172A),),),
         const SizedBox(height: 12),
         ...links.map((l) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(l,
                   style: const TextStyle(
-                      fontSize: 13, color: Color(0xFF64748B))),
-            )),
+                      fontSize: 13, color: Color(0xFF64748B),),),
+            ),),
       ],
     );
   }

@@ -70,7 +70,7 @@ class MatConfirmDeleteDialog extends StatelessWidget {
                     child: const Padding(
                       padding: EdgeInsets.all(6),
                       child: Icon(Icons.close_rounded,
-                          size: 18, color: AppColors.textMuted),
+                          size: 18, color: AppColors.textMuted,),
                     ),
                   ),
                 ],
@@ -96,7 +96,7 @@ class MatConfirmDeleteDialog extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         side: const BorderSide(color: MatK.div),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                            borderRadius: BorderRadius.circular(10),),
                       ),
                       child: const Text('Cancel'),
                     ),
@@ -113,7 +113,7 @@ class MatConfirmDeleteDialog extends StatelessWidget {
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                            borderRadius: BorderRadius.circular(10),),
                       ),
                       child: Text(confirmLabel),
                     ),

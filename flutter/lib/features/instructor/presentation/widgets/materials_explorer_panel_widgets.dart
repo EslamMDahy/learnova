@@ -31,7 +31,7 @@ class _UploadZoneState extends State<_UploadZone> {
           color: _h ? const Color(0xFFE4F2FE) : _K.white,
           border: Border.all(
             color: _h ? _K.blue : _K.border,
-            width: _h ? 1.5 : 1),
+            width: _h ? 1.5 : 1,),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -40,32 +40,32 @@ class _UploadZoneState extends State<_UploadZone> {
             width: 54, height: 54,
             decoration: BoxDecoration(
               color: _h ? _K.blue : _K.blueSoft,
-              borderRadius: BorderRadius.circular(16)),
+              borderRadius: BorderRadius.circular(16),),
             child: Icon(Icons.cloud_upload_rounded, size: 26,
-              color: _h ? Colors.white : _K.blue),
+              color: _h ? Colors.white : _K.blue,),
           ),
           const SizedBox(height: 14),
           Text('Upload materials to this module',
             style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700,
-              color: _h ? _K.blue : _K.text)),
+              color: _h ? _K.blue : _K.text,),),
           const SizedBox(height: 5),
           const Text('PDF, DOCX, PPTX, MP4  ·  Max 500 MB',
-            style: TextStyle(fontSize: 12.5, color: _K.muted)),
+            style: TextStyle(fontSize: 12.5, color: _K.muted),),
           const SizedBox(height: 18),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
             decoration: BoxDecoration(
               color: _K.blue,
-              borderRadius: BorderRadius.circular(9)),
+              borderRadius: BorderRadius.circular(9),),
             child: const Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.upload_rounded, size: 15, color: Colors.white),
               SizedBox(width: 7),
               Text('Browse Files',
                 style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700,
-                  color: Colors.white)),
-            ]),
+                  color: Colors.white,),),
+            ],),
           ),
-        ]),
+        ],),
       ),
     ),
   );
@@ -111,28 +111,28 @@ class _MaterialListCardState extends State<_MaterialListCard> {
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(m.title,
                 style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700,
-                  color: _K.text),
-                maxLines: 1, overflow: TextOverflow.ellipsis),
+                  color: _K.text,),
+                maxLines: 1, overflow: TextOverflow.ellipsis,),
               const SizedBox(height: 3),
               Text(_mkLabel(m.mk),
-                style: const TextStyle(fontSize: 12, color: _K.muted)),
-            ])),
+                style: const TextStyle(fontSize: 12, color: _K.muted),),
+            ],),),
             if (m.children.isNotEmpty) ...[
               Container(
                 margin: const EdgeInsets.only(right: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: _K.purpleSoft, borderRadius: BorderRadius.circular(999)),
+                  color: _K.purpleSoft, borderRadius: BorderRadius.circular(999),),
                 child: Text(
                   '${m.children.length} topic${m.children.length == 1 ? "" : "s"}',
                   style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                    color: _K.purple)),
+                    color: _K.purple,),),
               ),
             ],
             _IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: widget.onRename),
             _IcBtn(icon: Icons.delete_outline, tip: 'Delete', onTap: widget.onDelete, col: _K.red),
             const Icon(Icons.chevron_right_rounded, size: 16, color: _K.hint),
-          ]),
+          ],),
         ),
       ),
     );
@@ -162,22 +162,22 @@ class _MatHeader extends StatelessWidget {
         const SizedBox(width: 8),
         const _Pill('⚠ REVIEW NEEDED', _K.badgeRevBg, _K.badgeRevFg),
       ],
-    ]),
+    ],),
     const SizedBox(height: 12),
     Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _MatIcon(mk: mat.mk, size: 48),
       const SizedBox(width: 14),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(mat.title,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: _K.text)),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: _K.text),),
         const SizedBox(height: 4),
         Text(_mkLabel(mat.mk),
-          style: const TextStyle(fontSize: 12.5, color: _K.muted, fontWeight: FontWeight.w600)),
-      ])),
+          style: const TextStyle(fontSize: 12.5, color: _K.muted, fontWeight: FontWeight.w600),),
+      ],),),
       _IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: onRename),
       _IcBtn(icon: Icons.delete_outline, tip: 'Delete', onTap: onDelete, col: _K.red),
-    ]),
-  ]);
+    ],),
+  ],);
 
   static String _mkLabel(_MK? k) {
     switch (k) {
@@ -217,20 +217,20 @@ class _TopicsSection extends StatelessWidget {
           Container(
             width: 32, height: 32,
             decoration: BoxDecoration(
-              color: _K.purpleSoft, borderRadius: BorderRadius.circular(8)),
+              color: _K.purpleSoft, borderRadius: BorderRadius.circular(8),),
             child: const Icon(Icons.label_rounded, size: 16, color: _K.purple),
           ),
           const SizedBox(width: 10),
           const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Topics',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _K.text)),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _K.text),),
             Text('Organise this material into topics',
-              style: TextStyle(fontSize: 11.5, color: _K.muted)),
-          ])),
+              style: TextStyle(fontSize: 11.5, color: _K.muted),),
+          ],),),
           _BtnAI(generating: generating, onTap: onGenerateAI),
           const SizedBox(width: 8),
           _BtnOutline(label: 'Add', icon: Icons.add_rounded, onTap: onAddManual, small: true),
-        ]),
+        ],),
       ),
       const Divider(height: 1, color: _K.border),
       if (topics.isEmpty && !generating)
@@ -240,20 +240,20 @@ class _TopicsSection extends StatelessWidget {
             const Icon(Icons.label_off_outlined, size: 30, color: _K.hint),
             const SizedBox(height: 10),
             const Text('No topics yet',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _K.text)),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _K.text),),
             const SizedBox(height: 4),
             const Text(
               'Add topics manually or let AI generate them from the material content.',
               style: TextStyle(fontSize: 12, color: _K.muted, height: 1.5),
-              textAlign: TextAlign.center),
+              textAlign: TextAlign.center,),
             const SizedBox(height: 16),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               _BtnAI(generating: generating, onTap: onGenerateAI, labeled: true),
               const SizedBox(width: 10),
               _BtnOutline(label: 'Add manually', icon: Icons.add_rounded,
-                onTap: onAddManual, small: true),
-            ]),
-          ]),
+                onTap: onAddManual, small: true,),
+            ],),
+          ],),
         )
       else if (generating)
         const Padding(
@@ -268,10 +268,10 @@ class _TopicsSection extends StatelessWidget {
               topic: t,
               onRename: () => onRenameTopic(t),
               onDelete: () => onDeleteTopic(t),
-            )),
-          ]),
+            ),),
+          ],),
         ),
-    ]),
+    ],),
   );
 }
 
@@ -302,14 +302,14 @@ class _TopicChipState extends State<_TopicChip> {
         const Icon(Icons.label_rounded, size: 12, color: _K.purple),
         const SizedBox(width: 5),
         Text(widget.topic.title,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _K.text)),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _K.text),),
         const SizedBox(width: 6),
         GestureDetector(onTap: widget.onRename,
-          child: const Icon(Icons.edit_outlined, size: 11, color: _K.muted)),
+          child: const Icon(Icons.edit_outlined, size: 11, color: _K.muted),),
         const SizedBox(width: 3),
         GestureDetector(onTap: widget.onDelete,
-          child: const Icon(Icons.close_rounded, size: 11, color: _K.muted)),
-      ]),
+          child: const Icon(Icons.close_rounded, size: 11, color: _K.muted),),
+      ],),
     ),
   );
 }
@@ -327,11 +327,11 @@ class _AIGeneratingRow extends StatelessWidget {
     const SizedBox(width: 12),
     const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('AI is analysing the content and generating topics…',
-        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _K.text)),
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _K.text),),
       SizedBox(height: 6),
       LinearProgressIndicator(minHeight: 3, color: _K.blue, backgroundColor: _K.blueSoft),
-    ])),
-  ]);
+    ],),),
+  ],);
 }
 
 // ── Transcript card ────────────────────────────────────────────────────────────
@@ -352,10 +352,10 @@ class _TranscriptCard extends StatelessWidget {
         Container(
           width: 28, height: 28,
           decoration: BoxDecoration(color: _K.blueSoft, borderRadius: BorderRadius.circular(7)),
-          child: const Icon(Icons.article_outlined, size: 14, color: _K.blue)),
+          child: const Icon(Icons.article_outlined, size: 14, color: _K.blue),),
         const SizedBox(width: 10),
         const Expanded(child: Text('Transcript & Content',
-          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: _K.text))),
+          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: _K.text),),),
         const _TxBtn(label: 'B', bold: true),
         const SizedBox(width: 3),
         const _TxBtn(label: 'I', italic: true),
@@ -363,21 +363,21 @@ class _TranscriptCard extends StatelessWidget {
         const _TxBtn(label: 'S̶'),
         const SizedBox(width: 3),
         const _TxBtn(label: '↗'),
-      ]),
+      ],),
       const Divider(height: 20, color: _K.border),
       Text(
         mat.transcript.isNotEmpty
           ? mat.transcript
           : 'Transcript will appear here once the material has been processed.',
-        style: const TextStyle(fontSize: 13, height: 1.75, color: Color(0xFF1E293B))),
+        style: const TextStyle(fontSize: 13, height: 1.75, color: Color(0xFF1E293B)),),
       const SizedBox(height: 12),
       const Row(children: [
         Icon(Icons.auto_fix_high_rounded, size: 12, color: _K.blue),
         SizedBox(width: 6),
         Text('Suggestion: Simplify sentence structure?',
-          style: TextStyle(fontSize: 11.5, color: _K.blue, fontWeight: FontWeight.w600)),
-      ]),
-    ]),
+          style: TextStyle(fontSize: 11.5, color: _K.blue, fontWeight: FontWeight.w600),),
+      ],),
+    ],),
   );
 }
 
@@ -397,43 +397,43 @@ class _AISidebar extends StatelessWidget {
         Container(
           width: 28, height: 28,
           decoration: BoxDecoration(color: _K.blueSoft, borderRadius: BorderRadius.circular(7)),
-          child: const Icon(Icons.auto_awesome_rounded, size: 13, color: _K.blue)),
+          child: const Icon(Icons.auto_awesome_rounded, size: 13, color: _K.blue),),
         const SizedBox(width: 9),
         const Text('AI Analysis',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: _K.text)),
-      ]),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: _K.text),),
+      ],),
       const SizedBox(height: 16),
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         const Text('Quality Score',
-          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: _K.muted)),
+          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: _K.muted),),
         Text('$score/100',
-          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: col)),
-      ]),
+          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: col),),
+      ],),
       const SizedBox(height: 6),
       ClipRRect(
         borderRadius: BorderRadius.circular(999),
         child: LinearProgressIndicator(value: val, minHeight: 6,
-          backgroundColor: _K.bg, color: col)),
+          backgroundColor: _K.bg, color: col,),),
       const SizedBox(height: 16),
       const Text('Suggested Tags',
-        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: _K.muted)),
+        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: _K.muted),),
       const SizedBox(height: 8),
       Wrap(spacing: 6, runSpacing: 6, children: [
         ...mat.tags.map((t) => _Tag(t)),
         const _Tag('+', dashed: true),
-      ]),
+      ],),
       const SizedBox(height: 16),
       SizedBox(width: double.infinity, child: OutlinedButton.icon(
         onPressed: onRegen,
         icon: const Icon(Icons.refresh_rounded, size: 13),
         label: const Text('Regenerate',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),),
         style: OutlinedButton.styleFrom(
           foregroundColor: _K.muted,
           side: const BorderSide(color: _K.border),
           padding: const EdgeInsets.symmetric(vertical: 9),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-      )),
-    ]);
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),),
+      ),),
+    ],);
   }
 }

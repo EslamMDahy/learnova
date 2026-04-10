@@ -272,7 +272,7 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
                 .loadModulesAndAllMaterials(force: true),
           ),
           Expanded(child: _buildPanel(st)),
-        ]),
+        ],),
       ),
       if (_sel != null && active != null)
         _FooterWidget(
@@ -287,7 +287,7 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
           ),
           onClose: () => setState(() { _sel = null; _stack.clear(); _persistUiState(); }),
         ),
-    ]);
+    ],);
   }
 
   bool _canGenerate(_Ctx ctx, CourseDetailsState st) {
@@ -478,7 +478,7 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
 
     if (topic != null) {
       AppToast.success(context,
-          title: 'Subtopic added', message: '"${topic.title}" created.');
+          title: 'Subtopic added', message: '"${topic.title}" created.',);
     }
   }
 
@@ -511,7 +511,7 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
       if (!mounted) return;
       if (m != null) {
         AppToast.success(context,
-            title: 'Module created', message: '"${m.title}" added.');
+            title: 'Module created', message: '"${m.title}" added.',);
       }
     } else {
       final sourceModule   = result.existing!;
@@ -543,19 +543,19 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
   Future<void> _showUploadSheet(ModuleItem module) async {
     final results = await _showManagedDialog<List<UploadSheetResult>>(
         barrierColor: Colors.black.withOpacity(0.35),
-        builder: (_) => UploadMaterialSheet(moduleTitle: module.title));
+        builder: (_) => UploadMaterialSheet(moduleTitle: module.title),);
     if (results == null || results.isEmpty || !mounted) return;
     int ok = 0;
     for (final r in results) {
       if (!mounted) break;
       final success = await ref.read(courseDetailsControllerProvider(widget.course.id).notifier)
           .uploadMaterial(moduleId: module.id, bytes: r.bytes,
-              filename: r.filename, contentType: r.contentType, title: r.title);
+              filename: r.filename, contentType: r.contentType, title: r.title,);
       if (success) ok++;
     }
     if (mounted && ok > 0) {
       AppToast.success(context, title: 'Uploaded',
-          message: ok == 1 ? '"${results.first.title}" is ready.' : '$ok files uploaded.');
+          message: ok == 1 ? '"${results.first.title}" is ready.' : '$ok files uploaded.',);
     }
   }
 
@@ -584,7 +584,7 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
     } else {
       AppToast.error(context,
           title: 'Copy failed',
-          message: 'Could not copy module. Please try again.');
+          message: 'Could not copy module. Please try again.',);
     }
   }
 
@@ -594,9 +594,7 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
       context: context,
       barrierColor: Colors.black.withOpacity(0.35),
       builder: (_) => _SimpleDialog(
-        title: 'Rename Module',
         controller: c,
-        confirmLabel: 'Save',
       ),
     );
     final title = c.text.trim();
@@ -701,9 +699,7 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
         barrierColor: Colors.black.withOpacity(0.35),
         builder: (_) => _ConfirmDialogWidget(
             title: 'Delete Module',
-            body: 'Delete "${m.title}"? This will also remove all its materials.',
-            confirmLabel: 'Delete',
-            confirmColor: const Color(0xFFEF4444)));
+            body: 'Delete "${m.title}"? This will also remove all its materials.',),);
     if (ok != true || !mounted) return;
 
     final success = await ref.read(courseDetailsControllerProvider(widget.course.id).notifier)
@@ -787,7 +783,6 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
             builder: (_) => _ConfirmDialogWidget(
               title: 'Delete Topic',
               body: 'Delete "${topic.title}"? This action cannot be undone.',
-              confirmLabel: 'Delete',
               confirmColor: const Color(0xFFDC2626),
             ),
           ) ??
@@ -1351,7 +1346,7 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
         initialModuleId: moduleId,
         initialMaterialId: materialId,
         initialTopicId: topicId,
-      ));
+      ),);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1589,10 +1584,10 @@ class _ShareModuleDialogState extends ConsumerState<_ShareModuleDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('Copy Module to Another Course',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textTitle),),
               const SizedBox(height: 6),
               Text('Copying "${widget.module.title}" — choose a destination course.',
-                  style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+                  style: const TextStyle(fontSize: 13, color: AppColors.textMuted),),
               const SizedBox(height: 16),
               if (courses.isLoading)
                 const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()))
@@ -1609,7 +1604,7 @@ class _ShareModuleDialogState extends ConsumerState<_ShareModuleDialog> {
                   items: otherCourses.map((c) => DropdownMenuItem(
                     value: c,
                     child: Text(c.safeTitle, overflow: TextOverflow.ellipsis),
-                  )).toList(),
+                  ),).toList(),
                   onChanged: (v) => setState(() => _selected = v),
                 ),
               const SizedBox(height: 20),

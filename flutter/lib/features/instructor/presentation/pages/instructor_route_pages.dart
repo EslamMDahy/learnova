@@ -42,7 +42,7 @@ class _InstructorCourseRoutePageState extends ConsumerState<InstructorCourseRout
     // Load my courses once when entering the page
     Future.microtask(() => ref
         .read(instructorCoursesControllerProvider.notifier)
-        .load(force: true));
+        .load(force: true),);
   }
 
   Future<void> _openCreateCourse() async {

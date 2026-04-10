@@ -68,7 +68,7 @@ class MatEditDescriptionDialog extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         side: const BorderSide(color: MatK.div),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                            borderRadius: BorderRadius.circular(10),),
                       ),
                       child: const Text('Cancel'),
                     ),
@@ -84,7 +84,7 @@ class MatEditDescriptionDialog extends StatelessWidget {
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                            borderRadius: BorderRadius.circular(10),),
                       ),
                       child: const Text('Save'),
                     ),

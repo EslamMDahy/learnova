@@ -127,7 +127,7 @@ class _AppLabeledTextFieldState extends State<AppLabeledTextField> {
             decoration: InputDecoration(
               hintText: widget.hint,
               hintStyle: AppText.hint.copyWith(
-                  height: widget.expands ? 20 / 14 : null),
+                  height: widget.expands ? 20 / 14 : null,),
               suffixIcon: widget.suffix,
               isCollapsed: true,
               contentPadding: EdgeInsets.zero,
@@ -144,7 +144,7 @@ class _AppLabeledTextFieldState extends State<AppLabeledTextField> {
         if (hasError) ...[
           AppSpacing.gap4,
           Text(widget.errorText!,
-              style: AppText.mutedSmall.copyWith(color: AppColors.dangerText)),
+              style: AppText.mutedSmall.copyWith(color: AppColors.dangerText),),
         ] else if (widget.helper != null) ...[
           AppSpacing.gap6,
           Text(widget.helper!, style: AppText.mutedSmall),
@@ -230,7 +230,7 @@ class FigmaUmSearch40 extends StatelessWidget {
                 ),
               ),
             ),
-          ]),
+          ],),
         ),
       ),
     );
@@ -275,15 +275,15 @@ class AppReadOnlyInput extends StatelessWidget {
               child: Text(
                 value,
                 style: AppText.input.copyWith(
-                    fontWeight: FontWeight.w500, color: AppColors.muted),
+                    fontWeight: FontWeight.w500, color: AppColors.muted,),
               ),
             ),
             if (rightTag != null) ...[
               Text(rightTag!.toUpperCase(), style: AppText.mutedSmall.copyWith(
-                  fontWeight: FontWeight.w700, letterSpacing: 0.3)),
+                  fontWeight: FontWeight.w700, letterSpacing: 0.3,),),
               const SizedBox(width: 14),
             ],
-          ]),
+          ],),
         ),
       ],
     );

@@ -78,20 +78,20 @@ class _CourseTopicsTabState extends ConsumerState<CourseTopicsTab> {
                   style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textMuted)),
+                      color: AppColors.textMuted,),),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                     color: AppColors.pageBg,
-                    borderRadius: BorderRadius.circular(99)),
+                    borderRadius: BorderRadius.circular(99),),
                 child: Text('${modules.length}',
                     style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textMuted)),
+                        color: AppColors.textMuted,),),
               ),
-            ]),
+            ],),
           ),
           Expanded(
             child: ListView.builder(
@@ -110,7 +110,7 @@ class _CourseTopicsTabState extends ConsumerState<CourseTopicsTab> {
                       duration: const Duration(milliseconds: 120),
                       margin: const EdgeInsets.only(bottom: 4),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 9),
+                          horizontal: 10, vertical: 9,),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? const Color(0xFFEFF6FF)
@@ -118,7 +118,7 @@ class _CourseTopicsTabState extends ConsumerState<CourseTopicsTab> {
                         borderRadius: BorderRadius.circular(8),
                         border: isSelected
                             ? Border.all(
-                                color: const Color(0xFFBFDBFE))
+                                color: const Color(0xFFBFDBFE),)
                             : null,
                       ),
                       child: Row(children: [
@@ -146,14 +146,14 @@ class _CourseTopicsTabState extends ConsumerState<CourseTopicsTab> {
                             ),
                           ),
                         ),
-                      ]),
+                      ],),
                     ),
                   ),
                 );
               },
             ),
           ),
-        ]),
+        ],),
       ),
 
       // ── Right: Topic management panel ────────────────────────────────────
@@ -165,9 +165,9 @@ class _CourseTopicsTabState extends ConsumerState<CourseTopicsTab> {
           materialId: 0,
           moduleTitle: selectedModule.title,
           outcomes: outcomes,
-        )
+        ),
       ),
-    ]);
+    ],);
   }
 }
 
@@ -181,22 +181,22 @@ class _NoModulesState extends StatelessWidget {
           width: 64, height: 64,
           decoration: BoxDecoration(
               color: const Color(0xFFF3E8FF),
-              borderRadius: BorderRadius.circular(16)),
+              borderRadius: BorderRadius.circular(16),),
           child: const Icon(Icons.topic_outlined,
-              size: 30, color: Color(0xFF7C3AED)),
+              size: 30, color: Color(0xFF7C3AED),),
         ),
         const SizedBox(height: 16),
         const Text('No Modules Yet',
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textTitle)),
+                color: AppColors.textTitle,),),
         const SizedBox(height: 8),
         const Text(
           'Create modules in the Materials tab first,\nthen manage their topics here.',
           textAlign: TextAlign.center,
           style: TextStyle(
-              fontSize: 13, color: AppColors.textMuted, height: 1.5),
+              fontSize: 13, color: AppColors.textMuted, height: 1.5,),
         ),
       ],
     ),

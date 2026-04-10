@@ -37,23 +37,23 @@ class _ModuleTreeItem extends StatelessWidget {
             width: 20, height: 20,
             decoration: BoxDecoration(
               color: const Color(0xFFFFF0E0),
-              borderRadius: BorderRadius.circular(5)),
+              borderRadius: BorderRadius.circular(5),),
             child: const Icon(Icons.folder_rounded, size: 12, color: Color(0xFFF97316)),
           ),
-        ]),
+        ],),
         title: module.title,
         titleStyle: TextStyle(
           fontSize: 12.5, fontWeight: FontWeight.w700,
-          color: sel ? _K.blue : _K.text),
+          color: sel ? _K.blue : _K.text,),
         trailing: _CtxMenu(items: [
           _MItem(icon: Icons.upload_rounded, label: 'Upload material',
-            color: _K.blue, onTap: () => onModule(module)),
+            color: _K.blue, onTap: () => onModule(module),),
           const _MDivider(),
           _MItem(icon: Icons.edit_outlined, label: 'Rename',
-            onTap: () => onRename(module)),
+            onTap: () => onRename(module),),
           _MItem(icon: Icons.delete_outline, label: 'Delete',
-            color: _K.red, onTap: () => onDelete(module)),
-        ]),
+            color: _K.red, onTap: () => onDelete(module),),
+        ],),
         onTap: () => onModule(module),
       ),
       // Materials
@@ -62,8 +62,8 @@ class _ModuleTreeItem extends StatelessWidget {
           mat: mat, selectedId: selectedId,
           onMaterial: onMaterial, onTopic: onTopic,
           onRename: onRename, onDelete: onDelete,
-        )),
-    ]);
+        ),),
+    ],);
   }
 }
 
@@ -104,21 +104,21 @@ class _MaterialTreeItem extends StatelessWidget {
             decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(5)),
             child: Icon(icon, size: 11, color: col),
           ),
-        ]),
+        ],),
         title: mat.title,
         titleStyle: TextStyle(
           fontSize: 12, fontWeight: FontWeight.w600,
-          color: sel ? _K.blue : const Color(0xFF2D3748)),
+          color: sel ? _K.blue : const Color(0xFF2D3748),),
         trailing: _CtxMenu(items: [
           _MItem(icon: Icons.label_outline_rounded, label: 'Add topic manually',
-            color: _K.purple, onTap: () => onMaterial(mat)),
+            color: _K.purple, onTap: () => onMaterial(mat),),
           _MItem(icon: Icons.auto_awesome_rounded, label: 'Generate topics with AI',
-            color: _K.blue, onTap: () => onMaterial(mat)),
+            color: _K.blue, onTap: () => onMaterial(mat),),
           const _MDivider(),
           _MItem(icon: Icons.edit_outlined, label: 'Rename', onTap: () => onRename(mat)),
           _MItem(icon: Icons.delete_outline, label: 'Delete',
-            color: _K.red, onTap: () => onDelete(mat)),
-        ]),
+            color: _K.red, onTap: () => onDelete(mat),),
+        ],),
         onTap: () => onMaterial(mat),
       ),
       // Topics
@@ -130,17 +130,17 @@ class _MaterialTreeItem extends StatelessWidget {
             leading: Container(
               width: 18, height: 18,
               decoration: BoxDecoration(
-                color: _K.purpleSoft, borderRadius: BorderRadius.circular(4)),
+                color: _K.purpleSoft, borderRadius: BorderRadius.circular(4),),
               child: const Icon(Icons.label_rounded, size: 10, color: _K.purple),
             ),
             title: t.title,
             titleStyle: TextStyle(
               fontSize: 11.5, fontWeight: FontWeight.w500,
-              color: tsel ? _K.purple : _K.muted),
+              color: tsel ? _K.purple : _K.muted,),
             onTap: () => onTopic(t),
           );
         }),
-    ]);
+    ],);
   }
 
   static IconData _mkIcon(_MK? k) {
@@ -209,7 +209,7 @@ class _SidebarRowState extends State<_SidebarRow> {
             ? const EdgeInsets.symmetric(horizontal: 6, vertical: 1)
             : const EdgeInsets.symmetric(vertical: 1),
           padding: EdgeInsets.fromLTRB(
-            widget.isSelected ? lp - 4 : lp, 7, 8, 7),
+            widget.isSelected ? lp - 4 : lp, 7, 8, 7,),
           decoration: BoxDecoration(
             color: widget.isSelected
               ? _K.blueSoft
@@ -225,9 +225,9 @@ class _SidebarRowState extends State<_SidebarRow> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: widget.titleStyle,
-            )),
+            ),),
             if (widget.trailing != null) widget.trailing!,
-          ]),
+          ],),
         ),
       ),
     );

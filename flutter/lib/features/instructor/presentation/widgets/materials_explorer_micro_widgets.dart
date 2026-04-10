@@ -72,7 +72,7 @@ class _Pill extends StatelessWidget {
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
     child: Text(label,
       style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800,
-        color: fg, letterSpacing: 0.4)),
+        color: fg, letterSpacing: 0.4,),),
   );
 }
 
@@ -80,7 +80,7 @@ class _Pill extends StatelessWidget {
 class _BtnPrimary extends StatefulWidget {
   final String label; final IconData icon; final VoidCallback onTap; final bool full;
   const _BtnPrimary({required this.label, required this.icon,
-    required this.onTap, this.full = false});
+    required this.onTap, this.full = false,});
   @override State<_BtnPrimary> createState() => _BtnPrimaryState();
 }
 
@@ -97,7 +97,7 @@ class _BtnPrimaryState extends State<_BtnPrimary> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
         color: _h ? _K.blueHov : _K.blue,
-        borderRadius: BorderRadius.circular(8)),
+        borderRadius: BorderRadius.circular(8),),
       child: Row(
         mainAxisSize: widget.full ? MainAxisSize.max : MainAxisSize.min,
         mainAxisAlignment: widget.full ? MainAxisAlignment.center : MainAxisAlignment.start,
@@ -106,9 +106,9 @@ class _BtnPrimaryState extends State<_BtnPrimary> {
           const SizedBox(width: 6),
           Text(widget.label,
             style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700,
-              color: Colors.white)),
-        ]),
-    )),
+              color: Colors.white,),),
+        ],),
+    ),),
   );
 }
 
@@ -116,7 +116,7 @@ class _BtnPrimaryState extends State<_BtnPrimary> {
 class _BtnOutline extends StatefulWidget {
   final String label; final IconData icon; final VoidCallback onTap; final bool small;
   const _BtnOutline({required this.label, required this.icon,
-    required this.onTap, this.small = false});
+    required this.onTap, this.small = false,});
   @override State<_BtnOutline> createState() => _BtnOutlineState();
 }
 
@@ -131,19 +131,19 @@ class _BtnOutlineState extends State<_BtnOutline> {
       duration: const Duration(milliseconds: 110),
       padding: EdgeInsets.symmetric(
         horizontal: widget.small ? 10 : 14,
-        vertical:   widget.small ? 6  : 9),
+        vertical:   widget.small ? 6  : 9,),
       decoration: BoxDecoration(
         color: _h ? const Color(0xFFF1F5F9) : _K.white,
         border: Border.all(color: _K.border),
-        borderRadius: BorderRadius.circular(8)),
+        borderRadius: BorderRadius.circular(8),),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(widget.icon, size: 13, color: _K.text),
         const SizedBox(width: 5),
         Text(widget.label,
           style: TextStyle(fontSize: widget.small ? 12 : 12.5,
-            fontWeight: FontWeight.w600, color: _K.text)),
-      ]),
-    )),
+            fontWeight: FontWeight.w600, color: _K.text,),),
+      ],),
+    ),),
   );
 }
 
@@ -167,14 +167,14 @@ class _BtnDangerState extends State<_BtnDanger> {
       decoration: BoxDecoration(
         color: _h ? _K.redSoft : _K.white,
         border: Border.all(color: _h ? _K.red : _K.border),
-        borderRadius: BorderRadius.circular(8)),
+        borderRadius: BorderRadius.circular(8),),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(widget.icon, size: 13, color: _K.red),
         const SizedBox(width: 5),
         Text(widget.label,
-          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _K.red)),
-      ]),
-    )),
+          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _K.red),),
+      ],),
+    ),),
   );
 }
 
@@ -197,14 +197,14 @@ class _BtnGenerateState extends State<_BtnGenerate> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
       decoration: BoxDecoration(
         color: _h ? _K.blueHov : _K.blue,
-        borderRadius: BorderRadius.circular(8)),
+        borderRadius: BorderRadius.circular(8),),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(widget.icon, size: 14, color: Colors.white),
         const SizedBox(width: 7),
         Text(widget.label,
-          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Colors.white)),
-      ]),
-    )),
+          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Colors.white),),
+      ],),
+    ),),
   );
 }
 
@@ -230,25 +230,25 @@ class _BtnAIState extends State<_BtnAI> {
         duration: const Duration(milliseconds: 110),
         padding: EdgeInsets.symmetric(
           horizontal: widget.labeled ? 12 : 8,
-          vertical:   widget.labeled ? 7  : 5),
+          vertical:   widget.labeled ? 7  : 5,),
         decoration: BoxDecoration(
           color: _h && !widget.generating
             ? const Color(0xFFD2E9FD)
             : _K.blueSoft,
           border: Border.all(
-            color: _h && !widget.generating ? _K.blue : _K.blueBorder),
-          borderRadius: BorderRadius.circular(8)),
+            color: _h && !widget.generating ? _K.blue : _K.blueBorder,),
+          borderRadius: BorderRadius.circular(8),),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           widget.generating
             ? const SizedBox(width: 12, height: 12,
-                child: CircularProgressIndicator(strokeWidth: 1.5, color: _K.blue))
+                child: CircularProgressIndicator(strokeWidth: 1.5, color: _K.blue),)
             : const Icon(Icons.auto_awesome_rounded, size: 13, color: _K.blue),
           if (widget.labeled) ...[
             const SizedBox(width: 6),
             const Text('Generate with AI',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _K.blue)),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _K.blue),),
           ],
-        ]),
+        ],),
       ),
     ),
   );
@@ -258,7 +258,7 @@ class _BtnAIState extends State<_BtnAI> {
 class _IcBtn extends StatelessWidget {
   final IconData icon; final String tip; final VoidCallback onTap; final Color col;
   const _IcBtn({required this.icon, required this.tip, required this.onTap,
-    this.col = _K.muted});
+    this.col = _K.muted,});
 
   @override
   Widget build(BuildContext context) => Tooltip(
@@ -272,7 +272,7 @@ class _IcBtn extends StatelessWidget {
       borderRadius: BorderRadius.circular(6),
       child: Padding(
         padding: const EdgeInsets.all(6),
-        child: Icon(icon, size: 17, color: col)),
+        child: Icon(icon, size: 17, color: col),),
     ),
   );
 }
@@ -298,9 +298,9 @@ class _TbBtnState extends State<_TbBtn> {
         width: 26, height: 26,
         decoration: BoxDecoration(
           color: _h ? _K.bg : Colors.transparent,
-          borderRadius: BorderRadius.circular(6)),
+          borderRadius: BorderRadius.circular(6),),
         child: Icon(widget.icon, size: 14, color: _K.hint),
-      )),
+      ),),
     ),
   );
 }
@@ -323,12 +323,12 @@ class _TxBtnState extends State<_TxBtn> {
       width: 26, height: 26,
       decoration: BoxDecoration(
         color: _h ? _K.bg : Colors.transparent,
-        borderRadius: BorderRadius.circular(5)),
+        borderRadius: BorderRadius.circular(5),),
       child: Center(child: Text(widget.label, style: TextStyle(
         fontSize: 12,
         fontWeight: widget.bold ? FontWeight.w900 : FontWeight.w500,
         fontStyle: widget.italic ? FontStyle.italic : FontStyle.normal,
-        color: _K.muted))),
+        color: _K.muted,),),),
     ),
   );
 }
@@ -343,7 +343,7 @@ class _CountBadge extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
     decoration: BoxDecoration(color: _K.blueSoft, borderRadius: BorderRadius.circular(999)),
     child: Text(label, style: const TextStyle(fontSize: 11,
-      fontWeight: FontWeight.w700, color: _K.blue)),
+      fontWeight: FontWeight.w700, color: _K.blue,),),
   );
 }
 
@@ -358,9 +358,9 @@ class _Tag extends StatelessWidget {
     decoration: BoxDecoration(
       color: dashed ? Colors.transparent : const Color(0xFFF1F5F9),
       border: Border.all(color: _K.border),
-      borderRadius: BorderRadius.circular(999)),
+      borderRadius: BorderRadius.circular(999),),
     child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-      color: dashed ? _K.hint : _K.sub)),
+      color: dashed ? _K.hint : _K.sub,),),
   );
 }
 
@@ -393,8 +393,8 @@ class _CtxMenu extends StatelessWidget {
             Icon(item.icon, size: 14, color: item.color ?? _K.text),
             const SizedBox(width: 9),
             Text(item.label,
-              style: TextStyle(fontSize: 13, color: item.color ?? _K.text)),
-          ])));
+              style: TextStyle(fontSize: 13, color: item.color ?? _K.text),),
+          ],),),);
         }
       }
       return out;

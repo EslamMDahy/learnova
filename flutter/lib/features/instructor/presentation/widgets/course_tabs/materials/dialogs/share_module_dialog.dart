@@ -22,5 +22,5 @@
 //     required int currentCourseId,
 //   });
 
-library share_module_dialog;
+library;
 // No exports until _ShareModuleDialog is extracted from materials_tab.dart.

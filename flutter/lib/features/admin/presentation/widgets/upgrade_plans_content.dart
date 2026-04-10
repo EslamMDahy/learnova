@@ -229,7 +229,7 @@ class _UpgradePlansContentState extends State<UpgradePlansContent> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.lock_outline,
-                            size: 18, color: Color(0xFF64748B)),
+                            size: 18, color: Color(0xFF64748B),),
                         SizedBox(width: 10),
                         Text(
                           'Secure payments · Cancel anytime · Invoice available',

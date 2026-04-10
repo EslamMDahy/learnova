@@ -193,7 +193,7 @@ void _onNavSelect(int i) {
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     return '${months[d.month - 1]}, ${d.year}';
   }
@@ -443,12 +443,12 @@ Future<bool> _confirmDiscardDialog(BuildContext context) async {
 
       if (err != null && err.trim().isNotEmpty) {
         _toast(context,
-            title: 'Error', message: err, icon: Icons.error_outline_rounded);
+            title: 'Error', message: err, icon: Icons.error_outline_rounded,);
       } else if (ok != null && ok.trim().isNotEmpty) {
         _toast(context,
             title: 'Done',
             message: ok,
-            icon: Icons.check_circle_outline_rounded);
+            icon: Icons.check_circle_outline_rounded,);
 
         
         WidgetsBinding.instance.addPostFrameCallback((_) {

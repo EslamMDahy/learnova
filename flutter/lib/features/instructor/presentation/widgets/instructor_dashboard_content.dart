@@ -100,7 +100,7 @@ class InstructorDashboardContent extends StatelessWidget {
           ),
         ),
       );
-    });
+    },);
   }
 }
 
@@ -194,7 +194,7 @@ class _StatsGrid extends StatelessWidget {
         runSpacing: gap,
         children: children.map((e) => SizedBox(width: colW, child: e)).toList(),
       );
-    });
+    },);
   }
 }
 
@@ -274,7 +274,7 @@ class _StatCardState extends State<_StatCard> {
                       const Icon(Icons.arrow_upward_rounded, size: 11, color: Color(0xFF16A34A)),
                       const SizedBox(width: 3),
                       Text(widget.trendText,
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF16A34A))),
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF16A34A)),),
                     ],
                   ),
                 ),
@@ -282,7 +282,7 @@ class _StatCardState extends State<_StatCard> {
             ),
             const SizedBox(height: 14),
             Text(widget.label,
-                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500, color: AppColors.textMuted)),
+                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500, color: AppColors.textMuted),),
             const SizedBox(height: 4),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -290,12 +290,12 @@ class _StatCardState extends State<_StatCard> {
                 Text(widget.value,
                     style: TextStyle(
                         fontSize: 26, fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5, color: widget.accentColor, height: 1)),
+                        letterSpacing: -0.5, color: widget.accentColor, height: 1,),),
                 const SizedBox(width: 5),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 3),
                   child: Text(widget.unit,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textMuted),),
                 ),
               ],
             ),
@@ -317,7 +317,7 @@ class _RecentActivity extends StatelessWidget {
         Row(
           children: [
             const Text('Recent Activity',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle),),
             const Spacer(),
             TextButton(
               onPressed: () {},
@@ -327,7 +327,7 @@ class _RecentActivity extends StatelessWidget {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: const Text('View All',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),),
             ),
           ],
         ),
@@ -444,18 +444,18 @@ class _ActivityRowState extends State<_ActivityRow> {
                       children: [
                         Text(widget.title,
                             style: const TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
+                                fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textTitle,),),
                         const SizedBox(height: 2),
                         Text(widget.sub,
                             style: const TextStyle(
-                                fontSize: 12, color: AppColors.textMuted, height: 1.4)),
+                                fontSize: 12, color: AppColors.textMuted, height: 1.4,),),
                       ],
                     ),
                   ),
                   const SizedBox(width: 12),
                   Text(widget.time,
                       style: const TextStyle(
-                          fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textHint)),
+                          fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textHint,),),
                 ],
               ),
             ),
@@ -475,12 +475,12 @@ class _RightColumn extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Quick Actions',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle),),
         const SizedBox(height: 10),
         _QuickActionsCard(),
         const SizedBox(height: 20),
         const Text('System Usage',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle),),
         const SizedBox(height: 10),
         const _UsageCard(),
       ],
@@ -599,14 +599,14 @@ class _ActionTileState extends State<_ActionTile> {
                       children: [
                         Text(widget.label,
                             style: const TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
+                                fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textTitle,),),
                         Text(widget.sub,
-                            style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                            style: const TextStyle(fontSize: 11, color: AppColors.textMuted),),
                       ],
                     ),
                   ),
                   Icon(Icons.arrow_forward_ios_rounded, size: 12,
-                      color: _hovered ? AppColors.primary : AppColors.textHint),
+                      color: _hovered ? AppColors.primary : AppColors.textHint,),
                 ],
               ),
             ),
@@ -646,7 +646,7 @@ class _UsageCard extends StatelessWidget {
             children: [
               const Expanded(
                 child: Text('Weekly Token Usage',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMuted),),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
@@ -656,17 +656,17 @@ class _UsageCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Text('85% Limit',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFEA580C))),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFEA580C)),),
               ),
             ],
           ),
           const SizedBox(height: 8),
           const Text('12,450',
               style: TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5, color: AppColors.textTitle)),
+                  fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5, color: AppColors.textTitle,),),
           const SizedBox(height: 4),
           const Text('tokens used this week',
-              style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+              style: TextStyle(fontSize: 11, color: AppColors.textHint),),
           const SizedBox(height: 14),
           // Progress bar
           ClipRRect(
@@ -728,7 +728,7 @@ class _MiniBarChart extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 9, fontWeight: FontWeight.w700,
                         letterSpacing: 0.3,
-                        color: isActive ? AppColors.primary : AppColors.textHint)),
+                        color: isActive ? AppColors.primary : AppColors.textHint,),),
               ],
             ),
           );

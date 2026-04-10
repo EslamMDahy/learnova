@@ -64,14 +64,14 @@ class _MatChangePositionDialogState extends State<MatChangePositionDialog> {
                 decoration: InputDecoration(
                   labelText: 'New position',
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                        color: AppColors.primary, width: 1.4),
+                        color: AppColors.primary, width: 1.4,),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 14),
+                      horizontal: 14, vertical: 14,),
                 ),
                 items: List.generate(
                   widget.modules.length,
@@ -98,7 +98,7 @@ class _MatChangePositionDialogState extends State<MatChangePositionDialog> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         side: const BorderSide(color: MatK.div),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                            borderRadius: BorderRadius.circular(10),),
                       ),
                       child: const Text('Cancel'),
                     ),
@@ -115,7 +115,7 @@ class _MatChangePositionDialogState extends State<MatChangePositionDialog> {
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                            borderRadius: BorderRadius.circular(10),),
                       ),
                       child: const Text('Move'),
                     ),

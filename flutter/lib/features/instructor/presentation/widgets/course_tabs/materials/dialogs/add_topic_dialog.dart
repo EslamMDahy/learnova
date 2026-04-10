@@ -13,7 +13,7 @@
 //   final result = await showAddTopicDialog(context, outcomes: outcomes);
 //   if (result != null && result.mode == TopicCreateMode.manual) { ... }
 
-library add_topic_dialog;
+library;
 
 export 'package:learnova/features/instructor/presentation/widgets/course_tabs/materials_tab.dart'
     show TopicCreateMode, TopicDialogResult;

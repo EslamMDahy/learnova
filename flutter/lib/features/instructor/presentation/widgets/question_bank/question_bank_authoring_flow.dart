@@ -43,7 +43,7 @@ class _QuestionBankAuthoringFlowState
     setState(() => _bootstrapping = true);
     await ref
         .read(courseDetailsControllerProvider(widget.course.id).notifier)
-        .loadModulesAndAllMaterials(force: false);
+        .loadModulesAndAllMaterials();
     if (!mounted) return;
     setState(() => _bootstrapping = false);
   }

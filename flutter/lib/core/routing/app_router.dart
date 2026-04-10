@@ -276,7 +276,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return NoTransitionPage(
                 child: CourseDetailsPage(
                   courseSlug: slug,
-                  cachedCourse: null,
                   cachedCourseId: courseId,
                 ),
               );

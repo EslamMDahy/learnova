@@ -331,7 +331,7 @@ class _AppSidebarBrandHeader extends StatelessWidget {
                 padding: const EdgeInsets.all(5),
                 child: logoAssetPath == null
                     ? const Icon(Icons.auto_awesome, size: 18,
-                        color: Color(0xFF137FEC))
+                        color: Color(0xFF137FEC),)
                     : Image.asset(
                         logoAssetPath!,
                         fit: BoxFit.contain,
@@ -1158,7 +1158,7 @@ class AppSuccessBanner extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.only(top: 2),
               child: Icon(Icons.check_circle,
-                  color: Color(0xFF1E7A36), size: 20),
+                  color: Color(0xFF1E7A36), size: 20,),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -1832,7 +1832,7 @@ const FigmaUmFiltersBar({
         border: Border.all(color: AppColors.cBorder),
         boxShadow: [
           const BoxShadow(
-              color: Color(0x0D000000), blurRadius: 2, offset: Offset(0, 1)),
+              color: Color(0x0D000000), blurRadius: 2, offset: Offset(0, 1),),
         ],
       ),
       child: isNarrow
@@ -1901,10 +1901,10 @@ class FigmaUmTableHeader extends StatelessWidget {
 
           if (!isNarrow)
             FigmaUmHeaderCellFlex(
-                flex: 3, text: 'DEPARTMENT', leftPad: cellLeftPad),
+                flex: 3, text: 'DEPARTMENT', leftPad: cellLeftPad,),
           if (!isNarrow)
             FigmaUmHeaderCellFlex(
-                flex: 2, text: 'JOINED DATE', leftPad: cellLeftPad),
+                flex: 2, text: 'JOINED DATE', leftPad: cellLeftPad,),
 
           FigmaUmHeaderCellFlex(flex: 2, text: 'STATUS', leftPad: cellLeftPad),
 

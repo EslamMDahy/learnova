@@ -334,7 +334,7 @@ class _Card extends StatelessWidget {
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(10),),
             ),
             onPressed: state.checkingVerification ? null : onCheckVerified,
             child: state.checkingVerification
@@ -342,7 +342,7 @@ class _Card extends StatelessWidget {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2, color: Colors.white,),
                   )
                 : const Text(
                     'I\'ve Verified, Continue',
@@ -372,7 +372,7 @@ class _Card extends StatelessWidget {
                     ),
                     backgroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),),
                   ),
                   onPressed: (canResend && !state.loading) ? onResend : null,
                   icon: state.loading
@@ -381,7 +381,7 @@ class _Card extends StatelessWidget {
                           height: 16,
                           child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Color(0xFF6B7280)),
+                              color: Color(0xFF6B7280),),
                         )
                       : const Icon(Icons.refresh_rounded, size: 16),
                   label: Text(
@@ -389,7 +389,7 @@ class _Card extends StatelessWidget {
                         ? 'Resend in ${secondsLeft}s'
                         : 'Resend Email',
                     style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 14),
+                        fontWeight: FontWeight.w600, fontSize: 14,),
                   ),
                 ),
               ),
@@ -403,7 +403,7 @@ class _Card extends StatelessWidget {
                   side: const BorderSide(color: Color(0xFFFECACA)),
                   backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                 ),
                 onPressed: state.loading ? null : onLogout,

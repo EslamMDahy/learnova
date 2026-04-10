@@ -348,7 +348,7 @@ class _CoursesFiltersBar extends StatelessWidget {
     return Container(
       height: isNarrow ? null : 56,
       padding: EdgeInsets.symmetric(
-          horizontal: 16, vertical: isNarrow ? 12 : 0),
+          horizontal: 16, vertical: isNarrow ? 12 : 0,),
       decoration: BoxDecoration(
         color:        Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -357,7 +357,7 @@ class _CoursesFiltersBar extends StatelessWidget {
           const BoxShadow(
               color: Color(0x08000000),
               blurRadius: 8,
-              offset: Offset(0, 2)),
+              offset: Offset(0, 2),),
         ],
       ),
       child: isNarrow
@@ -372,7 +372,7 @@ class _CoursesFiltersBar extends StatelessWidget {
                   statusDrop,
                   const SizedBox(width: 10),
                   typeDrop,
-                ]),
+                ],),
               ],
             )
           : Row(children: [
@@ -383,7 +383,7 @@ class _CoursesFiltersBar extends StatelessWidget {
               statusDrop,
               const SizedBox(width: 10),
               typeDrop,
-            ]),
+            ],),
     );
   }
 }
@@ -428,13 +428,13 @@ class _ActiveFiltersChips extends StatelessWidget {
       return InputChip(
         label: Text(label,
             style: const TextStyle(
-                fontWeight: FontWeight.w800, fontSize: 12)),
+                fontWeight: FontWeight.w800, fontSize: 12,),),
         onDeleted:       onDeleted,
         deleteIcon:      const Icon(Icons.close_rounded, size: 16),
         backgroundColor: const Color(0xFFF1F5F9),
         side:  const BorderSide(color: Color(0xFFE2E8F0)),
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(999)),
+            borderRadius: BorderRadius.circular(999),),
       );
     }
 
@@ -457,9 +457,9 @@ class _ActiveFiltersChips extends StatelessWidget {
             onPressed: onClearAll,
             icon:  const Icon(Icons.restart_alt_rounded, size: 18),
             label: const Text('Clear all',
-                style: TextStyle(fontWeight: FontWeight.w900)),
+                style: TextStyle(fontWeight: FontWeight.w900),),
             style: TextButton.styleFrom(
-                foregroundColor: _CourseTokens.blue),
+                foregroundColor: _CourseTokens.blue,),
           ),
         ],
       ),
@@ -496,7 +496,7 @@ class _CourseTokens {
 
   static const hoverShadow = [
     BoxShadow(
-        color: Color(0x14000000), blurRadius: 26, offset: Offset(0, 14)),
+        color: Color(0x14000000), blurRadius: 26, offset: Offset(0, 14),),
   ];
 }
 
@@ -515,16 +515,16 @@ class _Breadcrumb extends StatelessWidget {
             style: TextStyle(
                 color:      _CourseTokens.textHint,
                 fontSize:   12,
-                fontWeight: FontWeight.w600)),
+                fontWeight: FontWeight.w600,),),
         SizedBox(width: 8),
         Icon(Icons.chevron_right_rounded,
-            size: 16, color: Color(0xFFCBD5E1)),
+            size: 16, color: Color(0xFFCBD5E1),),
         SizedBox(width: 8),
         Text('Courses Management',
             style: TextStyle(
                 color:      _CourseTokens.textHint,
                 fontSize:   12,
-                fontWeight: FontWeight.w600)),
+                fontWeight: FontWeight.w600,),),
       ],
     );
   }
@@ -551,14 +551,14 @@ class _HeaderRow extends StatelessWidget {
                   fontSize:   30,
                   fontWeight: FontWeight.w900,
                   color:      _CourseTokens.textPrimary,
-                  height:     1.05)),
+                  height:     1.05,),),
           SizedBox(height: 6),
           Text(
               'Manage your curriculum, AI assessments, and student cohorts.',
               style: TextStyle(
                   color:      _CourseTokens.textMuted,
                   fontSize:   13.2,
-                  fontWeight: FontWeight.w600)),
+                  fontWeight: FontWeight.w600,),),
         ],
       );
 
@@ -579,8 +579,8 @@ class _HeaderRow extends StatelessWidget {
         const Expanded(child: left),
         const SizedBox(width: 12),
         btn,
-      ]);
-    });
+      ],);
+    },);
   }
 }
 
@@ -615,16 +615,16 @@ class _PrimaryButtonState extends State<_PrimaryButton> {
                   leadingDistribution: TextLeadingDistribution.even,
                   fontSize:   12.6,
                   fontWeight: FontWeight.w800,
-                  color:      Colors.white)),
+                  color:      Colors.white,),),
           style: ElevatedButton.styleFrom(
             alignment: Alignment.center,
             backgroundColor: _CourseTokens.blue,
             elevation:   0,
             shadowColor: Colors.transparent,
             padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 12),
+                horizontal: 16, vertical: 12,),
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),),
           ),
         ),
       ),
@@ -679,18 +679,18 @@ class _StatsRow extends StatelessWidget {
           Expanded(
               child: SizedBox(
                   height: _CourseTokens.statCardHeight,
-                  child: cards[0])),
+                  child: cards[0],),),
           const SizedBox(width: 16),
           Expanded(
               child: SizedBox(
                   height: _CourseTokens.statCardHeight,
-                  child: cards[1])),
+                  child: cards[1],),),
           const SizedBox(width: 16),
           Expanded(
               child: SizedBox(
                   height: _CourseTokens.statCardHeight,
-                  child: cards[2])),
-        ]);
+                  child: cards[2],),),
+        ],);
       }
 
       return Wrap(
@@ -700,10 +700,10 @@ class _StatsRow extends StatelessWidget {
             .map((w) => SizedBox(
                 width:  (c.maxWidth - 16) / 2,
                 height: _CourseTokens.statCardHeight,
-                child:  w))
+                child:  w,),)
             .toList(),
       );
-    });
+    },);
   }
 }
 
@@ -736,14 +736,14 @@ class _MiniStatCard extends StatelessWidget {
                       color:         _CourseTokens.textHint,
                       fontSize:      10.4,
                       fontWeight:    FontWeight.w800,
-                      letterSpacing: 0.35)),
+                      letterSpacing: 0.35,),),
               const SizedBox(height: 8),
               Text(value,
                   style: const TextStyle(
                       color:      _CourseTokens.textPrimary,
                       fontSize:   24,
                       fontWeight: FontWeight.w900,
-                      height:     1.0)),
+                      height:     1.0,),),
             ],
           ),
         ),
@@ -756,7 +756,7 @@ class _MiniStatCard extends StatelessWidget {
           ),
           child: Icon(icon, size: 18, color: iconColor),
         ),
-      ]),
+      ],),
     );
   }
 }
@@ -816,7 +816,7 @@ class _CoursesGrid extends StatelessWidget {
           );
         }).toList(),
       );
-    });
+    },);
   }
 }
 
@@ -846,7 +846,7 @@ class _CoursesGridSkeleton extends StatelessWidget {
           );
         }),
       );
-    });
+    },);
   }
 }
 
@@ -868,24 +868,24 @@ class _NoResultsState extends StatelessWidget {
             const BoxShadow(
                 color:      Color(0x0D000000),
                 blurRadius: 2,
-                offset:     Offset(0, 1)),
+                offset:     Offset(0, 1),),
           ],
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           const Icon(Icons.search_off_rounded,
-              size: 34, color: Color(0xFF137FEC)),
+              size: 34, color: Color(0xFF137FEC),),
           const SizedBox(height: 10),
           const Text('No results match your filters',
               style: TextStyle(
                   fontSize:   18,
                   fontWeight: FontWeight.w900,
-                  color:      Color(0xFF0F172A)),
-              textAlign: TextAlign.center),
+                  color:      Color(0xFF0F172A),),
+              textAlign: TextAlign.center,),
           const SizedBox(height: 8),
           const Text(
               'Try clearing filters or searching with a different keyword.',
               style:     TextStyle(color: Color(0xFF64748B)),
-              textAlign: TextAlign.center),
+              textAlign: TextAlign.center,),
           const SizedBox(height: 14),
           if (onClear != null)
             ElevatedButton.icon(
@@ -896,10 +896,10 @@ class _NoResultsState extends StatelessWidget {
                 backgroundColor: const Color(0xFF137FEC),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),),
               ),
             ),
-        ]),
+        ],),
       ),
     );
   }
@@ -924,7 +924,7 @@ class _CoursesEmptyState extends StatelessWidget {
               const BoxShadow(
                   color:      Color(0x0D000000),
                   blurRadius: 2,
-                  offset:     Offset(0, 1)),
+                  offset:     Offset(0, 1),),
             ],
           ),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -936,14 +936,14 @@ class _CoursesEmptyState extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Icon(Icons.folder_open_rounded,
-                  color: _CourseTokens.blue, size: 28),
+                  color: _CourseTokens.blue, size: 28,),
             ),
             const SizedBox(height: 12),
             const Text('No courses yet',
                 style: TextStyle(
                     fontSize:   16,
                     fontWeight: FontWeight.w900,
-                    color:      _CourseTokens.textPrimary)),
+                    color:      _CourseTokens.textPrimary,),),
             const SizedBox(height: 6),
             const Text(
                 'Create your first course to start uploading materials, generating AI quizzes, and inviting students.',
@@ -952,28 +952,28 @@ class _CoursesEmptyState extends StatelessWidget {
                     fontSize:   12.8,
                     fontWeight: FontWeight.w600,
                     color:      _CourseTokens.textMuted,
-                    height:     1.35)),
+                    height:     1.35,),),
             const SizedBox(height: 14),
             SizedBox(
               height: 40,
               child: ElevatedButton.icon(
                 onPressed: onCreate,
                 icon:  const Icon(Icons.add_rounded,
-                    size: 18, color: Colors.white),
+                    size: 18, color: Colors.white,),
                 label: const Text('Create course',
                     style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        color:      Colors.white)),
+                        color:      Colors.white,),),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _CourseTokens.blue,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),),
                 ),
               ),
             ),
-          ]),
+          ],),
         ),
       ),
     );
@@ -998,7 +998,7 @@ class _SkeletonCardState extends State<_SkeletonCard>
     super.initState();
     _c = AnimationController(
         vsync:    this,
-        duration: const Duration(milliseconds: 1100))
+        duration: const Duration(milliseconds: 1100),)
       ..repeat(reverse: true);
   }
 
@@ -1016,7 +1016,7 @@ class _SkeletonCardState extends State<_SkeletonCard>
         final color = Color.lerp(
             const Color(0xFFE5E7EB),
             const Color(0xFFF1F5F9),
-            _c.value)!;
+            _c.value,)!;
 
         return Container(
           decoration: BoxDecoration(
@@ -1030,7 +1030,7 @@ class _SkeletonCardState extends State<_SkeletonCard>
               decoration: BoxDecoration(
                 color: color,
                 borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(_CourseTokens.radiusCard)),
+                    top: Radius.circular(_CourseTokens.radiusCard),),
               ),
             ),
             Expanded(
@@ -1044,14 +1044,14 @@ class _SkeletonCardState extends State<_SkeletonCard>
                         width:  double.infinity,
                         decoration: BoxDecoration(
                             color: color,
-                            borderRadius: BorderRadius.circular(6))),
+                            borderRadius: BorderRadius.circular(6),),),
                     const SizedBox(height: 10),
                     Container(
                         height: 14,
                         width:  160,
                         decoration: BoxDecoration(
                             color: color,
-                            borderRadius: BorderRadius.circular(6))),
+                            borderRadius: BorderRadius.circular(6),),),
                     const SizedBox(height: 18),
                     Row(children: [
                       Container(
@@ -1059,15 +1059,15 @@ class _SkeletonCardState extends State<_SkeletonCard>
                           width:  90,
                           decoration: BoxDecoration(
                               color: color,
-                              borderRadius: BorderRadius.circular(6))),
+                              borderRadius: BorderRadius.circular(6),),),
                       const SizedBox(width: 12),
                       Container(
                           height: 12,
                           width:  90,
                           decoration: BoxDecoration(
                               color: color,
-                              borderRadius: BorderRadius.circular(6))),
-                    ]),
+                              borderRadius: BorderRadius.circular(6),),),
+                    ],),
                     const Spacer(),
                     Container(height: 1, color: _CourseTokens.divider),
                     const SizedBox(height: 12),
@@ -1076,12 +1076,12 @@ class _SkeletonCardState extends State<_SkeletonCard>
                         width:  140,
                         decoration: BoxDecoration(
                             color: color,
-                            borderRadius: BorderRadius.circular(6))),
+                            borderRadius: BorderRadius.circular(6),),),
                   ],
                 ),
               ),
             ),
-          ]),
+          ],),
         );
       },
     );
@@ -1539,7 +1539,7 @@ class _ApiHero extends StatelessWidget {
             fit:             BoxFit.cover,
             gaplessPlayback: true,
             errorBuilder:    (_, __, ___) =>
-                Container(color: const Color(0xFFEFF2F6)))
+                Container(color: const Color(0xFFEFF2F6)),)
       else
         Container(color: const Color(0xFFEFF2F6)),
 
@@ -1562,7 +1562,7 @@ class _ApiHero extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           child: Container(
               padding: const EdgeInsets.symmetric(
-                  horizontal: 8, vertical: 4.5),
+                  horizontal: 8, vertical: 4.5,),
               color: Colors.white.withValues(alpha: 0.90),
               child: Text(code,
                   style: const TextStyle(
@@ -1570,7 +1570,7 @@ class _ApiHero extends StatelessWidget {
                       fontWeight:  FontWeight.w700,
                       fontSize:    12,
                       height:      1.33,
-                      color:       _CourseTokens.textPrimary)),
+                      color:       _CourseTokens.textPrimary,),),
             ),
           ),
         ),
@@ -1583,7 +1583,7 @@ class _ApiHero extends StatelessWidget {
           borderRadius: BorderRadius.circular(9999),
           child: Container(
               padding: const EdgeInsets.symmetric(
-                  horizontal: 8, vertical: 4),
+                  horizontal: 8, vertical: 4,),
               color: statusColor.withValues(alpha: 0.90),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Icon(
@@ -1602,12 +1602,12 @@ class _ApiHero extends StatelessWidget {
                         fontWeight:  FontWeight.w700,
                         fontSize:    12,
                         height:      1.33,
-                        color:       Colors.white)),
-              ]),
+                        color:       Colors.white,),),
+              ],),
             ),
           ),
         ),
-      ]
+      ],
     );
   }
 }
@@ -1659,7 +1659,7 @@ class _ApiBody extends StatelessWidget {
                   fontWeight:  FontWeight.w700,
                   fontSize:    18,
                   height:      1.2,
-                  color:       _CourseTokens.textPrimary)),
+                  color:       _CourseTokens.textPrimary,),),
           const SizedBox(height: 4),
           Text(meta.isEmpty ? '—' : meta,
               maxLines:  1,
@@ -1668,32 +1668,32 @@ class _ApiBody extends StatelessWidget {
                   fontFamily:  'Inter',
                   fontWeight:  FontWeight.w400,
                   fontSize:    14,
-                  color:       _CourseTokens.textMuted)),
+                  color:       _CourseTokens.textMuted,),),
           const SizedBox(height: 10),
           Row(children: [
             const Icon(Icons.people_outline,
-                size: 18, color: _CourseTokens.textMuted),
+                size: 18, color: _CourseTokens.textMuted,),
             const SizedBox(width: 6),
             Text('$students Students',
                 style: const TextStyle(
                     fontFamily:  'Inter',
                     fontWeight:  FontWeight.w400,
                     fontSize:    14,
-                    color:       _CourseTokens.textMuted)),
+                    color:       _CourseTokens.textMuted,),),
             const SizedBox(width: 14),
             const Icon(Icons.menu_book_outlined,
-                size: 18, color: _CourseTokens.textMuted),
+                size: 18, color: _CourseTokens.textMuted,),
             const SizedBox(width: 6),
             Text('$modules Modules',
                 style: const TextStyle(
                     fontFamily:  'Inter',
                     fontWeight:  FontWeight.w400,
                     fontSize:    14,
-                    color:       _CourseTokens.textMuted)),
-          ]),
+                    color:       _CourseTokens.textMuted,),),
+          ],),
           const Spacer(),
           const Divider(
-              height: 1, thickness: 1, color: _CourseTokens.divider),
+              height: 1, thickness: 1, color: _CourseTokens.divider,),
           const SizedBox(height: 10),
           SizedBox(
             height: 34,
@@ -1704,17 +1704,17 @@ class _ApiBody extends StatelessWidget {
                   child: showPeople
                       ? _PeopleFooter(memberCountText: memberCountText)
                       : _NoteFooter(
-                          text: 'Updated ${_fmtDate(updatedAt)}'),
+                          text: 'Updated ${_fmtDate(updatedAt)}',),
                 ),
               ),
               _IconActionButton(
-                  icon: Icons.work_outline_rounded, onTap: onWorkTap),
+                  icon: Icons.work_outline_rounded, onTap: onWorkTap,),
               const SizedBox(width: 6),
               _IconActionButton(
                   key:  moreKey,
                   icon: Icons.more_vert_rounded,
-                  onTap: onMoreTap),
-            ]),
+                  onTap: onMoreTap,),
+            ],),
           ),
         ],
       ),
@@ -1736,7 +1736,7 @@ class _PeopleFooter extends StatelessWidget {
         const SizedBox(width: 10),
         Container(
           padding: const EdgeInsets.symmetric(
-              horizontal: 10, vertical: 6),
+              horizontal: 10, vertical: 6,),
           decoration: BoxDecoration(
             color:        const Color(0xFFF0F2F4),
             borderRadius: BorderRadius.circular(999),
@@ -1747,10 +1747,10 @@ class _PeopleFooter extends StatelessWidget {
                   fontFamily:  'Inter',
                   fontWeight:  FontWeight.w600,
                   fontSize:    12,
-                  color:       _CourseTokens.textMuted)),
+                  color:       _CourseTokens.textMuted,),),
         ),
       ],
-    ]);
+    ],);
   }
 }
 
@@ -1767,7 +1767,7 @@ class _NoteFooter extends StatelessWidget {
             fontFamily:  'Inter',
             fontWeight:  FontWeight.w500,
             fontSize:    12,
-            color:       _CourseTokens.textMuted));
+            color:       _CourseTokens.textMuted,),);
   }
 }
 
@@ -1781,7 +1781,7 @@ class _AvatarStackSmall extends StatelessWidget {
       child: Stack(children: [
         _a(0,  const Color(0xFFE2E8F0)),
         _a(16, const Color(0xFFDBEAFE)),
-      ]),
+      ],),
     );
   }
 
@@ -1796,7 +1796,7 @@ class _AvatarStackSmall extends StatelessWidget {
           color:  bg,
         ),
         child: const Icon(Icons.person,
-            size: 14, color: Color(0xFF64748B)),
+            size: 14, color: Color(0xFF64748B),),
       ),
     );
   }
@@ -1844,7 +1844,7 @@ class _IconActionButtonState extends State<_IconActionButton> {
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(widget.icon,
-              size: 18, color: _CourseTokens.textMuted),
+              size: 18, color: _CourseTokens.textMuted,),
         ),
       ),
     );
@@ -1898,9 +1898,9 @@ class _InlineErrorBanner extends StatelessWidget {
           child: Text(message,
               style: const TextStyle(
                   color:      Color(0xFF92400E),
-                  fontWeight: FontWeight.w700),
+                  fontWeight: FontWeight.w700,),
               maxLines:  2,
-              overflow:  TextOverflow.ellipsis),
+              overflow:  TextOverflow.ellipsis,),
         ),
         const SizedBox(width: 10),
         if (onRetry != null)
@@ -1909,9 +1909,9 @@ class _InlineErrorBanner extends StatelessWidget {
             icon:  const Icon(Icons.refresh_rounded, size: 18),
             label: const Text('Retry'),
             style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF92400E)),
+                foregroundColor: const Color(0xFF92400E),),
           ),
-      ]),
+      ],),
     );
   }
 }
@@ -1933,8 +1933,8 @@ class _MenuItemRow extends StatelessWidget {
           style: const TextStyle(
               fontWeight: FontWeight.w700,
               fontSize:   13.5,
-              color:      Color(0xFF0F172A))),
-    ]);
+              color:      Color(0xFF0F172A),),),
+    ],);
   }
 }
 

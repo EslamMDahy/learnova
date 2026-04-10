@@ -55,7 +55,7 @@ class MatRenameModuleDialog extends StatelessWidget {
                         const BorderSide(color: AppColors.primary, width: 1.4),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 14),
+                      horizontal: 14, vertical: 14,),
                 ),
               ),
               const SizedBox(height: 20),
@@ -69,7 +69,7 @@ class MatRenameModuleDialog extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         side: const BorderSide(color: MatK.div),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                            borderRadius: BorderRadius.circular(10),),
                       ),
                       child: const Text('Cancel'),
                     ),
@@ -85,7 +85,7 @@ class MatRenameModuleDialog extends StatelessWidget {
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                            borderRadius: BorderRadius.circular(10),),
                       ),
                       child: Text(confirmLabel),
                     ),

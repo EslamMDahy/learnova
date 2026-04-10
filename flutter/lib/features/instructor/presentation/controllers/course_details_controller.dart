@@ -372,7 +372,7 @@ class CourseDetailsController extends StateNotifier<CourseDetailsState> {
                     title: '',
                     orderIndex: 0,
                     createdAt: DateTime(0),
-                    updatedAt: DateTime(0)))
+                    updatedAt: DateTime(0),),)
             .materialId;
     try {
       await _ref.read(topicsApiProvider).deleteTopic(
