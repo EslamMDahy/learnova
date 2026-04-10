@@ -10,9 +10,9 @@ import 'materials_explorer_panel_widgets.dart';
 import 'materials_explorer_micro_widgets.dart';
 import 'materials_explorer_dialogs.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────────
 //  Page widget
-// ─────────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────────
 class MaterialsExplorerPage extends ConsumerStatefulWidget {
   final String courseSlug;
   final MyCourseItem course;
@@ -35,7 +35,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   DateTime _lastSaved    = DateTime.now().subtract(const Duration(minutes: 2));
   int _examStep = 1;
 
-  // ── lifecycle ────────────────────────────────────────────────────────────
+  // ── lifecycle ────────────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
@@ -45,7 +45,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   @override
   void dispose() { _searchCtrl.dispose(); _treeScroll.dispose(); super.dispose(); }
 
-  // ── backend load ─────────────────────────────────────────────────────────
+  // ── backend load ───────────────────────────────────────────────────────────────
   Future<void> _loadFromBackend() async {
     if (!mounted) return;
     setState(() => _loadingTree = true);
@@ -82,7 +82,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     setState(() { _roots = roots; _loadingTree = false; _lastSaved = DateTime.now(); });
   }
 
-  // ── helpers ──────────────────────────────────────────────────────────────
+  // ── helpers ────────────────────────────────────────────────────────────────────
   String _nid() => '${DateTime.now().microsecondsSinceEpoch}_${_uid++}';
 
   void _removeNode(Node t) {
@@ -98,7 +98,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     setState(() => walk(_roots));
   }
 
-  // ── CRUD ─────────────────────────────────────────────────────────────────
+  // ── CRUD ────────────────────────────────────────────────────────────────────
   Future<void> _createModule() async {
     final name = await _dlgInput('New Module', 'e.g. Chapter 1 — Introduction', '', 'Create');
     if (name == null || !mounted) return;
@@ -178,7 +178,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     );
   }
 
-  // ── BUILD ─────────────────────────────────────────────────────────────────
+  // ── BUILD ───────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -192,9 +192,9 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     ],);
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════════
   //  LEFT SIDEBAR
-  // ══════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════════
   Widget _buildSidebar() => SizedBox(
     width: 284,
     child: Container(
@@ -211,9 +211,9 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
               style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800,
                 color: K.hint, letterSpacing: 0.9,),),
             const Spacer(),
-            _TbBtn(icon: Icons.unfold_less_rounded, tip: 'Collapse all',
+            TbBtn(icon: Icons.unfold_less_rounded, tip: 'Collapse all',
               onTap: () => _setAllExpanded(false),),
-            _TbBtn(icon: Icons.unfold_more_rounded, tip: 'Expand all',
+            TbBtn(icon: Icons.unfold_more_rounded, tip: 'Expand all',
               onTap: () => _setAllExpanded(true),),
           ],),
         ),
@@ -227,7 +227,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
               : ListView(
                   controller: _treeScroll,
                   padding: const EdgeInsets.symmetric(vertical: 6),
-                  children: _roots.map((mod) => _ModuleTreeItem(
+                  children: _roots.map((mod) => ModuleTreeItem(
                     module:     mod,
                     selectedId: _selected?.id,
                     onModule:   (n) => setState(() { n.isExpanded = !n.isExpanded; _selected = n; }),
@@ -243,7 +243,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
           padding: const EdgeInsets.all(10),
           decoration: const BoxDecoration(
             border: Border(top: BorderSide(color: K.border)),),
-          child: _BtnPrimary(
+          child: BtnPrimary(
             label: 'Create New Module',
             icon: Icons.add_rounded,
             onTap: _createModule,
@@ -274,9 +274,9 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     ],),
   );
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════════
   //  RIGHT PANEL  — 3 states: nothing / module / material
-  // ══════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════════
   Widget _buildRightPanel() {
     final sel = _selected;
     if (sel == null)            return _panelEmpty();
@@ -285,7 +285,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     return _panelTopic(sel);
   }
 
-  // ── nothing selected ────────────────────────────────────────────────────
+  // ── nothing selected ──────────────────────────────────────────────────────────────────
   Widget _panelEmpty() => Container(
     color: K.bg,
     child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -307,11 +307,11 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
       const Text('Use the hierarchy panel on the left to navigate.',
         style: TextStyle(fontSize: 13, color: K.muted),),
       const SizedBox(height: 20),
-      _BtnOutline(label: 'Upload Material', icon: Icons.upload_rounded, onTap: _showUpload),
+      BtnOutline(label: 'Upload Material', icon: Icons.upload_rounded, onTap: _showUpload),
     ],),),
   );
 
-  // ── MODULE panel ─────────────────────────────────────────────────────────
+  // ── MODULE panel ─────────────────────────────────────────────────────────────────
   Widget _panelModule(Node mod) {
     final mats = mod.children.where((c) => c.nk == NK.material).toList();
     return Container(
@@ -324,7 +324,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
             border: Border(bottom: BorderSide(color: K.border)),
           ),
           child: Row(children: [
-            const _MatIcon(isModule: true, size: 44),
+            const MatIcon(isModule: true, size: 44),
             const SizedBox(width: 14),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(mod.title,
@@ -334,16 +334,16 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
               Text('Module  ·  ${mats.length} material${mats.length == 1 ? "" : "s"}',
                 style: const TextStyle(fontSize: 12.5, color: K.muted),),
             ],),),
-            _IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: () => _rename(mod)),
+            IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: () => _rename(mod)),
             const SizedBox(width: 2),
-            _IcBtn(icon: Icons.delete_outline, tip: 'Delete',
+            IcBtn(icon: Icons.delete_outline, tip: 'Delete',
               onTap: () => _delete(mod), col: K.red,),
           ],),
         ),
         Expanded(child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 22, 24, 32),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _UploadZone(onTap: _showUpload),
+            UploadZone(onTap: _showUpload),
             if (mats.isNotEmpty) ...[
               const SizedBox(height: 28),
               Row(children: [
@@ -351,10 +351,10 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800,
                     color: K.muted, letterSpacing: 0.7,),),
                 const SizedBox(width: 8),
-                _CountBadge('${mats.length}'),
+                CountBadge('${mats.length}'),
               ],),
               const SizedBox(height: 12),
-              ...mats.map((m) => _MaterialListCard(
+              ...mats.map((m) => MaterialListCard(
                 mat: m,
                 onTap: () => setState(() { m.isExpanded = !m.isExpanded; _selected = m; }),
                 onRename: () => _rename(m),
@@ -367,7 +367,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     );
   }
 
-  // ── MATERIAL panel ───────────────────────────────────────────────────────
+  // ── MATERIAL panel ─────────────────────────────────────────────────────────────────
   Widget _panelMaterial(Node mat) {
     final topics = mat.children.where((c) => c.nk == NK.topic).toList();
     return Row(children: [
@@ -376,9 +376,9 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 22, 20, 80),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _MatHeader(mat: mat, onRename: () => _rename(mat), onDelete: () => _delete(mat)),
+            MatHeader(mat: mat, onRename: () => _rename(mat), onDelete: () => _delete(mat)),
             const SizedBox(height: 22),
-            _TopicsSection(
+            TopicsSection(
               mat: mat,
               topics: topics,
               generating: _generatingTopics,
@@ -388,7 +388,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
               onDeleteTopic: (t) => _delete(t),
             ),
             const SizedBox(height: 20),
-            _TranscriptCard(mat: mat),
+            TranscriptCard(mat: mat),
           ],),
         ),
       ),),
@@ -400,7 +400,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         ),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(18),
-          child: _AISidebar(mat: mat, onRegen: () => setState(() {
+          child: AISidebar(mat: mat, onRegen: () => setState(() {
             mat.qualityScore = 65 + DateTime.now().second % 35;
           }),),
         ),
@@ -408,7 +408,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     ],);
   }
 
-  // ── TOPIC panel (leaf) ───────────────────────────────────────────────────
+  // ── TOPIC panel (leaf) ────────────────────────────────────────────────────────────
   Widget _panelTopic(Node t) => Container(
     color: K.bg,
     child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -426,14 +426,14 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
       const Text('Topic', style: TextStyle(fontSize: 13, color: K.muted)),
       const SizedBox(height: 22),
       Row(mainAxisSize: MainAxisSize.min, children: [
-        _BtnOutline(label: 'Rename', icon: Icons.edit_outlined, onTap: () => _rename(t)),
+        BtnOutline(label: 'Rename', icon: Icons.edit_outlined, onTap: () => _rename(t)),
         const SizedBox(width: 10),
-        _BtnDanger(label: 'Delete', icon: Icons.delete_outline, onTap: () => _delete(t)),
+        BtnDanger(label: 'Delete', icon: Icons.delete_outline, onTap: () => _delete(t)),
       ],),
     ],),),
   );
 
-  // ── bottom bar ────────────────────────────────────────────────────────────
+  // ── bottom bar ───────────────────────────────────────────────────────────────────
   Widget _buildBottomBar() {
     if (_selected == null) return const SizedBox.shrink();
     final diff = DateTime.now().difference(_lastSaved);
@@ -453,7 +453,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         Text(txt, style: const TextStyle(
           fontSize: 12, color: K.muted, fontWeight: FontWeight.w600,),),
         const Spacer(),
-        _BtnGenerate(
+        BtnGenerate(
           label: 'Generate Question',
           icon: Icons.auto_awesome_rounded,
           onTap: _openExam,),
@@ -461,16 +461,16 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     );
   }
 
-  // ── dialog helpers ────────────────────────────────────────────────────────
+  // ── dialog helpers ──────────────────────────────────────────────────────────────────
   Future<String?> _dlgInput(String t, String h, String init, String act) =>
     showDialog<String>(
       context: context, barrierDismissible: false,
-      builder: (_) => _DlgInput(title: t, hint: h, init: init, action: act),);
+      builder: (_) => DlgInput(title: t, hint: h, init: init, action: act),);
 
   Future<bool> _dlgConfirm(String body, String act, {bool danger = false}) async {
     final r = await showDialog<bool>(
       context: context, barrierDismissible: false,
-      builder: (_) => _DlgConfirm(body: body, action: act, danger: danger),);
+      builder: (_) => DlgConfirm(body: body, action: act, danger: danger),);
     return r ?? false;
   }
 }

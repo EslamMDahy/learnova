@@ -5,18 +5,19 @@ import 'materials_explorer_constants.dart';
 //  DIALOGS
 // =============================================================================
 
-class _DlgInput extends StatefulWidget {
+class DlgInput extends StatefulWidget {
   final String title, hint, init, action;
-  const _DlgInput({
+  const DlgInput({
+    super.key,
     required this.title,
     required this.hint,
     required this.init,
     required this.action,
   });
-  @override State<_DlgInput> createState() => _DlgInputState();
+  @override State<DlgInput> createState() => _DlgInputState();
 }
 
-class _DlgInputState extends State<_DlgInput> {
+class _DlgInputState extends State<DlgInput> {
   late final TextEditingController _c;
   bool _err = false;
 
@@ -110,10 +111,11 @@ class _DlgInputState extends State<_DlgInput> {
   );
 }
 
-class _DlgConfirm extends StatelessWidget {
+class DlgConfirm extends StatelessWidget {
   final String body, action;
   final bool danger;
-  const _DlgConfirm({
+  const DlgConfirm({
+    super.key,
     required this.body,
     required this.action,
     this.danger = false,
