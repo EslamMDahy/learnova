@@ -7,12 +7,13 @@ import 'materials_explorer_micro_widgets.dart';
 // =============================================================================
 
 /// One complete module row + its children
-class _ModuleTreeItem extends StatelessWidget {
+class ModuleTreeItem extends StatelessWidget {
   final Node module;
   final String? selectedId;
   final ValueChanged<Node> onModule, onMaterial, onTopic, onRename, onDelete;
 
-  const _ModuleTreeItem({
+  const ModuleTreeItem({
+    super.key,
     required this.module, required this.selectedId,
     required this.onModule, required this.onMaterial, required this.onTopic,
     required this.onRename, required this.onDelete,
@@ -23,7 +24,7 @@ class _ModuleTreeItem extends StatelessWidget {
     final sel = selectedId == module.id;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       // Module row
-      _SidebarRow(
+      SidebarRow(
         indent: 0, isSelected: sel,
         leading: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(
@@ -45,20 +46,20 @@ class _ModuleTreeItem extends StatelessWidget {
         titleStyle: TextStyle(
           fontSize: 12.5, fontWeight: FontWeight.w700,
           color: sel ? K.blue : K.text,),
-        trailing: _CtxMenu(items: [
-          _MItem(icon: Icons.upload_rounded, label: 'Upload material',
+        trailing: CtxMenu(items: [
+          MItem(icon: Icons.upload_rounded, label: 'Upload material',
             color: K.blue, onTap: () => onModule(module),),
-          const _MDivider(),
-          _MItem(icon: Icons.edit_outlined, label: 'Rename',
+          const MDivider(),
+          MItem(icon: Icons.edit_outlined, label: 'Rename',
             onTap: () => onRename(module),),
-          _MItem(icon: Icons.delete_outline, label: 'Delete',
+          MItem(icon: Icons.delete_outline, label: 'Delete',
             color: K.red, onTap: () => onDelete(module),),
         ],),
         onTap: () => onModule(module),
       ),
       // Materials
       if (module.isExpanded)
-        ...module.children.map((mat) => _MaterialTreeItem(
+        ...module.children.map((mat) => MaterialTreeItem(
           mat: mat, selectedId: selectedId,
           onMaterial: onMaterial, onTopic: onTopic,
           onRename: onRename, onDelete: onDelete,
@@ -67,12 +68,13 @@ class _ModuleTreeItem extends StatelessWidget {
   }
 }
 
-class _MaterialTreeItem extends StatelessWidget {
+class MaterialTreeItem extends StatelessWidget {
   final Node mat;
   final String? selectedId;
   final ValueChanged<Node> onMaterial, onTopic, onRename, onDelete;
 
-  const _MaterialTreeItem({
+  const MaterialTreeItem({
+    super.key,
     required this.mat, required this.selectedId,
     required this.onMaterial, required this.onTopic,
     required this.onRename, required this.onDelete,
@@ -81,13 +83,13 @@ class _MaterialTreeItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sel    = selectedId == mat.id;
-    final icon   = MKIcon(mat.mk);
-    final col    = MKColor(mat.mk);
-    final bg     = MKBg(mat.mk);
+    final icon   = _mkIcon(mat.mk);
+    final col    = _mkColor(mat.mk);
+    final bg     = _mkBg(mat.mk);
     final topics = mat.children.where((c) => c.nk == NK.topic).toList();
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _SidebarRow(
+      SidebarRow(
         indent: 1, isSelected: sel,
         leading: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(
@@ -109,14 +111,14 @@ class _MaterialTreeItem extends StatelessWidget {
         titleStyle: TextStyle(
           fontSize: 12, fontWeight: FontWeight.w600,
           color: sel ? K.blue : const Color(0xFF2D3748),),
-        trailing: _CtxMenu(items: [
-          _MItem(icon: Icons.label_outline_rounded, label: 'Add topic manually',
+        trailing: CtxMenu(items: [
+          MItem(icon: Icons.label_outline_rounded, label: 'Add topic manually',
             color: K.purple, onTap: () => onMaterial(mat),),
-          _MItem(icon: Icons.auto_awesome_rounded, label: 'Generate topics with AI',
+          MItem(icon: Icons.auto_awesome_rounded, label: 'Generate topics with AI',
             color: K.blue, onTap: () => onMaterial(mat),),
-          const _MDivider(),
-          _MItem(icon: Icons.edit_outlined, label: 'Rename', onTap: () => onRename(mat)),
-          _MItem(icon: Icons.delete_outline, label: 'Delete',
+          const MDivider(),
+          MItem(icon: Icons.edit_outlined, label: 'Rename', onTap: () => onRename(mat)),
+          MItem(icon: Icons.delete_outline, label: 'Delete',
             color: K.red, onTap: () => onDelete(mat),),
         ],),
         onTap: () => onMaterial(mat),
@@ -125,7 +127,7 @@ class _MaterialTreeItem extends StatelessWidget {
       if (mat.isExpanded)
         ...topics.map((t) {
           final tsel = selectedId == t.id;
-          return _SidebarRow(
+          return SidebarRow(
             indent: 2, isSelected: tsel,
             leading: Container(
               width: 18, height: 18,
@@ -143,7 +145,7 @@ class _MaterialTreeItem extends StatelessWidget {
     ],);
   }
 
-  static IconData MKIcon(MK? k) {
+  static IconData _mkIcon(MK? k) {
     switch (k) {
       case MK.video: return Icons.play_circle_rounded;
       case MK.doc:   return Icons.description_rounded;
@@ -152,7 +154,7 @@ class _MaterialTreeItem extends StatelessWidget {
     }
   }
 
-  static Color MKColor(MK? k) {
+  static Color _mkColor(MK? k) {
     switch (k) {
       case MK.video: return K.blue;
       case MK.doc:   return const Color(0xFF1E40AF);
@@ -161,7 +163,7 @@ class _MaterialTreeItem extends StatelessWidget {
     }
   }
 
-  static Color MKBg(MK? k) {
+  static Color _mkBg(MK? k) {
     switch (k) {
       case MK.video: return K.blueSoft;
       case MK.doc:   return K.badgeDocBg;
@@ -172,7 +174,7 @@ class _MaterialTreeItem extends StatelessWidget {
 }
 
 /// Base sidebar row — animated hover + selected
-class _SidebarRow extends StatefulWidget {
+class SidebarRow extends StatefulWidget {
   final int indent;
   final bool isSelected;
   final Widget leading;
@@ -181,17 +183,18 @@ class _SidebarRow extends StatefulWidget {
   final Widget? trailing;
   final VoidCallback onTap;
 
-  const _SidebarRow({
+  const SidebarRow({
+    super.key,
     required this.indent, required this.isSelected, required this.leading,
     required this.title, required this.titleStyle, required this.onTap,
     this.trailing,
   });
 
   @override
-  State<_SidebarRow> createState() => _SidebarRowState();
+  State<SidebarRow> createState() => _SidebarRowState();
 }
 
-class _SidebarRowState extends State<_SidebarRow> {
+class _SidebarRowState extends State<SidebarRow> {
   bool _h = false;
 
   @override
