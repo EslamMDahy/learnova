@@ -9,7 +9,7 @@ import 'forgot_password_state.dart';
 /// Uses the Riverpod 2.x [Notifier] API.
 final forgotPasswordControllerProvider =
     NotifierProvider<ForgotPasswordController, ForgotPasswordState>(
-        ForgotPasswordController.new,);
+        ForgotPasswordController.new);
 
 class ForgotPasswordController extends Notifier<ForgotPasswordState> {
   @override

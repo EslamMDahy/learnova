@@ -47,7 +47,7 @@ class AuthRepository implements IAuthRepository {
                 'logo_url': o.logoUrl,
                 'invite_code': o.inviteCode,
                 'subscription_status': o.subscriptionStatus,
-              },)
+              })
           .toList(),
     };
 

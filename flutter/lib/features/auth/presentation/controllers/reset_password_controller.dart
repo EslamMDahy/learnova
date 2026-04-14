@@ -9,7 +9,7 @@ import 'reset_password_state.dart';
 /// Uses the Riverpod 2.x [Notifier] API.
 final resetPasswordControllerProvider =
     NotifierProvider<ResetPasswordController, ResetPasswordState>(
-        ResetPasswordController.new,);
+        ResetPasswordController.new);
 
 class ResetPasswordController extends Notifier<ResetPasswordState> {
   @override

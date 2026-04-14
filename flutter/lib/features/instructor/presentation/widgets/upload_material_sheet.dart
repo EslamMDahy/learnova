@@ -122,7 +122,7 @@ class _UploadMaterialSheetState extends State<UploadMaterialSheet>
           bytes: bytes,
           status: valid ? _FileStatus.ready : _FileStatus.error,
           errorMsg: valid ? null : 'Unsupported or exceeds 500 MB',
-        ),);
+        ));
       });
       c.complete();
     });
@@ -205,10 +205,10 @@ class _UploadMaterialSheetState extends State<UploadMaterialSheet>
                   onSave: readyCount > 0 ? _save : null,
                 ),
               ),
-            ],),
+            ]),
           ),
         );
-      },),
+      }),
     );
   }
 }
@@ -287,10 +287,10 @@ class _LeftPanel extends StatelessWidget {
                     color: const Color(0xFF137FEC).withOpacity(0.2),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                        color: const Color(0xFF137FEC).withOpacity(0.4),),
+                        color: const Color(0xFF137FEC).withOpacity(0.4)),
                   ),
                   child: const Icon(Icons.upload_file_rounded,
-                      size: 20, color: Color(0xFF60AFFE),),
+                      size: 20, color: Color(0xFF60AFFE)),
                 ),
                 const SizedBox(width: 12),
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -299,13 +299,13 @@ class _LeftPanel extends StatelessWidget {
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF60AFFE),
-                          letterSpacing: 0.5,),),
+                          letterSpacing: 0.5)),
                   Text('→ $moduleTitle',
                       style: TextStyle(
                           fontSize: 11,
-                          color: Colors.white.withOpacity(0.4),),),
-                ],),
-              ],),
+                          color: Colors.white.withOpacity(0.4))),
+                ]),
+              ]),
 
               const SizedBox(height: 36),
 
@@ -325,7 +325,7 @@ class _LeftPanel extends StatelessWidget {
                 'PDF, DOCX, PPTX, MP4  ·  Max 500 MB',
                 style: TextStyle(
                     fontSize: 13,
-                    color: Colors.white.withOpacity(0.45),),
+                    color: Colors.white.withOpacity(0.45)),
               ),
 
               const SizedBox(height: 40),
@@ -416,7 +416,7 @@ class _LeftPanel extends StatelessWidget {
                               onTap: onBrowse,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 32, vertical: 13,),
+                                    horizontal: 32, vertical: 13),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF137FEC),
                                   borderRadius: BorderRadius.circular(10),
@@ -463,11 +463,11 @@ class _LeftPanel extends StatelessWidget {
                 const Icon(Icons.text_snippet_outlined, size: 13, color: Color(0xFF60AFFE)),
                 const SizedBox(width: 6),
                 Text('OCR supported', style: TextStyle(fontSize: 11.5, color: Colors.white.withOpacity(0.45))),
-              ],),
+              ]),
             ],
           ),
         ),
-      ],),
+      ]),
     );
   }
 }
@@ -528,7 +528,7 @@ class _RightPanel extends StatelessWidget {
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF0F172A),
-                    letterSpacing: -0.4,),),
+                    letterSpacing: -0.4)),
             const Spacer(),
             if (queue.isNotEmpty)
               Container(
@@ -542,9 +542,9 @@ class _RightPanel extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary,),),
+                        color: AppColors.primary)),
               ),
-          ],),
+          ]),
         ),
 
         const SizedBox(height: 8),
@@ -575,22 +575,22 @@ class _RightPanel extends StatelessWidget {
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
                       child: const Icon(Icons.inbox_outlined,
-                          size: 32, color: Color(0xFFCBD5E1),),
+                          size: 32, color: Color(0xFFCBD5E1)),
                     ),
                     const SizedBox(height: 16),
                     const Text('Nothing here yet',
                         style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF94A3B8),),),
+                            color: Color(0xFF94A3B8))),
                     const SizedBox(height: 6),
                     const Text('Drop files on the left\nto add them to the queue',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 13,
                             color: Color(0xFFCBD5E1),
-                            height: 1.5,),),
-                  ],),
+                            height: 1.5)),
+                  ]),
                 )
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
@@ -617,12 +617,12 @@ class _RightPanel extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0xFFE2E8F0)),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(9),),
+                      borderRadius: BorderRadius.circular(9)),
                   foregroundColor: const Color(0xFF64748B),
                 ),
                 child: const Text('Clear Completed',
                     style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600),),
+                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
               ),
             ),
           ),
@@ -647,7 +647,7 @@ class _RightPanel extends StatelessWidget {
                       ? 'Save to Course ($readyCount)'
                       : 'Save to Course',
                   style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w700,),
+                      fontSize: 14, fontWeight: FontWeight.w700),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF137FEC),
@@ -657,7 +657,7 @@ class _RightPanel extends StatelessWidget {
                   elevation: 0,
                   shadowColor: Colors.transparent,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ),
@@ -671,16 +671,16 @@ class _RightPanel extends StatelessWidget {
                 style: TextButton.styleFrom(
                   foregroundColor: const Color(0xFF94A3B8),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: const Text('Cancel',
                     style: TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w500,),),
+                        fontSize: 14, fontWeight: FontWeight.w500)),
               ),
             ),
-          ],),
+          ]),
         ),
-      ],),
+      ]),
     );
   }
 }
@@ -726,7 +726,7 @@ class _QueueTile extends StatelessWidget {
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-              color: iconBg, borderRadius: BorderRadius.circular(12),),
+              color: iconBg, borderRadius: BorderRadius.circular(12)),
           child: Icon(icon, size: 22, color: iconFg),
         ),
         const SizedBox(width: 14),
@@ -740,35 +740,35 @@ class _QueueTile extends StatelessWidget {
                 style: const TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),),),
+                    color: Color(0xFF1E293B))),
             const SizedBox(height: 5),
             if (isReady)
               Row(children: [
                 const Icon(Icons.check_circle_rounded,
-                    size: 14, color: Color(0xFF22C55E),),
+                    size: 14, color: Color(0xFF22C55E)),
                 const SizedBox(width: 5),
                 Text(file.displaySize,
                     style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF22C55E),),),
+                        color: Color(0xFF22C55E))),
                 const SizedBox(width: 8),
                 const Text('Ready for Review',
                     style: TextStyle(
-                        fontSize: 12, color: Color(0xFF94A3B8),),),
-              ],)
+                        fontSize: 12, color: Color(0xFF94A3B8))),
+              ])
             else if (isError)
               Row(children: [
                 const Icon(Icons.error_outline_rounded,
-                    size: 14, color: Color(0xFFEF4444),),
+                    size: 14, color: Color(0xFFEF4444)),
                 const SizedBox(width: 5),
                 Expanded(
                   child: Text(file.errorMsg ?? 'Error',
                       style: const TextStyle(
-                          fontSize: 12, color: Color(0xFFEF4444),),),
+                          fontSize: 12, color: Color(0xFFEF4444))),
                 ),
-              ],),
-          ],),
+              ]),
+          ]),
         ),
         InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
           onTap: onRemove,
@@ -780,10 +780,10 @@ class _QueueTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.close_rounded,
-                size: 14, color: Color(0xFFCBD5E1),),
+                size: 14, color: Color(0xFFCBD5E1)),
           ),
         ),
-      ],),
+      ]),
     );
   }
 }

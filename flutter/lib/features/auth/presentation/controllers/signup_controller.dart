@@ -53,14 +53,14 @@ class SignupController extends Notifier<SignupState> {
 
     if (!_looksLikeEmail(cleanEmail)) {
       state = state.copyWith(
-          loading: false, error: 'Please enter a valid email.',);
+          loading: false, error: 'Please enter a valid email.');
       return false;
     }
 
     if (password.trim().length < 8) {
       state = state.copyWith(
           loading: false,
-          error: 'Password must be at least 8 characters.',);
+          error: 'Password must be at least 8 characters.');
       return false;
     }
 

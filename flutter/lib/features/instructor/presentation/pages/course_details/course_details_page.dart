@@ -44,16 +44,16 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
 
   List<Widget> _buildPages(MyCourseItem course) => [
         CourseOverviewTab(
-            key: const PageStorageKey('course-overview-tab'), course: course,),
+            key: const PageStorageKey('course-overview-tab'), course: course),
         CourseMaterialsTab(
-            key: const PageStorageKey('course-materials-tab'), course: course,),
+            key: const PageStorageKey('course-materials-tab'), course: course),
         CourseOutcomesTab(
-            key: const PageStorageKey('course-outcomes-tab'), course: course,),
+            key: const PageStorageKey('course-outcomes-tab'), course: course),
         CourseQuestionBankTab(
             key: const PageStorageKey('course-question-bank-tab'),
-            course: course,),
+            course: course),
         CourseStudentsTab(
-            key: const PageStorageKey('course-students-tab'), course: course,),
+            key: const PageStorageKey('course-students-tab'), course: course),
       ];
 
   String get _tabKey =>
@@ -77,7 +77,7 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
         ? storedIndex
         : 0;
     _tabController = TabController(
-        length: _tabs.length, vsync: this, initialIndex: _currentIndex,);
+        length: _tabs.length, vsync: this, initialIndex: _currentIndex);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() => _currentIndex = _tabController.index);
@@ -164,7 +164,7 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
       ),
-    ],);
+    ]);
   }
 
   // ── Error shell ─────────────────────────────────────────────────────────────
@@ -186,9 +186,9 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.error_outline,
-                    color: AppColors.dangerText, size: 40,),
+                    color: AppColors.dangerText, size: 40),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Could not load course',
                   style: AppTextStyles.sectionTitle,
                 ),
@@ -203,7 +203,7 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
           ),
         ),
       ),
-    ],);
+    ]);
   }
 
   // ── Main content ────────────────────────────────────────────────────────────
@@ -236,7 +236,7 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
           children: pages,
         ),
       ),
-    ],);
+    ]);
   }
 }
 

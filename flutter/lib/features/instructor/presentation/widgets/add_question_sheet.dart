@@ -110,7 +110,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
       }
       options = nonEmpty
           .map((c) => QuestionOption(
-              id: 'opt_${nonEmpty.indexOf(c)}', text: c.text.trim(),),)
+              id: 'opt_${nonEmpty.indexOf(c)}', text: c.text.trim()))
           .toList();
       correctOptionId = _correctIdx < options.length
           ? options[_correctIdx].id
@@ -199,20 +199,20 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                       style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.textTitle,),),
+                          color: AppColors.textTitle)),
                   SizedBox(height: 2),
                   Text('Create a new assessment item for your students.',
                       style: TextStyle(
-                          fontSize: 13, color: AppColors.textMuted,),),
-                ],),
+                          fontSize: 13, color: AppColors.textMuted)),
+                ]),
               ),
               IconButton(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.close_rounded,
-                    color: AppColors.textMuted, size: 20,),
+                    color: AppColors.textMuted, size: 20),
                 padding: EdgeInsets.zero,
               ),
-            ],),
+            ]),
             const SizedBox(height: 12),
 
             // Type tabs (matching Image 3)
@@ -227,11 +227,11 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
               labelStyle: const TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 13.5,
-                  fontFamily: 'Inter',),
+                  fontFamily: 'Inter'),
               unselectedLabelStyle: const TextStyle(
                   fontWeight: FontWeight.w500,
                   fontSize: 13.5,
-                  fontFamily: 'Inter',),
+                  fontFamily: 'Inter'),
               tabs: const [
                 Tab(text: 'Multiple Choice'),
                 Tab(text: 'True / False'),
@@ -239,7 +239,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                 Tab(text: 'Short Answer'),
               ],
             ),
-          ],),
+          ]),
         ),
 
         // Body
@@ -258,33 +258,33 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                         style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textTitle,),),
+                            color: AppColors.textTitle)),
                     const Spacer(),
                     // "Generate with AI" button (Image 3)
                     GestureDetector(
                       onTap: _generateWithAI,
                       child: const Row(mainAxisSize: MainAxisSize.min, children: [
                         Icon(Icons.auto_awesome_rounded,
-                            size: 13, color: AppColors.primary,),
+                            size: 13, color: AppColors.primary),
                         SizedBox(width: 4),
                         Text('Generate with AI',
                             style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.primary,),),
-                      ],),
+                                color: AppColors.primary)),
+                      ]),
                     ),
-                  ],),
+                  ]),
                   const SizedBox(height: 8),
 
                   // Formatting toolbar (matching Image 3)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6,),
+                        horizontal: 10, vertical: 6),
                     decoration: const BoxDecoration(
                       color: Color(0xFFF8F9FA),
                       borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(8),),
+                          top: Radius.circular(8)),
                       border: Border(
                         top: BorderSide(color: AppColors.border),
                         left: BorderSide(color: AppColors.border),
@@ -299,7 +299,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                       _ToolbarIconBtn(Icons.format_list_bulleted_rounded),
                       _ToolbarIconBtn(Icons.image_outlined),
                       _ToolbarIconBtn(Icons.code_rounded),
-                    ],),
+                    ]),
                   ),
 
                   // Text input
@@ -311,29 +311,29 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                       hintText:
                           "Enter your question here... e.g., 'What is the primary function of the mitochondria?'",
                       hintStyle: TextStyle(
-                          fontSize: 13, color: AppColors.textHint,),
+                          fontSize: 13, color: AppColors.textHint),
                       filled: true,
                       fillColor: Colors.white,
                       contentPadding: EdgeInsets.all(14),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.vertical(
-                            bottom: Radius.circular(8),),
+                            bottom: Radius.circular(8)),
                         borderSide: BorderSide(color: AppColors.border),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.vertical(
-                            bottom: Radius.circular(8),),
+                            bottom: Radius.circular(8)),
                         borderSide: BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.vertical(
-                            bottom: Radius.circular(8),),
+                            bottom: Radius.circular(8)),
                         borderSide: BorderSide(
-                            color: AppColors.primary, width: 1.5,),
+                            color: AppColors.primary, width: 1.5),
                       ),
                     ),
                   ),
-                ],),
+                ]),
               ),
               const SizedBox(height: 12),
 
@@ -348,7 +348,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                   if (_type == QuestionType.shortAnswer ||
                       _type == QuestionType.essay)
                     _buildOpenSection(),
-                ],),
+                ]),
               ),
               const SizedBox(height: 12),
 
@@ -362,26 +362,26 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                         style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textTitle,),),
+                            color: AppColors.textTitle)),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<int?>(
                       value: _selectedModuleId,
                       decoration: const InputDecoration(
-                          hintText: 'Select a module',),
+                          hintText: 'Select a module'),
                       items: [
                         const DropdownMenuItem<int?>(
-                            child: Text('No module'),),
+                            child: Text('No module')),
                         ...widget.modules.map((m) =>
                             DropdownMenuItem<int?>(
                                 value: m.id,
                                 child: Text(m.title,
                                     overflow:
-                                        TextOverflow.ellipsis,),),),
+                                        TextOverflow.ellipsis))),
                       ],
                       onChanged: (v) =>
                           setState(() => _selectedModuleId = v),
                     ),
-                  ],),
+                  ]),
                 ),
 
               if (widget.moduleId == null && widget.modules.isNotEmpty)
@@ -396,7 +396,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                       style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textTitle,),),
+                          color: AppColors.textTitle)),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _explanationCtrl,
@@ -410,15 +410,15 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                   const SizedBox(height: 8),
                   const Row(children: [
                     Icon(Icons.info_outline_rounded,
-                        size: 13, color: AppColors.textHint,),
+                        size: 13, color: AppColors.textHint),
                     SizedBox(width: 5),
                     Text(
                         'This will be shown to students after they submit their answer.',
                         style: TextStyle(
                             fontSize: 11.5,
-                            color: AppColors.textHint,),),
-                  ],),
-                ],),
+                            color: AppColors.textHint)),
+                  ]),
+                ]),
               ),
 
               // Error
@@ -433,18 +433,18 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                   ),
                   child: Row(children: [
                     const Icon(Icons.error_outline,
-                        size: 14, color: AppColors.dangerText,),
+                        size: 14, color: AppColors.dangerText),
                     const SizedBox(width: 8),
                     Text(_error!,
                         style: const TextStyle(
                             fontSize: 12.5,
-                            color: AppColors.dangerText,),),
-                  ],),
+                            color: AppColors.dangerText)),
+                  ]),
                 ),
               ],
 
               const SizedBox(height: 80), // space for bottom bar
-            ],),
+            ]),
           ),
         ),
 
@@ -463,7 +463,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
               label: const Text('Save Draft'),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12,),
+                    horizontal: 16, vertical: 12),
               ),
             ),
             const Spacer(),
@@ -472,7 +472,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
               onPressed: () => _submit(addAnother: true),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12,),
+                    horizontal: 20, vertical: 12),
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 side: BorderSide.none,
@@ -485,13 +485,13 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
               onPressed: _submit,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 12,),
+                    horizontal: 24, vertical: 12),
               ),
               child: const Text('Add'),
             ),
-          ],),
+          ]),
         ),
-      ],),
+      ]),
     );
   }
 
@@ -503,7 +503,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textTitle,),),
+                color: AppColors.textTitle)),
         const SizedBox(width: 10),
         Container(
           padding:
@@ -516,9 +516,9 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
               style: TextStyle(
                   fontSize: 11,
                   color: AppColors.textMuted,
-                  fontWeight: FontWeight.w500,),),
+                  fontWeight: FontWeight.w500)),
         ),
-      ],),
+      ]),
       const SizedBox(height: 12),
       ...List.generate(_optionCtrls.length, (i) {
         final label = String.fromCharCode(65 + i); // A, B, C...
@@ -530,7 +530,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                 style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textMuted,),),
+                    color: AppColors.textMuted)),
             const SizedBox(height: 4),
             Row(children: [
               GestureDetector(
@@ -559,8 +559,8 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                   ),
                 ),
               ),
-            ],),
-          ],),
+            ]),
+          ]),
         );
       }),
       if (_optionCtrls.length < 6)
@@ -574,20 +574,20 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                    color: AppColors.primary, width: 1.5,),
+                    color: AppColors.primary, width: 1.5),
               ),
               child: const Icon(Icons.add,
-                  size: 12, color: AppColors.primary,),
+                  size: 12, color: AppColors.primary),
             ),
             const SizedBox(width: 8),
             const Text('Add another option',
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primary,),),
-          ],),
+                    color: AppColors.primary)),
+          ]),
         ),
-    ],);
+    ]);
   }
 
   // ── T/F Section ─────────────────────────────────────────────────────────────
@@ -597,7 +597,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
           style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: AppColors.textTitle,),),
+              color: AppColors.textTitle)),
       const SizedBox(height: 12),
       Row(children: [
         _TFOptionBtn(
@@ -611,8 +611,8 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
           selected: !_correctBool,
           onTap: () => setState(() => _correctBool = false),
         ),
-      ],),
-    ],);
+      ]),
+    ]);
   }
 
   // ── Open Section ─────────────────────────────────────────────────────────────
@@ -622,7 +622,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
           style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: AppColors.textTitle,),),
+              color: AppColors.textTitle)),
       const SizedBox(height: 8),
       TextField(
         controller: _answerCtrl,
@@ -634,7 +634,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
               : 'Model essay structure or key points...',
         ),
       ),
-    ],);
+    ]);
   }
 
   void _generateWithAI() {
@@ -684,7 +684,7 @@ class _ToolbarBtn extends StatelessWidget {
   final bool italic;
   final bool underline;
   const _ToolbarBtn(this.label,
-      {this.bold = false, this.italic = false, this.underline = false,});
+      {this.bold = false, this.italic = false, this.underline = false});
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(right: 2),
@@ -743,7 +743,7 @@ class _TFOptionBtn extends StatelessWidget {
   const _TFOptionBtn(
       {required this.label,
       required this.selected,
-      required this.onTap,});
+      required this.onTap});
   @override
   Widget build(BuildContext context) => GestureDetector(
         onTap: onTap,
@@ -758,7 +758,7 @@ class _TFOptionBtn extends StatelessWidget {
                 color: selected
                     ? AppColors.primary
                     : AppColors.border,
-                width: selected ? 1.5 : 1,),
+                width: selected ? 1.5 : 1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(

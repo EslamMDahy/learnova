@@ -71,7 +71,7 @@ class _CourseStudentsTabState extends ConsumerState<CourseStudentsTab> {
     if (_search.trim().isNotEmpty) {
       list = list
           .where((i) =>
-              i.email.toLowerCase().contains(_search.toLowerCase()),)
+              i.email.toLowerCase().contains(_search.toLowerCase()))
           .toList();
     }
     return list;
@@ -91,7 +91,7 @@ class _CourseStudentsTabState extends ConsumerState<CourseStudentsTab> {
           color: Colors.white,
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.border)),),
+              border: Border(bottom: BorderSide(color: AppColors.border))),
           child: Row(children: [
             // Stat pills
             _StatPill('${_invites.length}', 'Total', AppColors.primary),
@@ -111,18 +111,18 @@ class _CourseStudentsTabState extends ConsumerState<CourseStudentsTab> {
                   hintText: 'Search by email...',
                   hintStyle: const TextStyle(fontSize: 13),
                   prefixIcon: const Icon(Icons.search_rounded,
-                      size: 15, color: AppColors.textHint,),
+                      size: 15, color: AppColors.textHint),
                   contentPadding: const EdgeInsets.symmetric(vertical: 8),
                   filled: true,
                   fillColor: AppColors.pageBg,
                   enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide:
-                          const BorderSide(color: AppColors.border),),
+                          const BorderSide(color: AppColors.border)),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: const BorderSide(
-                          color: AppColors.primary, width: 1.5,),),
+                          color: AppColors.primary, width: 1.5)),
                 ),
               ),
             ),
@@ -143,11 +143,11 @@ class _CourseStudentsTabState extends ConsumerState<CourseStudentsTab> {
                 child: const Padding(
                   padding: EdgeInsets.all(7),
                   child: Icon(Icons.refresh_rounded,
-                      size: 17, color: AppColors.textMuted,),
+                      size: 17, color: AppColors.textMuted),
                 ),
               ),
             ),
-          ],),
+          ]),
         ),
 
         // ── Content ───────────────────────────────────────────────────────
@@ -167,7 +167,7 @@ class _CourseStudentsTabState extends ConsumerState<CourseStudentsTab> {
                               _InviteCard(invite: shown[i]),
                         ),
         ),
-      ],),
+      ]),
     );
   }
 
@@ -176,14 +176,14 @@ class _CourseStudentsTabState extends ConsumerState<CourseStudentsTab> {
     return Center(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         const Icon(Icons.people_outline_rounded,
-            size: 42, color: AppColors.primary,),
+            size: 42, color: AppColors.primary),
         const SizedBox(height: 12),
         Text(
           isFiltered ? 'No matching students' : 'No invitations yet',
           style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
-              color: AppColors.textTitle,),
+              color: AppColors.textTitle),
         ),
         const SizedBox(height: 6),
         Text(
@@ -193,10 +193,10 @@ class _CourseStudentsTabState extends ConsumerState<CourseStudentsTab> {
                   ? 'Invite students via the course settings to get started.'
                   : 'This is a public course. Students can join without invitations.',
           style: const TextStyle(
-              fontSize: 13, color: AppColors.textMuted, height: 1.5,),
+              fontSize: 13, color: AppColors.textMuted, height: 1.5),
           textAlign: TextAlign.center,
         ),
-      ],),
+      ]),
     );
   }
 }
@@ -265,7 +265,7 @@ class _InviteCard extends StatelessWidget {
                 fontSize: 13,
                 color: isAccepted
                     ? AppColors.primary
-                    : AppColors.textMuted,),
+                    : AppColors.textMuted),
           ),
         ),
         const SizedBox(width: 12),
@@ -277,19 +277,19 @@ class _InviteCard extends StatelessWidget {
                 style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textTitle,),),
+                    color: AppColors.textTitle)),
             const SizedBox(height: 3),
             Text(
               isAccepted && invite.acceptedAt != null
                   ? 'Accepted ${_fmt(invite.acceptedAt!)}'
                   : 'Invited ${_fmt(invite.createdAt)}',
               style: const TextStyle(
-                  fontSize: 11.5, color: AppColors.textMuted,),
+                  fontSize: 11.5, color: AppColors.textMuted),
             ),
-          ],),
+          ]),
         ),
         _StatusBadge(status: invite.status),
-      ],),
+      ]),
     );
   }
 
@@ -328,7 +328,7 @@ class _StatusBadge extends StatelessWidget {
           BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
       child: Text(label,
           style: TextStyle(
-              fontSize: 11.5, fontWeight: FontWeight.w700, color: fg,),),
+              fontSize: 11.5, fontWeight: FontWeight.w700, color: fg)),
     );
   }
 }
@@ -346,20 +346,20 @@ class _StatPill extends StatelessWidget {
       decoration: BoxDecoration(
           color: color.withOpacity(0.08),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.2)),),
+          border: Border.all(color: color.withOpacity(0.2))),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Text(count,
             style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
-                color: color,),),
+                color: color)),
         const SizedBox(width: 5),
         Text(label,
             style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: color.withOpacity(0.8),),),
-      ],),
+                color: color.withOpacity(0.8))),
+      ]),
     );
   }
 }
@@ -381,7 +381,7 @@ class _FilterBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: active ? const Color(0xFFEFF6FF) : Colors.white,
           border: Border.all(
-              color: active ? AppColors.primary : AppColors.border,),
+              color: active ? AppColors.primary : AppColors.border),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(label,
@@ -390,7 +390,7 @@ class _FilterBtn extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: active
                     ? AppColors.primary
-                    : AppColors.textMuted,),),
+                    : AppColors.textMuted)),
       ),
     );
   }
@@ -409,19 +409,19 @@ class _ErrorView extends StatelessWidget {
         const SizedBox(height: 12),
         const Text('Failed to load students',
             style: TextStyle(
-                fontWeight: FontWeight.w700, fontSize: 15,),),
+                fontWeight: FontWeight.w700, fontSize: 15)),
         const SizedBox(height: 6),
         Text(error,
             textAlign: TextAlign.center,
             style: const TextStyle(
-                fontSize: 12, color: AppColors.textMuted,),),
+                fontSize: 12, color: AppColors.textMuted)),
         const SizedBox(height: 14),
         ElevatedButton.icon(
           onPressed: onRetry,
           icon: const Icon(Icons.refresh),
           label: const Text('Retry'),
         ),
-      ],),
+      ]),
     );
   }
 }

@@ -286,7 +286,7 @@ class _GenerateQuestionsDialogState
           module: module,
           material: material,
           topic: topic,
-        ),);
+        ));
       }
     }
 

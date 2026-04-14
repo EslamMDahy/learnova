@@ -125,7 +125,7 @@ class _CourseOutcomesContentState
           .createOutcome(courseId: widget.courseId, outcome: lo);
       final current = ref.read(courseLOProvider(widget.courseId));
       final withCode = saved.copyWith(
-          code: LearningOutcome.codeForIndex(current.length),);
+          code: LearningOutcome.codeForIndex(current.length));
       ref.read(courseLOProvider(widget.courseId).notifier).state = [
         ...current,
         withCode,
@@ -407,10 +407,10 @@ class _AddOutcomeDialogState extends State<_AddOutcomeDialog> {
                 const Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('Add Learning Outcome',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textTitle),),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
                     Text('Define what students will achieve',
-                        style: TextStyle(fontSize: 12, color: AppColors.textMuted),),
-                  ],),
+                        style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                  ]),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close, size: 18),
@@ -418,12 +418,12 @@ class _AddOutcomeDialogState extends State<_AddOutcomeDialog> {
                   onPressed: () => Navigator.pop(context),
                   visualDensity: VisualDensity.compact,
                 ),
-              ],),
+              ]),
               const SizedBox(height: 22),
 
               // Outcome description
               const Text('Description',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textTitle),),
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
               const SizedBox(height: 6),
               TextField(
                 controller: _titleCtrl,
@@ -442,20 +442,20 @@ class _AddOutcomeDialogState extends State<_AddOutcomeDialog> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.border),),
+                      borderSide: const BorderSide(color: AppColors.border)),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.primary, width: 1.5),),
+                      borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
                   errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFEF4444)),),
+                      borderSide: const BorderSide(color: Color(0xFFEF4444))),
                 ),
               ),
               const SizedBox(height: 18),
 
               // Difficulty
               const Text('Difficulty Level',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textTitle),),
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
               const SizedBox(height: 8),
               Row(children: OutcomeDifficulty.values.map((d) {
                 final sel = _diff == d;
@@ -484,12 +484,12 @@ class _AddOutcomeDialogState extends State<_AddOutcomeDialog> {
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: sel ? color : AppColors.textMuted,
-                            ),),
-                      ],),
+                            )),
+                      ]),
                     ),
                   ),
-                ),);
-              }).toList(),),
+                ));
+              }).toList()),
               const SizedBox(height: 24),
 
               // Actions
@@ -519,7 +519,7 @@ class _AddOutcomeDialogState extends State<_AddOutcomeDialog> {
                     ),
                   ),
                 ),
-              ],),
+              ]),
             ],
           ),
         ),
@@ -616,7 +616,7 @@ class _OutcomeStatCard extends StatelessWidget {
                   Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
                 ],
               ),
-            ),
+            )
           ],
         ),
       );
@@ -682,22 +682,22 @@ class _EditLODialogState extends State<_EditLODialog> {
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Edit ${widget.outcome.code}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textTitle),),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
               const Text('Update this learning outcome',
-                  style: TextStyle(fontSize: 12, color: AppColors.textMuted),),
-            ],),),
+                  style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+            ])),
             IconButton(
               icon: const Icon(Icons.close, size: 18),
               color: AppColors.textMuted,
               onPressed: () => Navigator.pop(context),
               visualDensity: VisualDensity.compact,
             ),
-          ],),
+          ]),
           const SizedBox(height: 22),
 
           // Description
           const Text('Description',
-              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textTitle),),
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
           const SizedBox(height: 6),
           TextField(
             controller: _ctrl,
@@ -713,17 +713,17 @@ class _EditLODialogState extends State<_EditLODialog> {
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.border),),
+                  borderSide: const BorderSide(color: AppColors.border)),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.primary, width: 1.5),),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
             ),
           ),
           const SizedBox(height: 18),
 
           // Difficulty
           const Text('Difficulty Level',
-              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textTitle),),
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
           const SizedBox(height: 8),
           Row(children: OutcomeDifficulty.values.map((d) {
             final sel = _diff == d;
@@ -752,12 +752,12 @@ class _EditLODialogState extends State<_EditLODialog> {
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: sel ? color : AppColors.textMuted,
-                        ),),
-                  ],),
+                        )),
+                  ]),
                 ),
               ),
-            ),);
-          }).toList(),),
+            ));
+          }).toList()),
           const SizedBox(height: 24),
 
           // Actions
@@ -788,8 +788,8 @@ class _EditLODialogState extends State<_EditLODialog> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
               ),
             ),
-          ],),
-        ],),
+          ]),
+        ]),
       ),
     ),
   );
@@ -865,7 +865,7 @@ class _LOTile extends StatelessWidget {
                           Container(width: 7, height: 7, decoration: BoxDecoration(color: _diffColor, shape: BoxShape.circle)),
                           const SizedBox(width: 5),
                           Text(outcome.difficulty.label, style: TextStyle(fontSize: 10.8, fontWeight: FontWeight.w700, color: _diffColor)),
-                        ],),
+                        ]),
                       ),
                       const SizedBox(width: 8),
                       Container(
@@ -948,7 +948,7 @@ class _EmptyLO extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text('No learning outcomes yet',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textTitle),),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
           const SizedBox(height: 8),
           const Text(
             'Create structured learning goals so instructors and learners can clearly understand what this course is expected to achieve.',
@@ -966,7 +966,7 @@ class _EmptyLO extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
-        ],),
+        ]),
       ),
     ),
   );

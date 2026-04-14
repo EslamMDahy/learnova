@@ -9,7 +9,7 @@ import 'verify_email_state.dart';
 /// Uses the Riverpod 2.x [Notifier] API.
 final verifyEmailControllerProvider =
     NotifierProvider<VerifyEmailController, VerifyEmailState>(
-        VerifyEmailController.new,);
+        VerifyEmailController.new);
 
 class VerifyEmailController extends Notifier<VerifyEmailState> {
   @override

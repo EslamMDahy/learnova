@@ -89,7 +89,7 @@ class _GlobalErrorToastListenerState
             type: errorType,
             message: next.message,
             errorId: errorId,
-          ),);
+          ));
           return;
         }
 
@@ -145,7 +145,7 @@ class _GlobalErrorToastListenerState
         title: Row(
           children: [
             const Icon(Icons.lock_outline_rounded,
-                color: Color(0xFF137FEC), size: 22,),
+                color: Color(0xFF137FEC), size: 22),
             const SizedBox(width: 10),
             Text(AppFailurePresenter.title(f)),
           ],

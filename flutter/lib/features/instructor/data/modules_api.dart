@@ -69,14 +69,11 @@ class ModulesApi {
   }
 
   // ─── COPY ─────────────────────────────────────────────────────────────────
-  /// POST /courses/{targetCourseId}/modules/{moduleId}/copy
+  /// POST /courses/{sourceCourseId}/modules/{moduleId}/copy
+  /// Body: { "target_course_id": targetCourseId }
   ///
-  /// The backend resolves the source course from the module record itself —
-  /// no request body is needed or read by the server.
-  ///
-  /// [sourceCourseId] is kept in the signature for call-site clarity only;
-  /// it is NOT sent in the request.
-  /// [targetCourseId] goes in the URL path as course_id.
+  /// The copy endpoint lives on the SOURCE course. The target course is passed
+  /// in the request body so the backend knows where to copy the module into.
   Future<ModuleItem> copyModule({
     required int sourceCourseId,
     required int moduleId,
@@ -84,8 +81,8 @@ class ModulesApi {
     CancelToken? cancelToken,
   }) async {
     final res = await _client.post<Map<String, dynamic>>(
-      Endpoints.copyModule(targetCourseId, moduleId),
-      data: {},
+      Endpoints.copyModule(sourceCourseId, moduleId),
+      data: {'target_course_id': targetCourseId},
       cancelToken: cancelToken,
     );
     final data = res.data;

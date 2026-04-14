@@ -9,7 +9,7 @@ import 'verify_email_sent_state.dart';
 /// Uses the Riverpod 2.x [Notifier] API.
 final verifyEmailSentControllerProvider =
     NotifierProvider<VerifyEmailSentController, VerifyEmailSentState>(
-        VerifyEmailSentController.new,);
+        VerifyEmailSentController.new);
 
 class VerifyEmailSentController extends Notifier<VerifyEmailSentState> {
   @override
@@ -58,7 +58,7 @@ class VerifyEmailSentController extends Notifier<VerifyEmailSentState> {
     } catch (e) {
       final failure = mapApiFailure(e);
       state = state.copyWith(
-          checkingVerification: false, error: failure.message,);
+          checkingVerification: false, error: failure.message);
       return false;
     }
   }

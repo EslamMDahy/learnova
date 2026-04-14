@@ -237,7 +237,7 @@ class _QuestionBankQuestionEditorDialogState
                                         setState(() {
                                           _drafts.add(QuestionDraftItem.empty(
                                             widget.topicTargets.first.topic.id,
-                                          ),);
+                                          ));
                                         });
                                       },
                                 icon: const Icon(Icons.add_rounded, size: 18),
@@ -274,7 +274,7 @@ class _QuestionBankQuestionEditorDialogState
                                             setState(() {
                                               _drafts.add(QuestionDraftItem.empty(
                                                 widget.topicTargets.first.topic.id,
-                                              ),);
+                                              ));
                                             });
                                           },
                                   )
@@ -575,7 +575,7 @@ class _QuestionDraftCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   ChoiceChip(
-                    selected: draft.correctBool ?? false,
+                    selected: draft.correctBool == true,
                     label: const Text('True'),
                     onSelected: (_) => onChanged(draft.copyWith(correctBool: true)),
                   ),

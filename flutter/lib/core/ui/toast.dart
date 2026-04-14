@@ -20,7 +20,7 @@ class AppToast {
     String? actionLabel, VoidCallback? onAction,
   }) => _show(context, type: AppToastType.success, title: title,
         message: message, duration: duration,
-        actionLabel: actionLabel, onAction: onAction,);
+        actionLabel: actionLabel, onAction: onAction);
 
   static void info(BuildContext context, {
     String title = 'Info',
@@ -29,7 +29,7 @@ class AppToast {
     String? actionLabel, VoidCallback? onAction,
   }) => _show(context, type: AppToastType.info, title: title,
         message: message, duration: duration,
-        actionLabel: actionLabel, onAction: onAction,);
+        actionLabel: actionLabel, onAction: onAction);
 
   static void warning(BuildContext context, {
     String title = 'Warning',
@@ -38,7 +38,7 @@ class AppToast {
     String? actionLabel, VoidCallback? onAction,
   }) => _show(context, type: AppToastType.warning, title: title,
         message: message, duration: duration,
-        actionLabel: actionLabel, onAction: onAction,);
+        actionLabel: actionLabel, onAction: onAction);
 
   static void error(BuildContext context, {
     String title = 'Error',
@@ -47,7 +47,7 @@ class AppToast {
     String? actionLabel, VoidCallback? onAction,
   }) => _show(context, type: AppToastType.error, title: title,
         message: message, duration: duration,
-        actionLabel: actionLabel, onAction: onAction,);
+        actionLabel: actionLabel, onAction: onAction);
 
   static void show(BuildContext context, {
     required String title,
@@ -58,7 +58,7 @@ class AppToast {
   }) => _show(context, type: AppToastType.info, title: title,
         message: message, duration: duration,
         actionLabel: actionLabel, onAction: onAction,
-        overrideIcon: icon,);
+        overrideIcon: icon);
 
   static void _show(BuildContext context, {
     required AppToastType type,
@@ -107,7 +107,7 @@ class AppToast {
           ),
         ),
       );
-    },);
+    });
 
     _current = entry;
     overlay.insert(entry);
@@ -207,7 +207,7 @@ class _ToastRoot extends StatefulWidget {
 class _ToastRootState extends State<_ToastRoot>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 440),)..forward();
+      vsync: this, duration: const Duration(milliseconds: 440))..forward();
 
   late final Animation<Offset> _slide = Tween<Offset>(
     begin: const Offset(0.6, 0), end: Offset.zero,
@@ -264,7 +264,7 @@ class _ToastCard extends StatefulWidget {
 class _ToastCardState extends State<_ToastCard>
     with SingleTickerProviderStateMixin {
   late final AnimationController _prog = AnimationController(
-      vsync: this, duration: widget.duration,)..forward();
+      vsync: this, duration: widget.duration)..forward();
 
   bool _hovered = false;
 
@@ -381,12 +381,12 @@ class _ToastCardState extends State<_ToastCard>
                           ),
                           const SizedBox(width: 3),
                           Icon(Icons.arrow_forward_rounded,
-                              size: 13, color: t.bar,),
-                        ],),
+                              size: 13, color: t.bar),
+                        ]),
                       ),
                     ],
                   ],
-                ),),
+                )),
 
                 const SizedBox(width: 6),
 
@@ -403,10 +403,10 @@ class _ToastCardState extends State<_ToastCard>
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(Icons.close_rounded, size: 15,
-                        color: t.titleColor.withOpacity(0.4),),
+                        color: t.titleColor.withOpacity(0.4)),
                   ),
                 ),
-              ],),
+              ]),
             ),
 
             // ── Progress bar ────────────────────────────────────────
@@ -415,7 +415,7 @@ class _ToastCardState extends State<_ToastCard>
               builder: (_, __) => Stack(children: [
                 // track
                 Container(height: 2.5,
-                    color: t.borderColor.withOpacity(0.4),),
+                    color: t.borderColor.withOpacity(0.4)),
                 // fill
                 FractionallySizedBox(
                   widthFactor: 1.0 - _prog.value,
@@ -434,10 +434,10 @@ class _ToastCardState extends State<_ToastCard>
                     ),
                   ),
                 ),
-              ],),
+              ]),
             ),
 
-          ],),
+          ]),
         ),
       ),
     );

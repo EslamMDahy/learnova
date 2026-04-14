@@ -60,7 +60,7 @@ class BatchCreateQuestionsResponse {
       questions: raw
           .whereType<Map>()
           .map((e) =>
-              QuestionCreatedItem.fromJson(Map<String, dynamic>.from(e)),)
+              QuestionCreatedItem.fromJson(Map<String, dynamic>.from(e)))
           .toList(),
     );
   }
@@ -257,7 +257,7 @@ class QuestionsApi {
 
     if (mcqList.isEmpty) {
       throw ArgumentError(
-          'No valid MCQ questions to submit. Backend currently supports MCQ only.',);
+          'No valid MCQ questions to submit. Backend currently supports MCQ only.');
     }
 
     final res = await _client.post<Map<String, dynamic>>(
@@ -273,7 +273,7 @@ class QuestionsApi {
       return BatchCreateQuestionsResponse.fromJson(data);
     }
     throw const FormatException(
-        'Invalid response from POST .../questions',);
+        'Invalid response from POST .../questions');
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────

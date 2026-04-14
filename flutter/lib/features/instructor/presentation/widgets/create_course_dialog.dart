@@ -108,7 +108,7 @@ class _CreateCourseDialogState extends State<CreateCourseDialog> {
     _validateAll();
     if (!_canSubmit) {
       AppToast.error(context, title: 'Validation Error',
-          message: _titleError ?? _codeError ?? 'Fix highlighted fields.',);
+          message: _titleError ?? _codeError ?? 'Fix highlighted fields.');
       return;
     }
     final isPublic = _visibility == _VisibilityChoice.publicCourse;
@@ -135,7 +135,7 @@ class _CreateCourseDialogState extends State<CreateCourseDialog> {
       request: request,
       needsInvites: !isPublic,
       learningOutcomes: _outcomes,
-    ),);
+    ));
   }
 
   @override
@@ -211,10 +211,10 @@ class _CreateCourseDialogState extends State<CreateCourseDialog> {
               children: [
                 Text('Create New Course',
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700,
-                        color: Color(0xFF111418),),),
+                        color: Color(0xFF111418))),
                 SizedBox(height: 1),
                 Text('Fill in the details to set up a new learning module.',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF617589)),),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF617589))),
               ],
             ),
           ),
@@ -316,7 +316,7 @@ class _CreateCourseDialogState extends State<CreateCourseDialog> {
                   child: Text(
                     'AI Tip: A detailed description helps generate better quiz questions.',
                     style: TextStyle(fontSize: 12, color: Color(0xFF137FEC),
-                        fontWeight: FontWeight.w500,),
+                        fontWeight: FontWeight.w500),
                   ),
                 ),
               ],
@@ -405,10 +405,10 @@ class _CreateCourseDialogState extends State<CreateCourseDialog> {
     return Row(
       children: [
         Text(label,
-            style: AppText.label.copyWith(fontSize: 13, fontWeight: FontWeight.w600),),
+            style: AppText.label.copyWith(fontSize: 13, fontWeight: FontWeight.w600)),
         if (required)
           const Text(' *',
-              style: TextStyle(fontSize: 13, color: Color(0xFFEF4444), fontWeight: FontWeight.w600),),
+              style: TextStyle(fontSize: 13, color: Color(0xFFEF4444), fontWeight: FontWeight.w600)),
         if (optional) ...[
           const SizedBox(width: 6),
           Container(
@@ -419,7 +419,7 @@ class _CreateCourseDialogState extends State<CreateCourseDialog> {
             ),
             child: const Text('Optional',
                 style: TextStyle(fontSize: 10.5, color: Color(0xFF137FEC),
-                    fontWeight: FontWeight.w600,),),
+                    fontWeight: FontWeight.w600)),
           ),
         ],
       ],
@@ -468,7 +468,7 @@ class _SectionCard extends StatelessWidget {
               const SizedBox(width: 10),
               Text(title,
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
-                      color: Color(0xFF111418),),),
+                      color: Color(0xFF111418))),
               if (badge != null) ...[
                 const SizedBox(width: 8),
                 Container(
@@ -479,7 +479,7 @@ class _SectionCard extends StatelessWidget {
                   ),
                   child: Text(badge!,
                       style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                          color: Colors.white,),),
+                          color: Colors.white)),
                 ),
               ],
             ],
@@ -564,7 +564,7 @@ class _TitledInputWithErrorState extends State<_TitledInputWithError> {
                         ? const Color(0xFFEF4444)
                         : _focused
                             ? AppColors.primary
-                            : AppColors.muted,),
+                            : AppColors.muted),
                 const SizedBox(width: 8),
               ],
               Expanded(
@@ -597,7 +597,7 @@ class _TitledInputWithErrorState extends State<_TitledInputWithError> {
               const SizedBox(width: 4),
               Text(widget.error!,
                   style: const TextStyle(fontSize: 11.5, color: Color(0xFFEF4444),
-                      fontWeight: FontWeight.w500,),),
+                      fontWeight: FontWeight.w500)),
             ],
           ),
         ],
@@ -738,7 +738,7 @@ class _ConfigSection extends StatelessWidget {
       children: [
         const Text('Visibility Status',
             style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600,
-                color: Color(0xFF617589), letterSpacing: 0.2,),),
+                color: Color(0xFF617589), letterSpacing: 0.2)),
         const SizedBox(height: 8),
         Row(children: [
           Expanded(child: _OptionTile(
@@ -746,15 +746,15 @@ class _ConfigSection extends StatelessWidget {
             sub: 'Only visible to instructors',
             selected: publish == _PublishChoice.draft,
             onTap: () => onPublishChanged(_PublishChoice.draft),
-          ),),
+          )),
           const SizedBox(width: 8),
           Expanded(child: _OptionTile(
             title: 'Publish Now',
             sub: 'Visible to enrolled students',
             selected: publish == _PublishChoice.published,
             onTap: () => onPublishChanged(_PublishChoice.published),
-          ),),
-        ],),
+          )),
+        ]),
         const SizedBox(height: 10),
         Row(children: [
           Expanded(child: _OptionTile(
@@ -762,15 +762,15 @@ class _ConfigSection extends StatelessWidget {
             sub: 'For specific Student',
             selected: visibility == _VisibilityChoice.privateCourse,
             onTap: () => onVisibilityChanged(_VisibilityChoice.privateCourse),
-          ),),
+          )),
           const SizedBox(width: 8),
           Expanded(child: _OptionTile(
             title: 'Set as Public',
             sub: 'For Public Student',
             selected: visibility == _VisibilityChoice.publicCourse,
             onTap: () => onVisibilityChanged(_VisibilityChoice.publicCourse),
-          ),),
-        ],),
+          )),
+        ]),
         if (visibility == _VisibilityChoice.privateCourse) ...[
           const SizedBox(height: 10),
           Container(
@@ -784,8 +784,8 @@ class _ConfigSection extends StatelessWidget {
               Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFF137FEC)),
               SizedBox(width: 8),
               Expanded(child: Text('You can invite students after creating the course.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF111418)),),),
-            ],),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF111418)))),
+            ]),
           ),
         ],
       ],
@@ -875,7 +875,7 @@ class _OptionTileState extends State<_OptionTile> {
                         child: Container(
                           width: 8, height: 8,
                           decoration: const BoxDecoration(
-                            color: blue, shape: BoxShape.circle,),
+                            color: blue, shape: BoxShape.circle),
                         ),
                       )
                     : null,
@@ -925,7 +925,7 @@ class _CoverUploadState extends State<_CoverUpload> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(Icons.add_photo_alternate_outlined, size: 22,
-          color: _h ? const Color(0xFF137FEC) : AppColors.muted,),
+          color: _h ? const Color(0xFF137FEC) : AppColors.muted),
     ),
     const SizedBox(height: 12),
     
@@ -936,7 +936,7 @@ class _CoverUploadState extends State<_CoverUpload> {
         fontSize: 13, 
         fontWeight: FontWeight.w700,
         color: _h ? const Color(0xFF137FEC) : AppColors.muted,
-        fontFamily: 'Inter',
+        fontFamily: 'Inter'
       ),
     ),
     const SizedBox(height: 4), // مسافة بسيطة بين السطرين
@@ -945,7 +945,7 @@ class _CoverUploadState extends State<_CoverUpload> {
       style: TextStyle(
         fontSize: 12, 
         color: Color(0xFF9CA3AF), 
-        fontFamily: 'Inter',
+        fontFamily: 'Inter'
       ),
     ),
     
@@ -1028,7 +1028,7 @@ class _PrimaryBtnState extends State<_PrimaryBtn> {
             child: Text(widget.label,
                 style: TextStyle(
                     fontSize: 13.5, fontWeight: FontWeight.w700,
-                    color: enabled ? Colors.white : AppColors.muted,),),
+                    color: enabled ? Colors.white : AppColors.muted)),
           ),
         ),
       ),
@@ -1065,7 +1065,7 @@ class _OutlineBtnState extends State<_OutlineBtn> {
         child: Center(
           child: Text(widget.label,
               style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600,
-                  color: AppColors.text,),),
+                  color: AppColors.text)),
         ),
       ),
     ),
