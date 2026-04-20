@@ -122,8 +122,12 @@ class MaterialsApi {
     CancelToken? cancelToken,
   }) async {
     final res = await _client.patch<Map<String, dynamic>>(
-      Endpoints.reassignMaterial(courseId, moduleId, materialId),
+      Endpoints.reassignMaterial(materialId),
       data: {'target_module_id': targetModuleId},
+      queryParameters: {
+        'course_id': courseId,
+        'module_id': moduleId,
+      },
       cancelToken: cancelToken,
     );
     final data = res.data;

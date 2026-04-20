@@ -24,6 +24,7 @@ import '../../features/instructor/presentation/pages/instructor_shell.dart';
 import '../../features/instructor/presentation/pages/instructor_route_pages.dart';
 import '../../features/instructor/presentation/pages/course_details/course_details_page.dart';
 import '../../features/instructor/presentation/controllers/selected_course_provider.dart';
+import '../../features/instructor/presentation/course_route_identity.dart';
 import '../../features/instructor/data/courses_providers.dart';
 import '../../shared/pages/error_page.dart';
 import '../../shared/widgets/empty_state_page.dart';
@@ -256,23 +257,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             name: RouteNames.instructorCourseDetails,
             pageBuilder: (context, state) {
               final slug = state.pathParameters['courseSlug']!;
+              final routeCourseId = parseCourseIdFromSlug(slug);
 
-              // ── Hot path: course still in memory / sessionStorage ──────────
-              // Pass it directly to avoid an unnecessary network round-trip.
+              // Prefer the URL as the source of truth on refresh/deep links.
               final cached = SelectedCourseCache.value;
-              if (cached != null) {
+              if (cached != null && slugMatchesCourse(slug, cached)) {
                 return NoTransitionPage(
                   child: CourseDetailsPage(
                     courseSlug: slug,
                     cachedCourse: cached,
+                    cachedCourseId: routeCourseId ?? cached.id,
                   ),
                 );
               }
 
-              // ── Cold path: page refresh — only the id is persisted ─────────
-              // CourseDetailsPage will call selectedCourseByIdProvider to
-              // reload from the API. No silent redirect needed anymore.
-              final courseId = SelectedCourseCache.cachedCourseId;
+              // Fall back to persisted selection only when the URL itself
+              // does not carry a parseable course id.
+              final courseId = routeCourseId ?? SelectedCourseCache.cachedCourseId;
               return NoTransitionPage(
                 child: CourseDetailsPage(
                   courseSlug: slug,

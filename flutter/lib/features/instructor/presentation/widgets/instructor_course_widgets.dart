@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:learnova/core/routing/routes.dart';
 import '../../data/courses_models.dart';
+import '../../data/course_vocabulary.dart';
 import 'package:learnova/shared/widgets/app_ui_components.dart';
 import 'invite_students_dialog.dart';
 import '../controllers/selected_course_provider.dart';
+import '../course_route_identity.dart';
 
 class InstructorCourseContent extends StatefulWidget {
   final VoidCallback? onCreateNewCourse;
@@ -1111,10 +1113,15 @@ class _ApiCourseCardState extends State<_ApiCourseCard> {
   }
 
   _CourseStatus _status(MyCourseItem c) {
-    final s = c.status.trim().toLowerCase();
-    if (s == 'draft')    return _CourseStatus.draft;
-    if (s == 'archived') return _CourseStatus.archived;
-    return _CourseStatus.active;
+    switch (c.lifecycleStatus) {
+      case CourseLifecycleStatus.draft:
+        return _CourseStatus.draft;
+      case CourseLifecycleStatus.archived:
+        return _CourseStatus.archived;
+      case CourseLifecycleStatus.published:
+      case CourseLifecycleStatus.active:
+        return _CourseStatus.active;
+    }
   }
 
   String _meta(MyCourseItem c) {
@@ -1123,7 +1130,7 @@ class _ApiCourseCardState extends State<_ApiCourseCard> {
       parts.add(c.category!.trim());
     }
     if (c.visibilityLevel.trim().isNotEmpty) {
-      parts.add(c.visibilityLevel.trim());
+      parts.add(c.visibility.label);
     }
     return parts.join(' • ');
   }
@@ -1131,22 +1138,12 @@ class _ApiCourseCardState extends State<_ApiCourseCard> {
   int _students(MyCourseItem c) => c.enrollmentCount ?? 0;
   int _modules(MyCourseItem c)  => 0;
 
-String _slug(MyCourseItem c) {
-    final code = c.safeCourseCode.trim();
-    if (code.isNotEmpty) {
-      return code
-          .toLowerCase()
-          .replaceAll(RegExp(r'\s+'), '-')
-          .replaceAll(RegExp(r'[^a-z0-9\-]'), '');
-    }
-    return c.id.toString();
-  }
     Future<void> _showCourseMenuFromKey(
   BuildContext context,
   MyCourseItem c,
   GlobalKey anchorKey,
 ) async {
-  final slug = _slug(c);
+  final slug = buildCourseRouteSlug(c);
 
   final selected = await showFigmaUmMenu<String>(
     context: context,
@@ -1161,7 +1158,7 @@ String _slug(MyCourseItem c) {
         value: 'invite',
         label: 'Invite students',
         icon: Icons.person_add_alt_1_rounded,
-        enabled: c.visibilityLevel.trim().toLowerCase() == 'private',
+        enabled: c.visibility == CourseVisibility.private,
       ),
       const FigmaUmMenuEntry.divider(),
       const FigmaUmMenuEntry.item(
@@ -1197,13 +1194,12 @@ String _slug(MyCourseItem c) {
   @override
     Widget build(BuildContext context) {
     // HTML-matched card layout (hero gradient + code badge + status pill + stats + footer)
-    final status = widget.course.status.trim().toLowerCase();
-    final isActive = status == 'active';
-    final isDraft = status == 'draft';
-    final isArchived = status == 'archived';
-    final statusLabel = widget.course.status.isEmpty
-        ? 'Draft'
-        : (widget.course.status[0].toUpperCase() + widget.course.status.substring(1));
+    final lifecycleStatus = widget.course.lifecycleStatus;
+    final isActive = lifecycleStatus == CourseLifecycleStatus.active ||
+        lifecycleStatus == CourseLifecycleStatus.published;
+    final isDraft = lifecycleStatus == CourseLifecycleStatus.draft;
+    final isArchived = lifecycleStatus == CourseLifecycleStatus.archived;
+    final statusLabel = lifecycleStatus.label;
     final statusBg = isActive
         ? const Color(0xE616A34A)
         : (isDraft
@@ -1218,7 +1214,7 @@ String _slug(MyCourseItem c) {
     final modulesCount = widget.course.moduleCount ?? 0;
     final code = (widget.course.courseCode?.isNotEmpty ?? false) ? widget.course.courseCode! : '—';
     final metaLeft = widget.course.category ?? 'General';
-    final metaRight = widget.course.courseType;
+    final metaRight = widget.course.accessType.label;
     final meta = '$metaLeft • $metaRight';
   
   return MouseRegion(
@@ -1245,7 +1241,7 @@ String _slug(MyCourseItem c) {
       child: InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          final slug = _slug(widget.course);
+          final slug = buildCourseRouteSlug(widget.course);
           SelectedCourseCache.set(widget.course);
           context.go(Routes.courseDetails(slug)); // ✅ navigate to course details
         },

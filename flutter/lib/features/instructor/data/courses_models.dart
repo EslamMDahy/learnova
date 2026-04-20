@@ -1,3 +1,5 @@
+import 'course_vocabulary.dart';
+
 enum CourseType { individual, organization }
 
 enum CourseVisibilityLevel { private, public, unlisted }
@@ -84,7 +86,13 @@ class MyCourseItem {
     return v.isEmpty ? 'CS-$id' : v;
   }
 
-  bool get isPrivate => visibilityLevel.trim().toLowerCase() == 'private';
+  CourseAccessType get accessType => parseCourseAccessType(courseType);
+
+  CourseVisibility get visibility => parseCourseVisibility(visibilityLevel);
+
+  CourseLifecycleStatus get lifecycleStatus => parseCourseLifecycleStatus(status);
+
+  bool get isPrivate => visibility == CourseVisibility.private;
 
   MyCourseItem copyWith({
     int? id,
@@ -146,13 +154,13 @@ class MyCourseItem {
       id: _asInt(json['id']) ?? 0,
       title: s(json['title']),
       courseCode: s(json['course_code']).isEmpty ? null : s(json['course_code']),
-      courseType: s(json['course_type']),
+      courseType: parseCourseAccessType(s(json['course_type'])).backendValue,
       organizationId: _asInt(json['organization_id']),
       isPublic: _asBool(
         json['is_open_for_enrollment'] ?? json['is_public'],
       ),
-      visibilityLevel: s(json['visibility_level']),
-      status: s(json['status']),
+      visibilityLevel: parseCourseVisibility(s(json['visibility_level'])).backendValue,
+      status: parseCourseLifecycleStatus(s(json['status'])).backendValue,
       coverImageUrl: json['cover_image_url']?.toString(),
       bannerImageUrl: json['banner_image_url']?.toString(),
       category: json['category']?.toString(),
@@ -184,6 +192,29 @@ class MyCoursesResponse {
     return MyCoursesResponse(
       items: items,
       total: (json['total'] as num?)?.toInt() ?? items.length,
+    );
+  }
+}
+
+
+class CourseCreatedResponse {
+  final int id;
+  final String title;
+  final String? courseCode;
+
+  const CourseCreatedResponse({
+    required this.id,
+    required this.title,
+    required this.courseCode,
+  });
+
+  factory CourseCreatedResponse.fromJson(Map<String, dynamic> json) {
+    String s(dynamic v) => (v ?? '').toString().trim();
+
+    return CourseCreatedResponse(
+      id: _asInt(json['id']) ?? 0,
+      title: s(json['title']),
+      courseCode: s(json['course_code']).isEmpty ? null : s(json['course_code']),
     );
   }
 }
@@ -240,10 +271,10 @@ class CourseCreateRequest {
     // Excluded: learning_outcomes (commented out in backend), cover_image_url,
     //           banner_image_url, academicTerm, localStatus (UI-only).
     final map = <String, dynamic>{
-      'course_type': courseType,
+      'course_type': parseCourseAccessType(courseType).backendValue,
       'title': title,
       'is_open_for_enrollment': isPublic,
-      'visibility_level': visibilityLevel,
+      'visibility_level': parseCourseVisibility(visibilityLevel).backendValue,
       'requires_enrollment_approval': requiresEnrollmentApproval,
     };
 
@@ -257,7 +288,7 @@ class CourseCreateRequest {
     }
     if (tags != null && tags!.isNotEmpty) map['tags'] = tags;
     if (category != null && category!.trim().isNotEmpty) map['category'] = category;
-    if (status != null) map['status'] = status;
+    if (status != null) map['status'] = parseCourseLifecycleStatus(status).backendValue;
 
     return map;
   }

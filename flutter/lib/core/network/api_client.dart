@@ -69,26 +69,14 @@ class ApiClient implements ITokenRefreshScheduler {
           // – not already retried for this request
           final shouldTryRefresh = Env.enableRefreshToken &&
               status == 401 &&
-              TokenStorage.hasToken &&
+              _canAttemptRefresh() &&
               !_isAuthPath(e.requestOptions.path) &&
               !_hasAuthRetried(e.requestOptions);
 
           if (shouldTryRefresh) {
+            String newAccess;
             try {
-              final newAccess = await _refreshAccessToken();
-
-              TokenStorage.saveSession(
-                accessToken: newAccess,
-                persist: TokenStorage.isPersisted,
-              );
-
-              // Reschedule proactive refresh for the new token lifetime.
-              scheduleProactiveRefresh(newAccess);
-
-              final retryResponse =
-                  await _retryWithNewToken(e.requestOptions, newAccess);
-
-              return handler.resolve(retryResponse);
+              newAccess = await _refreshAccessToken();
             } catch (_) {
               // Refresh failed → clear session, propagate 401.
               TokenStorage.clear();
@@ -108,6 +96,37 @@ class ApiClient implements ITokenRefreshScheduler {
                 ),
               );
             }
+
+            TokenStorage.saveSession(
+              accessToken: newAccess,
+              persist: TokenStorage.isPersisted,
+            );
+
+            // Reschedule proactive refresh for the new token lifetime.
+            scheduleProactiveRefresh(newAccess);
+
+            try {
+              final retryResponse =
+                  await _retryWithNewToken(e.requestOptions, newAccess);
+              return handler.resolve(retryResponse);
+            } on DioException catch (retryError) {
+              GlobalLoadingBus.endIfNeeded(e.requestOptions);
+              return handler.reject(_mapRetryAfterRefreshError(retryError));
+            } catch (retryError) {
+              GlobalLoadingBus.endIfNeeded(e.requestOptions);
+              return handler.reject(
+                DioException(
+                  requestOptions: e.requestOptions,
+                  response: e.response,
+                  type: DioExceptionType.unknown,
+                  error: ApiException(
+                    'Request could not be completed. Please try again.',
+                    code: 'AUTH_RETRY_FAILED',
+                  ),
+                  message: retryError.toString(),
+                ),
+              );
+            }
           }
 
           // Normal error mapping
@@ -123,7 +142,7 @@ class ApiClient implements ITokenRefreshScheduler {
               error: ApiException(
                 msg,
                 statusCode: status,
-                code: _mapCode(status, e.response?.data),
+                code: _mapCode(status, e.response?.data, requestOptions: e.requestOptions),
               ),
               message: msg,
             ),
@@ -358,6 +377,25 @@ class ApiClient implements ITokenRefreshScheduler {
     }
   }
 
+
+  DioException _mapRetryAfterRefreshError(DioException e) {
+    final status = e.response?.statusCode;
+    if (status == 401) {
+      return DioException(
+        requestOptions: e.requestOptions,
+        response: e.response,
+        type: e.type,
+        error: ApiException(
+          'Request could not be completed. Please try again.',
+          statusCode: status,
+          code: 'AUTH_RETRY_FAILED',
+        ),
+        message: 'auth_retry_failed',
+      );
+    }
+    return e;
+  }
+
   bool _hasAuthRetried(RequestOptions o) => o.extra['__authRetried'] == true;
 
   Future<Response<dynamic>> _retryWithNewToken(
@@ -389,6 +427,11 @@ class ApiClient implements ITokenRefreshScheduler {
     );
   }
 
+
+  bool _canAttemptRefresh() {
+    return TokenStorage.hasToken || TokenStorage.isPersisted;
+  }
+
   bool _isAuthPath(String path) {
     return path.contains(Endpoints.login) ||
         path.contains(Endpoints.signup) ||
@@ -396,6 +439,16 @@ class ApiClient implements ITokenRefreshScheduler {
   }
 
   String _pickErrorMessage(DioException e) {
+    final status = e.response?.statusCode;
+    if (status == 401) {
+      return _hasAuthRetried(e.requestOptions)
+          ? 'Request could not be completed. Please try again.'
+          : 'Your session expired. Please login again.';
+    }
+    if (status == 403) {
+      return 'Access denied.';
+    }
+
     final data = e.response?.data;
 
     try {
@@ -438,10 +491,14 @@ class ApiClient implements ITokenRefreshScheduler {
         : 'Something went wrong. Please try again.';
   }
 
-  String _mapCode(int? status, dynamic data) {
+  String _mapCode(int? status, dynamic data, {RequestOptions? requestOptions}) {
     if (status == null) return 'UNKNOWN';
     if (status == 400) return 'BAD_REQUEST';
-    if (status == 401) return 'UNAUTHORIZED';
+    if (status == 401) {
+      return requestOptions != null && _hasAuthRetried(requestOptions)
+          ? 'AUTH_RETRY_FAILED'
+          : 'UNAUTHORIZED';
+    }
     if (status == 403) return 'FORBIDDEN';
     if (status == 404) return 'NOT_FOUND';
     if (status >= 500) return 'SERVER_ERROR';

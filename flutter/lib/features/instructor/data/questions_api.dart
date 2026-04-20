@@ -12,6 +12,7 @@ import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/endpoints.dart';
 import 'question_models.dart';
+import 'question_vocabulary.dart';
 
 // ── Response models matching backend schema exactly ───────────────────────────
 
@@ -236,12 +237,12 @@ class QuestionsApi {
     throw const FormatException('Invalid response from POST /courses/{id}/questions');
   }
 
-  /// POST /courses/{courseId}/modules/{moduleId}/materials/{materialId}/questions
+  /// Creates questions using the currently implemented backend contract:
+  /// `POST /courses/{courseId}/questions`.
   ///
-  /// Converts the app's [QuestionModel] list into the backend MCQ batch schema.
-  /// Only [QuestionType.multipleChoice] questions are supported by this endpoint.
-  /// Other question types are silently skipped (they can be submitted manually
-  /// once the backend adds more question-type support).
+  /// The older material-scoped batch endpoint is not implemented in the backend,
+  /// so this method now submits the compatible questions one by one and returns
+  /// a batch-shaped response for the existing Flutter flow.
   Future<BatchCreateQuestionsResponse> batchCreateQuestions({
     required int courseId,
     required int moduleId,
@@ -249,34 +250,66 @@ class QuestionsApi {
     required List<QuestionModel> questions,
     CancelToken? cancelToken,
   }) async {
-    final mcqList = questions
+    final compatibleQuestions = questions
         .where((q) => q.type == QuestionType.multipleChoice)
-        .map((q) => _buildMCQPayload(q))
-        .whereType<_QuestionMCQCreate>()
+        .where((q) => q.topicId != null)
         .toList();
 
-    if (mcqList.isEmpty) {
+    if (compatibleQuestions.isEmpty) {
       throw ArgumentError(
-          'No valid MCQ questions to submit. Backend currently supports MCQ only.');
+        'No valid MCQ questions with topicId to submit to the backend.',
+      );
     }
 
-    final res = await _client.post<Map<String, dynamic>>(
-      Endpoints.batchCreateQuestions(courseId, moduleId, materialId),
-      data: {
-        'questions': mcqList.map((q) => q.toJson()).toList(),
-      },
-      cancelToken: cancelToken,
+    final createdItems = <QuestionCreatedItem>[];
+
+    for (final question in compatibleQuestions) {
+      final payload = _buildCreatePayload(question);
+      if (payload == null) continue;
+
+      final created = await createQuestion(
+        courseId: courseId,
+        payload: payload,
+        cancelToken: cancelToken,
+      );
+
+      createdItems.add(
+        QuestionCreatedItem(
+          id: created.remoteId ?? int.tryParse(created.id) ?? 0,
+          questionText: created.text,
+          createdAt: created.createdAt.toIso8601String(),
+        ),
+      );
+    }
+
+    return BatchCreateQuestionsResponse(
+      courseId: courseId,
+      moduleId: moduleId,
+      materialId: materialId,
+      createdCount: createdItems.length,
+      questions: createdItems,
     );
-
-    final data = res.data;
-    if (data is Map<String, dynamic>) {
-      return BatchCreateQuestionsResponse.fromJson(data);
-    }
-    throw const FormatException(
-        'Invalid response from POST .../questions');
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
+
+  CreateQuestionPayload? _buildCreatePayload(QuestionModel q) {
+    final mcq = _buildMCQPayload(q);
+    final topicId = q.topicId;
+    if (mcq == null || topicId == null) return null;
+
+    return CreateQuestionPayload(
+      topicId: topicId,
+      questionText: mcq.questionText,
+      type: QuestionType.multipleChoice.backendValue,
+      difficulty: q.difficulty.backendValue,
+      explanation: mcq.explanation,
+      options: mcq.options.choices
+          .map((choice) => CreateQuestionOption(id: choice.id, text: choice.text))
+          .toList(),
+      expectedAnswer: mcq.expectedAnswer,
+    );
+  }
 
   _QuestionMCQCreate? _buildMCQPayload(QuestionModel q) {
     if (q.options.isEmpty) return null;
@@ -303,19 +336,7 @@ class QuestionsApi {
       }
     }
 
-    // Map difficulty enum → backend string
-    String? difficultyStr;
-    switch (q.difficulty) {
-      case QuestionDifficulty.easy:
-        difficultyStr = 'easy';
-        break;
-      case QuestionDifficulty.medium:
-        difficultyStr = 'medium';
-        break;
-      case QuestionDifficulty.hard:
-        difficultyStr = 'hard';
-        break;
-    }
+    final difficultyStr = q.difficulty.backendValue;
 
     return _QuestionMCQCreate(
       questionText: q.text,

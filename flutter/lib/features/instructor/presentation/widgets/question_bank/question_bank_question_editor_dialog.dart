@@ -8,6 +8,8 @@ import '../../../data/modules_models.dart';
 import '../../../data/question_models.dart';
 import '../../../data/questions_api.dart';
 import '../../../data/topics_models.dart';
+import '../../mappers/question_draft_payload_mapper.dart';
+import '../../models/question_draft_item.dart';
 
 class QuestionBankQuestionEditorDialog extends ConsumerStatefulWidget {
   final int courseId;
@@ -60,7 +62,7 @@ class _QuestionBankQuestionEditorDialogState
       try {
         await ref.read(questionsApiProvider).createQuestion(
               courseId: widget.courseId,
-              payload: draft.toPayload(),
+              payload: mapDraftToCreateQuestionPayload(draft),
             );
         successCount++;
       } catch (e) {
@@ -757,191 +759,14 @@ class QuestionAuthoringTopicTarget {
   final ModuleItem module;
   final MaterialItem material;
   final TopicItem topic;
+  final String? parentTopicTitle;
 
   const QuestionAuthoringTopicTarget({
     required this.module,
     required this.material,
     required this.topic,
+    this.parentTopicTitle,
   });
-}
-
-class QuestionDraftItem {
-  final String id;
-  final int topicId;
-  final QuestionType type;
-  final QuestionDifficulty difficulty;
-  final String questionText;
-  final List<String> options;
-  final int? correctOptionIndex;
-  final bool? correctBool;
-  final String explanation;
-  final String expectedAnswer;
-
-  const QuestionDraftItem({
-    required this.id,
-    required this.topicId,
-    required this.type,
-    required this.difficulty,
-    required this.questionText,
-    required this.options,
-    required this.correctOptionIndex,
-    required this.correctBool,
-    required this.explanation,
-    required this.expectedAnswer,
-  });
-
-  factory QuestionDraftItem.empty(int topicId) {
-    return QuestionDraftItem(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
-      topicId: topicId,
-      type: QuestionType.multipleChoice,
-      difficulty: QuestionDifficulty.medium,
-      questionText: '',
-      options: const ['', '', '', ''],
-      correctOptionIndex: null,
-      correctBool: true,
-      explanation: '',
-      expectedAnswer: '',
-    );
-  }
-
-  QuestionDraftItem copyWith({
-    int? topicId,
-    QuestionType? type,
-    QuestionDifficulty? difficulty,
-    String? questionText,
-    List<String>? options,
-    Object? correctOptionIndex = _unset,
-    Object? correctBool = _unset,
-    String? explanation,
-    String? expectedAnswer,
-  }) {
-    return QuestionDraftItem(
-      id: id,
-      topicId: topicId ?? this.topicId,
-      type: type ?? this.type,
-      difficulty: difficulty ?? this.difficulty,
-      questionText: questionText ?? this.questionText,
-      options: options ?? this.options,
-      correctOptionIndex: identical(correctOptionIndex, _unset)
-          ? this.correctOptionIndex
-          : correctOptionIndex as int?,
-      correctBool: identical(correctBool, _unset)
-          ? this.correctBool
-          : correctBool as bool?,
-      explanation: explanation ?? this.explanation,
-      expectedAnswer: expectedAnswer ?? this.expectedAnswer,
-    );
-  }
-
-  QuestionDraftItem withType(QuestionType nextType) {
-    if (nextType == QuestionType.multipleChoice) {
-      return copyWith(
-        type: nextType,
-        options: options.length >= 2 ? options : const ['', '', '', ''],
-        correctOptionIndex: 0,
-        correctBool: null,
-      );
-    }
-    if (nextType == QuestionType.trueFalse) {
-      return copyWith(
-        type: nextType,
-        correctBool: true,
-        correctOptionIndex: null,
-      );
-    }
-    return copyWith(
-      type: nextType,
-      correctOptionIndex: null,
-      correctBool: null,
-    );
-  }
-
-  String? validate() {
-    if (questionText.trim().isEmpty) return 'Question text is required.';
-    if (topicId <= 0) return 'Each question must be assigned to a topic.';
-    if (type == QuestionType.multipleChoice) {
-      final cleaned = options.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-      if (cleaned.length < 2) return 'Multiple-choice questions need at least 2 options.';
-      if (correctOptionIndex == null) return 'Choose the correct answer option.';
-      if (correctOptionIndex! >= options.length || options[correctOptionIndex!].trim().isEmpty) {
-        return 'The correct option must point to a non-empty answer.';
-      }
-    }
-    if ((type == QuestionType.shortAnswer || type == QuestionType.essay) && expectedAnswer.trim().isEmpty) {
-      return 'Provide an expected answer or rubric note.';
-    }
-    if (type == QuestionType.trueFalse && correctBool == null) {
-      return 'Choose whether the statement is true or false.';
-    }
-    return null;
-  }
-
-  CreateQuestionPayload toPayload() {
-    String difficultyValue;
-    switch (difficulty) {
-      case QuestionDifficulty.easy:
-        difficultyValue = 'easy';
-        break;
-      case QuestionDifficulty.medium:
-        difficultyValue = 'medium';
-        break;
-      case QuestionDifficulty.hard:
-        difficultyValue = 'hard';
-        break;
-    }
-
-    String typeValue;
-    switch (type) {
-      case QuestionType.multipleChoice:
-        typeValue = 'multiple_choice';
-        break;
-      case QuestionType.trueFalse:
-        typeValue = 'true_false';
-        break;
-      case QuestionType.shortAnswer:
-        typeValue = 'short_answer';
-        break;
-      case QuestionType.essay:
-        typeValue = 'essay';
-        break;
-      default:
-        typeValue = 'short_answer';
-    }
-
-    final cleanedOptions = options
-        .asMap()
-        .entries
-        .where((entry) => entry.value.trim().isNotEmpty)
-        .map(
-          (entry) => CreateQuestionOption(
-            id: String.fromCharCode(65 + entry.key),
-            text: entry.value.trim(),
-          ),
-        )
-        .toList();
-
-    Object? expectedAnswer;
-    if (type == QuestionType.multipleChoice && correctOptionIndex != null) {
-      expectedAnswer = String.fromCharCode(65 + correctOptionIndex!);
-    } else if (type == QuestionType.trueFalse) {
-      expectedAnswer = (correctBool ?? false).toString();
-    } else if (type == QuestionType.shortAnswer || type == QuestionType.essay) {
-      expectedAnswer = expectedAnswerText;
-    }
-
-    return CreateQuestionPayload(
-      topicId: topicId,
-      questionText: questionText.trim(),
-      type: typeValue,
-      difficulty: difficultyValue,
-      explanation: explanation.trim().isEmpty ? null : explanation.trim(),
-      options: cleanedOptions.isEmpty ? null : cleanedOptions,
-      expectedAnswer: expectedAnswer,
-    );
-  }
-
-  String get expectedAnswerText => expectedAnswer.trim();
 }
 
 const _unset = Object();

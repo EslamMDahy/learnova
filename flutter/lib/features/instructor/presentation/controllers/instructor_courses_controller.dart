@@ -28,8 +28,10 @@ class InstructorCoursesController extends StateNotifier<InstructorCoursesState> 
     state = state.copyWith(loading: true);
 
     try {
-      final res =
-          await _ref.read(coursesRepositoryProvider).myCourses(cancelToken: _cancel);
+      final res = await _ref.read(coursesRepositoryProvider).myCourses(
+        cancelToken: _cancel,
+        enrichMissingModuleCounts: false,
+      );
       state = state.copyWith(loading: false, items: res.items);
     } catch (e) {
       final failure = mapApiFailure(e);
@@ -42,12 +44,12 @@ class InstructorCoursesController extends StateNotifier<InstructorCoursesState> 
     }
   }
 
-  /// Creates a course and returns the backend response (must include `id`).
+  /// Creates a course and returns the typed backend response.
   ///
   /// NOTE: We do NOT call load() here automatically because the UI flow
   /// might need the created courseId first (e.g., to upload invitations),
   /// then refresh after finishing that flow.
-  Future<Map<String, dynamic>> createCourse(CourseCreateRequest payload) async {
+  Future<CourseCreatedResponse> createCourse(CourseCreateRequest payload) async {
     _cancel?.cancel();
     _cancel = CancelToken();
 

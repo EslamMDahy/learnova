@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'upload_materials_dialog.dart';
-import 'package:learnova/features/instructor/presentation/widgets/create_exam_content.dart';
 import 'package:learnova/features/instructor/data/courses_models.dart';
 import 'package:learnova/features/instructor/presentation/controllers/course_details_controller.dart';
+import 'package:learnova/features/instructor/data/topics_models.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Design tokens
@@ -46,41 +46,93 @@ class _K {
 // ─────────────────────────────────────────────────────────────────────────────
 //  Data model   Module → [Material → [Topic]]
 // ─────────────────────────────────────────────────────────────────────────────
-enum _NK { module, material, topic }
+enum _NK { module, material, topic, subtopic }
 enum _MK { video, pdf, doc, ppt }       // material kind
 
 class _Node {
   final String id;
-  _NK   nk;
+  _NK nk;
   String title;
-  bool   isExpanded;
+  bool isExpanded;
   List<_Node> children;
   // material-only fields
-  _MK?  mk;
-  int   qualityScore;
+  _MK? mk;
+  int qualityScore;
   List<String> tags;
   String transcript;
   // backend
   int? backendId;
   int? moduleId;
+  int? materialId;
+  int? parentTopicId;
 
   _Node.module({
-    required this.id, required this.title,
-    this.isExpanded = true, List<_Node>? children, this.backendId,
-  }) : nk = _NK.module, children = children ?? [],
-       mk = null, qualityScore = 0, tags = const [], transcript = '';
+    required this.id,
+    required this.title,
+    this.isExpanded = true,
+    List<_Node>? children,
+    this.backendId,
+  })  : nk = _NK.module,
+        children = children ?? [],
+        mk = null,
+        qualityScore = 0,
+        tags = const [],
+        transcript = '',
+        moduleId = null,
+        materialId = null,
+        parentTopicId = null;
 
   _Node.material({
-    required this.id, required this.title, required _MK kind,
-    this.isExpanded = false, List<_Node>? children,
-    this.qualityScore = 0, this.tags = const [],
-    this.transcript = '', this.backendId, this.moduleId,
-  }) : nk = _NK.material, children = children ?? [], mk = kind;
+    required this.id,
+    required this.title,
+    required _MK kind,
+    this.isExpanded = false,
+    List<_Node>? children,
+    this.qualityScore = 0,
+    this.tags = const [],
+    this.transcript = '',
+    this.backendId,
+    this.moduleId,
+  })  : nk = _NK.material,
+        children = children ?? [],
+        mk = kind,
+        materialId = backendId,
+        parentTopicId = null;
 
   _Node.topic({
-    required this.id, required this.title, this.backendId, this.moduleId,
-  }) : nk = _NK.topic, children = [], isExpanded = false,
-       mk = null, qualityScore = 0, tags = const [], transcript = '';
+    required this.id,
+    required this.title,
+    this.backendId,
+    this.moduleId,
+    this.materialId,
+    this.parentTopicId,
+    List<_Node>? children,
+    bool isExpanded = false,
+  })  : nk = _NK.topic,
+        children = children ?? [],
+        isExpanded = isExpanded,
+        mk = null,
+        qualityScore = 0,
+        tags = const [],
+        transcript = '';
+
+  _Node.subtopic({
+    required this.id,
+    required this.title,
+    this.backendId,
+    this.moduleId,
+    this.materialId,
+    this.parentTopicId,
+  })  : nk = _NK.subtopic,
+        children = const [],
+        isExpanded = false,
+        mk = null,
+        qualityScore = 0,
+        tags = const [],
+        transcript = '';
+
+  bool get isTopicLike => nk == _NK.topic || nk == _NK.subtopic;
+  bool get isSubtopic => nk == _NK.subtopic;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -106,7 +158,6 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   bool _loadingTree      = true;
   bool _generatingTopics = false;
   DateTime _lastSaved    = DateTime.now().subtract(const Duration(minutes: 2));
-  int _examStep = 1;
 
   // ── lifecycle ────────────────────────────────────────────────────────────
   @override
@@ -122,9 +173,10 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   Future<void> _loadFromBackend() async {
     if (!mounted) return;
     setState(() => _loadingTree = true);
-    final cid  = widget.course.id;
+    final cid = widget.course.id;
     final ctrl = ref.read(courseDetailsControllerProvider(cid).notifier);
     var st = ref.read(courseDetailsControllerProvider(cid));
+
     if (st.modules.isEmpty && !st.modulesLoading) {
       await ctrl.loadModules();
     } else {
@@ -133,26 +185,99 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         if (!mounted) return;
       }
     }
+
     st = ref.read(courseDetailsControllerProvider(cid));
     if (!mounted) return;
+
     final roots = <_Node>[];
     for (final mod in st.modules) {
       await ctrl.loadMaterials(mod.id);
+      await ctrl.loadTopics(mod.id, force: true);
       final fresh = ref.read(courseDetailsControllerProvider(cid));
-      final mats  = fresh.materials[mod.id] ?? [];
-      final matNodes = mats.map((m) => _Node.material(
-        id: 'mat_${m.id}', title: m.displayTitle,
-        kind: m.type == 'video' ? _MK.video : _MK.pdf,
-        backendId: m.id, moduleId: mod.id,
-        transcript: m.description ?? '',
-      )).toList();
+      final mats = fresh.materials[mod.id] ?? [];
+      final moduleTopics = fresh.topics[mod.id] ?? [];
+      final matNodes = mats.map((m) {
+        final materialTopics = moduleTopics.where((t) => t.materialId == m.id).toList()
+          ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+        final topicNodes = _buildTopicTree(
+          topics: materialTopics,
+          moduleId: mod.id,
+          materialId: m.id,
+        );
+        return _Node.material(
+          id: 'mat_${m.id}',
+          title: m.displayTitle,
+          kind: m.type == 'video' ? _MK.video : _MK.pdf,
+          backendId: m.id,
+          moduleId: mod.id,
+          transcript: m.description ?? '',
+          children: topicNodes,
+        );
+      }).toList();
+
       roots.add(_Node.module(
-        id: 'mod_${mod.id}', title: mod.title,
-        children: matNodes, backendId: mod.id,
+        id: 'mod_${mod.id}',
+        title: mod.title,
+        children: matNodes,
+        backendId: mod.id,
       ));
     }
+
     if (!mounted) return;
-    setState(() { _roots = roots; _loadingTree = false; _lastSaved = DateTime.now(); });
+    setState(() {
+      _roots = roots;
+      _loadingTree = false;
+      _lastSaved = DateTime.now();
+    });
+  }
+
+  List<_Node> _buildTopicTree({
+    required List<TopicItem> topics,
+    required int moduleId,
+    required int materialId,
+  }) {
+    final byId = <int, TopicItem>{for (final t in topics) t.id: t};
+    final childrenByParent = <int, List<TopicItem>>{};
+    final rootTopics = <TopicItem>[];
+
+    for (final topic in topics) {
+      final parentId = topic.parentTopicId;
+      if (parentId == null || !byId.containsKey(parentId)) {
+        rootTopics.add(topic);
+      } else {
+        childrenByParent.putIfAbsent(parentId, () => []).add(topic);
+      }
+    }
+
+    rootTopics.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    for (final list in childrenByParent.values) {
+      list.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    }
+
+    _Node buildTopicNode(TopicItem topic) {
+      final subtopics = (childrenByParent[topic.id] ?? const <TopicItem>[])
+          .map((child) => _Node.subtopic(
+                id: 'topic_${child.id}',
+                title: child.title,
+                backendId: child.id,
+                moduleId: moduleId,
+                materialId: materialId,
+                parentTopicId: child.parentTopicId,
+              ))
+          .toList();
+      return _Node.topic(
+        id: 'topic_${topic.id}',
+        title: topic.title,
+        backendId: topic.id,
+        moduleId: moduleId,
+        materialId: materialId,
+        parentTopicId: topic.parentTopicId,
+        children: subtopics,
+        isExpanded: subtopics.isNotEmpty,
+      );
+    }
+
+    return rootTopics.map(buildTopicNode).toList();
   }
 
   // ── helpers ──────────────────────────────────────────────────────────────
@@ -187,9 +312,16 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
 
   Future<void> _addTopicToMaterial(_Node mat, {String? prefill}) async {
     final name = await _dlgInput('New Topic', 'e.g. Binary Trees', prefill ?? '', 'Add Topic');
-    if (name == null || !mounted) return;
+    if (name == null || !mounted || mat.moduleId == null || mat.backendId == null) return;
+    final ctrl = ref.read(courseDetailsControllerProvider(widget.course.id).notifier);
+    final created = await ctrl.createTopic(
+      moduleId: mat.moduleId!,
+      materialId: mat.backendId!,
+      payload: TopicCreateRequest(title: name),
+    );
+    if (!mounted || created == null) return;
+    await _loadFromBackend();
     setState(() {
-      mat.children.add(_Node.topic(id: _nid(), title: name));
       mat.isExpanded = true;
     });
   }
@@ -226,17 +358,12 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
 
   void _showUpload() => showDialog(context: context, builder: (_) => const UploadMaterialsDialog());
 
-  void _openExam() {
-    _examStep = 1;
-    showGeneralDialog(
-      context: context, barrierDismissible: true, barrierLabel: '',
-      pageBuilder: (_, __, ___) => Material(color: Colors.white, child: SafeArea(
-        child: StatefulBuilder(builder: (ctx, ss) => CreateExamContent(
-          currentStep: _examStep,
-          onBack: () { if (_examStep > 1) { ss(() => _examStep--); } else { Navigator.pop(ctx); } },
-          onNext: () { if (_examStep < 3) { ss(() => _examStep++); } else { Navigator.pop(ctx); } },
-        )),
-      )),
+  void _showQuestionGenerationUnavailable() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Question generation and quiz creation are not available in the current instructor flow yet.'),
+      ),
     );
   }
 
@@ -339,7 +466,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     final sel = _selected;
     if (sel == null)              return _panelEmpty();
     if (sel.nk == _NK.module)     return _panelModule(sel);
-    if (sel.nk == _NK.material)   return _panelMaterial(sel);
+    if (sel.nk == _NK.material) return _panelMaterial(sel);
     return _panelTopic(sel);
   }
 
@@ -486,7 +613,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _K.text),
         textAlign: TextAlign.center),
       const SizedBox(height: 6),
-      const Text('Topic', style: TextStyle(fontSize: 13, color: _K.muted)),
+      Text(t.nk == _NK.subtopic ? 'Subtopic' : 'Topic', style: const TextStyle(fontSize: 13, color: _K.muted)),
       const SizedBox(height: 22),
       Row(mainAxisSize: MainAxisSize.min, children: [
         _BtnOutline(label: 'Rename', icon: Icons.edit_outlined, onTap: () => _rename(t)),
@@ -515,8 +642,8 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         const SizedBox(width: 6),
         Text(txt, style: const TextStyle(fontSize: 12, color: _K.muted, fontWeight: FontWeight.w600)),
         const Spacer(),
-        _BtnGenerate(label: 'Generate Question', icon: Icons.auto_awesome_rounded,
-          onTap: _openExam),
+        _BtnOutline(label: 'Question Generation Unavailable', icon: Icons.info_outline_rounded,
+          onTap: _showQuestionGenerationUnavailable),
       ]),
     );
   }
@@ -604,99 +731,203 @@ class _MaterialTreeItem extends StatelessWidget {
   final ValueChanged<_Node> onMaterial, onTopic, onRename, onDelete;
 
   const _MaterialTreeItem({
-    required this.mat, required this.selectedId,
-    required this.onMaterial, required this.onTopic,
-    required this.onRename, required this.onDelete,
+    required this.mat,
+    required this.selectedId,
+    required this.onMaterial,
+    required this.onTopic,
+    required this.onRename,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final sel   = selectedId == mat.id;
-    final icon  = _mkIcon(mat.mk);
-    final col   = _mkColor(mat.mk);
-    final bg    = _mkBg(mat.mk);
+    final sel = selectedId == mat.id;
+    final icon = _mkIcon(mat.mk);
+    final col = _mkColor(mat.mk);
+    final bg = _mkBg(mat.mk);
     final topics = mat.children.where((c) => c.nk == _NK.topic).toList();
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _SidebarRow(
-        indent: 1, isSelected: sel,
+        indent: 1,
+        isSelected: sel,
         leading: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(
             topics.isNotEmpty
-              ? (mat.isExpanded
-                  ? Icons.keyboard_arrow_down_rounded
-                  : Icons.keyboard_arrow_right_rounded)
-              : Icons.remove_rounded,
-            size: 13, color: _K.hint,
+                ? (mat.isExpanded
+                    ? Icons.keyboard_arrow_down_rounded
+                    : Icons.keyboard_arrow_right_rounded)
+                : Icons.remove_rounded,
+            size: 13,
+            color: _K.hint,
           ),
           const SizedBox(width: 5),
           Container(
-            width: 20, height: 20,
+            width: 20,
+            height: 20,
             decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(5)),
             child: Icon(icon, size: 11, color: col),
           ),
         ]),
         title: mat.title,
         titleStyle: TextStyle(
-          fontSize: 12, fontWeight: FontWeight.w600,
-          color: sel ? _K.blue : const Color(0xFF2D3748)),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: sel ? _K.blue : const Color(0xFF2D3748),
+        ),
         trailing: _CtxMenu(items: [
-          _MItem(icon: Icons.label_outline_rounded, label: 'Add topic manually',
-            color: _K.purple, onTap: () => onMaterial(mat)),
-          _MItem(icon: Icons.auto_awesome_rounded, label: 'Generate topics with AI',
-            color: _K.blue, onTap: () => onMaterial(mat)),
+          _MItem(
+            icon: Icons.label_outline_rounded,
+            label: 'Add topic manually',
+            color: _K.purple,
+            onTap: () => onMaterial(mat),
+          ),
+          _MItem(
+            icon: Icons.auto_awesome_rounded,
+            label: 'Generate topics with AI',
+            color: _K.blue,
+            onTap: () => onMaterial(mat),
+          ),
           const _MDivider(),
           _MItem(icon: Icons.edit_outlined, label: 'Rename', onTap: () => onRename(mat)),
-          _MItem(icon: Icons.delete_outline, label: 'Delete',
-            color: _K.red, onTap: () => onDelete(mat)),
+          _MItem(
+            icon: Icons.delete_outline,
+            label: 'Delete',
+            color: _K.red,
+            onTap: () => onDelete(mat),
+          ),
         ]),
         onTap: () => onMaterial(mat),
       ),
-      // Topics
-      if (mat.isExpanded)
-        ...topics.map((t) {
-          final tsel = selectedId == t.id;
-          return _SidebarRow(
-            indent: 2, isSelected: tsel,
-            leading: Container(
-              width: 18, height: 18,
-              decoration: BoxDecoration(
-                color: _K.purpleSoft, borderRadius: BorderRadius.circular(4)),
-              child: const Icon(Icons.label_rounded, size: 10, color: _K.purple),
-            ),
-            title: t.title,
-            titleStyle: TextStyle(
-              fontSize: 11.5, fontWeight: FontWeight.w500,
-              color: tsel ? _K.purple : _K.muted),
-            onTap: () => onTopic(t),
-          );
-        }),
+      if (mat.isExpanded) ...topics.map(
+        (topic) => _TopicTreeItem(
+          topic: topic,
+          selectedId: selectedId,
+          onTopic: onTopic,
+        ),
+      ),
     ]);
   }
 
   static IconData _mkIcon(_MK? k) {
     switch (k) {
-      case _MK.video: return Icons.play_circle_rounded;
-      case _MK.doc:   return Icons.description_rounded;
-      case _MK.ppt:   return Icons.slideshow_rounded;
-      default:        return Icons.picture_as_pdf_rounded;
+      case _MK.video:
+        return Icons.play_circle_rounded;
+      case _MK.doc:
+        return Icons.description_rounded;
+      case _MK.ppt:
+        return Icons.slideshow_rounded;
+      default:
+        return Icons.picture_as_pdf_rounded;
     }
   }
+
   static Color _mkColor(_MK? k) {
     switch (k) {
-      case _MK.video: return _K.blue;
-      case _MK.doc:   return const Color(0xFF1E40AF);
-      case _MK.ppt:   return _K.orange;
-      default:        return _K.red;
+      case _MK.video:
+        return _K.blue;
+      case _MK.doc:
+        return const Color(0xFF1E40AF);
+      case _MK.ppt:
+        return _K.orange;
+      default:
+        return _K.red;
     }
   }
+
   static Color _mkBg(_MK? k) {
     switch (k) {
-      case _MK.video: return _K.blueSoft;
-      case _MK.doc:   return _K.badgeDocBg;
-      case _MK.ppt:   return _K.orangeSoft;
-      default:        return _K.redSoft;
+      case _MK.video:
+        return _K.blueSoft;
+      case _MK.doc:
+        return _K.badgeDocBg;
+      case _MK.ppt:
+        return _K.orangeSoft;
+      default:
+        return _K.redSoft;
     }
+  }
+}
+
+class _TopicTreeItem extends StatelessWidget {
+  final _Node topic;
+  final String? selectedId;
+  final ValueChanged<_Node> onTopic;
+
+  const _TopicTreeItem({
+    required this.topic,
+    required this.selectedId,
+    required this.onTopic,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = selectedId == topic.id;
+    final hasSubtopics = topic.children.isNotEmpty;
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _SidebarRow(
+        indent: 2,
+        isSelected: isSelected,
+        leading: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(
+            hasSubtopics
+                ? (topic.isExpanded
+                    ? Icons.keyboard_arrow_down_rounded
+                    : Icons.keyboard_arrow_right_rounded)
+                : Icons.remove_rounded,
+            size: 13,
+            color: _K.hint,
+          ),
+          const SizedBox(width: 5),
+          Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              color: _K.purpleSoft,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Icon(Icons.label_rounded, size: 10, color: _K.purple),
+          ),
+        ]),
+        title: topic.title,
+        titleStyle: TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: isSelected ? _K.purple : _K.muted,
+        ),
+        onTap: () {
+          if (hasSubtopics) {
+            topic.isExpanded = !topic.isExpanded;
+          }
+          onTopic(topic);
+        },
+      ),
+      if (topic.isExpanded)
+        ...topic.children.where((c) => c.nk == _NK.subtopic).map(
+              (subtopic) => _SidebarRow(
+                indent: 3,
+                isSelected: selectedId == subtopic.id,
+                leading: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Icon(Icons.subdirectory_arrow_right_rounded,
+                      size: 11, color: _K.sub),
+                ),
+                title: subtopic.title,
+                titleStyle: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                  color: selectedId == subtopic.id ? _K.blue : _K.muted,
+                ),
+                onTap: () => onTopic(subtopic),
+              ),
+            ),
+    ]);
   }
 }
 

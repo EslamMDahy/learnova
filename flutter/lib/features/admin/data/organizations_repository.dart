@@ -6,6 +6,7 @@ import 'organizations_api.dart';
 import 'dto/create_org_response.dart';
 import 'dto/join_requests_response.dart';
 import 'dto/organization_out.dart';
+import '../../../core/utils/organization_member_status.dart';
 
 class OrganizationsRepository {
   final OrganizationsApi _api;
@@ -97,7 +98,7 @@ class OrganizationsRepository {
       final raw = await _api.updateMemberStatus(
         organizationId: organizationId.trim(),
         memberId: memberId.trim(),
-        newStatus: 'accepted',
+        newStatus: normalizeOrganizationMemberStatus('accepted'),
         cancelToken: cancelToken,
       );
 
@@ -121,11 +122,10 @@ class OrganizationsRepository {
   }) async {
     try {
       
-      // Most backends use "rejected" (or "declined"). We standardize to "rejected".
       final raw = await _api.updateMemberStatus(
         organizationId: organizationId.trim(),
         memberId: memberId.trim(),
-        newStatus: 'declinate',
+        newStatus: normalizeOrganizationMemberStatus('declined'),
         cancelToken: cancelToken,
       );
 
@@ -150,7 +150,7 @@ class OrganizationsRepository {
       final raw = await _api.updateMemberStatus(
         organizationId: organizationId.trim(),
         memberId: memberId.trim(),
-        newStatus: 'suspended',
+        newStatus: normalizeOrganizationMemberStatus('suspended'),
         cancelToken: cancelToken,
       );
 

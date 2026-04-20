@@ -37,7 +37,8 @@ class AppFailure {
   });
 
   /// True only for 401 token expiry — triggers logout + login redirect.
-  bool get isAuthIssue => type == AppFailureType.unauthorized;
+  bool get isAuthIssue =>
+      type == AppFailureType.unauthorized && code == 'TOKEN_EXPIRED';
 
   /// True for the specific "email not verified" 403 case.
   bool get isEmailNotVerified => type == AppFailureType.emailNotVerified;

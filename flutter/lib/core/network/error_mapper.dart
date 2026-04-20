@@ -109,6 +109,18 @@ AppFailure _fromStatus({
     );
   }
 
+  if (code == 'AUTH_RETRY_FAILED') {
+    return AppFailure(
+      type: AppFailureType.warning,
+      message: message.isNotEmpty
+          ? message
+          : 'Request could not be completed. Please try again.',
+      debugMessage: debug,
+      statusCode: sc,
+      code: code,
+    );
+  }
+
   // Detect email-not-verified: 403 + any of these backend messages/codes.
   if (sc == 403) {
     final lowerMsg = message.toLowerCase();

@@ -69,7 +69,9 @@ class _ReusableCourse {
 
 final _reusableCoursesProvider =
     FutureProvider.autoDispose.family<List<_ReusableCourse>, int>((ref, currentCourseId) async {
-  final coursesResponse = await ref.read(coursesRepositoryProvider).myCourses();
+  final coursesResponse = await ref.read(coursesRepositoryProvider).myCourses(
+    enrichMissingModuleCounts: false,
+  );
   final modulesApi = ref.read(modulesApiProvider);
 
   final reusable = <_ReusableCourse>[];

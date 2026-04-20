@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/error/app_error_bus.dart';
+import '../../../../core/error/app_failure.dart';
+import '../../../../core/log/app_logger.dart';
 import '../../../../core/network/error_mapper.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../core/storage/user_storage.dart';
@@ -10,6 +12,7 @@ import '../../data/dto/user_profile.dart';
 import '../../data/settings_providers.dart';
 import '../../data/settings_repository.dart';
 import 'settings_state.dart';
+import 'settings_form_snapshot.dart';
 
 final settingsControllerProvider =
     StateNotifierProvider<SettingsController, SettingsState>(
@@ -46,6 +49,26 @@ class SettingsController extends StateNotifier<SettingsState> {
     _saveCancel = CancelToken();
   }
 
+  void _reportSoftWarning(
+    String message, {
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
+    AppLogger.log(
+      message,
+      level: LogLevel.warn,
+      error: error,
+      stackTrace: stackTrace,
+    );
+    AppErrorReporter.report(
+      ref,
+      AppFailure(
+        type: AppFailureType.warning,
+        message: message,
+      ),
+    );
+  }
+
   void _handleError(Object e, {bool stopLoading = true}) {
     final failure = mapApiFailure(e);
 
@@ -72,8 +95,13 @@ class SettingsController extends StateNotifier<SettingsState> {
     try {
       final profile = UserProfile.fromJson(cachedUser);
       state = state.copyWith(profile: profile);
-    } catch (_) {
-      // ignore
+    } catch (e, st) {
+      AppLogger.log(
+        'Failed to hydrate settings profile from cached storage.',
+        level: LogLevel.warn,
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 
@@ -121,8 +149,13 @@ Future<void> load() async {
     UserPreferences prefs;
     try {
       prefs = await _repo.getPreferences(cancelToken: _loadCancel);
-    } catch (_) {
+    } catch (e, st) {
       prefs = state.preferences ?? UserPreferences.defaults();
+      _reportSoftWarning(
+        'Preferences could not be loaded. Showing defaults for now.',
+        error: e,
+        stackTrace: st,
+      );
     }
 
     state = state.copyWith(
@@ -130,9 +163,14 @@ Future<void> load() async {
       profile: mergedProfile,
       preferences: prefs,
     );
-  } catch (e) {
+  } catch (e, st) {
     if (state.profile != null) {
       state = state.copyWith(loading: false);
+      _reportSoftWarning(
+        'Unable to refresh settings right now. Showing cached profile data.',
+        error: e,
+        stackTrace: st,
+      );
     } else {
       _handleError(e);
     }
@@ -143,6 +181,70 @@ Future<void> load() async {
   /// 1) Get signed upload URL from backend
   /// 2) PUT file bytes to Supabase
   /// 3) Confirm to backend → get new avatar_url
+
+  SettingsFormSnapshot buildFormSnapshot({
+    required String firstName,
+    required String lastName,
+    required String phone,
+    required String bio,
+    required String language,
+    required bool emailNotifications,
+    required bool assignmentAlerts,
+    required bool courseUpdates,
+    required bool announcementNotifications,
+    required bool gradingNotifications,
+    required bool deadlineReminders,
+    required String themeMode,
+    required String profileVisibility,
+    required bool showOnlineStatus,
+  }) {
+    return SettingsFormSnapshot(
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      phone: phone.trim(),
+      bio: bio.trim(),
+      language: language,
+      emailNotifications: emailNotifications,
+      assignmentAlerts: assignmentAlerts,
+      courseUpdates: courseUpdates,
+      announcementNotifications: announcementNotifications,
+      gradingNotifications: gradingNotifications,
+      deadlineReminders: deadlineReminders,
+      themeMode: themeMode,
+      profileVisibility: profileVisibility,
+      showOnlineStatus: showOnlineStatus,
+    );
+  }
+
+  bool hasFormChanges({
+    required SettingsFormSnapshot initial,
+    required SettingsFormSnapshot current,
+  }) {
+    return initial.firstName != current.firstName ||
+        initial.lastName != current.lastName ||
+        initial.phone != current.phone ||
+        initial.bio != current.bio ||
+        initial.language != current.language ||
+        initial.emailNotifications != current.emailNotifications ||
+        initial.assignmentAlerts != current.assignmentAlerts ||
+        initial.courseUpdates != current.courseUpdates ||
+        initial.announcementNotifications != current.announcementNotifications ||
+        initial.gradingNotifications != current.gradingNotifications ||
+        initial.deadlineReminders != current.deadlineReminders ||
+        initial.themeMode != current.themeMode ||
+        initial.profileVisibility != current.profileVisibility ||
+        initial.showOnlineStatus != current.showOnlineStatus;
+  }
+
+  bool shouldValidateProfileOnSave({
+    required SettingsFormSnapshot initial,
+    required SettingsFormSnapshot current,
+  }) {
+    return initial.firstName != current.firstName ||
+        initial.lastName != current.lastName ||
+        initial.phone != current.phone;
+  }
+
   Future<bool> uploadAvatar({
     required List<int> bytes,
     required String contentType,
@@ -312,15 +414,22 @@ Future<void> load() async {
       );
 
       UserPreferences savedPrefs = nextPrefs;
-      
+      var preferencesSyncFailed = false;
+
       try {
         state = state.copyWith(savingPreferences: true);
         savedPrefs = await _repo.updatePreferences(
           nextPrefs,
           cancelToken: _saveCancel,
         );
-      } catch (_) {
+      } catch (e, st) {
         savedPrefs = nextPrefs;
+        preferencesSyncFailed = true;
+        _reportSoftWarning(
+          'Profile was saved, but preference changes could not be synced.',
+          error: e,
+          stackTrace: st,
+        );
       } finally {
         state = state.copyWith(savingPreferences: false);
       }
@@ -329,7 +438,9 @@ Future<void> load() async {
         savingProfile: false,
         profile: mergedProfile,
         preferences: savedPrefs,
-        success: 'Saved',
+        success: preferencesSyncFailed
+            ? 'Profile saved. Preferences will need to be retried.'
+            : 'Saved',
       );
 
       return true;

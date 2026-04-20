@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:learnova/features/instructor/presentation/widgets/create_course_dialog.dart';
 import 'package:learnova/features/instructor/presentation/widgets/invite_students_dialog.dart';
 import 'package:learnova/features/instructor/data/mock_services.dart';
+import 'package:learnova/features/instructor/data/authoring_mode.dart';
 import 'package:learnova/features/instructor/presentation/widgets/instructor_course_widgets.dart';
 import 'package:learnova/features/instructor/presentation/widgets/instructor_dashboard_content.dart';
 
@@ -58,18 +59,16 @@ class _InstructorCourseRoutePageState extends ConsumerState<InstructorCourseRout
         .read(instructorCoursesControllerProvider.notifier)
         .createCourse(result.request);
 
-    final courseIdNum = created['id'];
-    final courseId = (courseIdNum is num) ? courseIdNum.toInt() : int.tryParse('$courseIdNum');
+    final courseId = created.id;
 
-    if (courseId == null) {
-      // If backend response doesn't include id, we can't proceed with invites upload
-      // Still refresh list.
+    if (courseId <= 0) {
       await ref.read(instructorCoursesControllerProvider.notifier).load(force: true);
       return;
     }
 
     // 2) Seed locally-managed learning outcomes for the dedicated Outcomes tab.
-    if (result.learningOutcomes.isNotEmpty) {
+    if (result.learningOutcomes.isNotEmpty &&
+        ref.read(enableLocalAuthoringFallbackProvider)) {
       await ref
           .read(learningOutcomeMockServiceProvider)
           .seedOutcomes(courseId, result.learningOutcomes);

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/storage/user_storage.dart';
 import '../../../../core/ui/toast.dart';
+import '../../../../core/utils/organization_member_status.dart';
 import '../controllers/user_management_controller.dart';
 import '../controllers/user_management_state.dart';
 import '../../data/dto/join_request_user.dart';
@@ -211,10 +212,11 @@ class _UserManagementContentState extends ConsumerState<UserManagementContent> {
   }
 
   String _normalizeStatus(String s) {
-    final v = s.toLowerCase().trim();
-    if (v == 'declinate') return 'declined';
-    if (v == 'rejected') return 'declined';
-    return v;
+    try {
+      return normalizeOrganizationMemberStatus(s);
+    } catch (_) {
+      return s.toLowerCase().trim();
+    }
   }
 }
 

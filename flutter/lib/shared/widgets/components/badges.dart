@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../design_tokens.dart';
+import '../../../core/utils/organization_member_status.dart';
 
 /// Badges / chips / status pills.
 
@@ -171,10 +172,11 @@ class JrStatusBadge extends StatelessWidget {
 }
 
 String jrNormalizeStatus(String raw) {
-  final s = raw.toLowerCase().trim();
-  if (s == 'pinding') return 'pending';
-  if (s == 'declinate') return 'declined';
-  return s;
+  try {
+    return normalizeOrganizationMemberStatus(raw);
+  } catch (_) {
+    return raw.toLowerCase().trim();
+  }
 }
 
 /* ---------------- Toggle ---------------- */

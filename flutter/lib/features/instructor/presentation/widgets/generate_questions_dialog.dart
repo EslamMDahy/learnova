@@ -20,6 +20,8 @@ class GenerateQuestionsDialog extends ConsumerStatefulWidget {
   final int? initialModuleId;
   final int? initialMaterialId;
   final int? initialTopicId;
+  final List<int>? initialMaterialIds;
+  final List<int>? initialTopicIds;
 
   const GenerateQuestionsDialog({
     super.key,
@@ -27,6 +29,8 @@ class GenerateQuestionsDialog extends ConsumerStatefulWidget {
     this.initialModuleId,
     this.initialMaterialId,
     this.initialTopicId,
+    this.initialMaterialIds,
+    this.initialTopicIds,
   });
 
   @override
@@ -58,13 +62,21 @@ class _GenerateQuestionsDialogState
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    if (widget.initialMaterialIds != null) {
+      _selectedMaterialIds.addAll(widget.initialMaterialIds!);
+    }
+    if (widget.initialTopicIds != null) {
+      _selectedTopicIds.addAll(widget.initialTopicIds!);
+    }
     if (widget.initialMaterialId != null) {
       _selectedMaterialIds.add(widget.initialMaterialId!);
     }
     if (widget.initialTopicId != null) {
       _selectedTopicIds.add(widget.initialTopicId!);
       _tabController.index = 0;
-    } else if (widget.initialMaterialId != null) {
+    } else if (_selectedTopicIds.isNotEmpty) {
+      _tabController.index = 0;
+    } else if (widget.initialMaterialId != null || _selectedMaterialIds.isNotEmpty) {
       _tabController.index = 1;
     }
   }

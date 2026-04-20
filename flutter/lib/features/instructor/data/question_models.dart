@@ -3,6 +3,8 @@
 //  In-memory + backend-ready (fromJson / toJson wired to real DB schema).
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'question_vocabulary.dart';
+
 enum QuestionType { multipleChoice, trueFalse, shortAnswer, essay, multiSelect, fillInTheBlank, numeric, code }
 enum QuestionDifficulty { easy, medium, hard }
 enum QuestionSource { manual, aiGenerated, imported }
@@ -106,26 +108,9 @@ class QuestionModel {
     required this.createdAt,
   });
 
-  String get typeLabel {
-    switch (type) {
-      case QuestionType.multipleChoice:   return 'Multiple Choice';
-      case QuestionType.trueFalse:        return 'True / False';
-      case QuestionType.shortAnswer:      return 'Short Answer';
-      case QuestionType.essay:            return 'Essay';
-      case QuestionType.multiSelect:      return 'Multi-Select';
-      case QuestionType.fillInTheBlank:   return 'Fill in the Blank';
-      case QuestionType.numeric:          return 'Numeric';
-      case QuestionType.code:             return 'Code';
-    }
-  }
+  String get typeLabel => type.label;
 
-  String get difficultyLabel {
-    switch (difficulty) {
-      case QuestionDifficulty.easy:   return 'Easy';
-      case QuestionDifficulty.medium: return 'Medium';
-      case QuestionDifficulty.hard:   return 'Hard';
-    }
-  }
+  String get difficultyLabel => difficulty.label;
 
   String get contextLabel {
     if (topicName != null)    return topicName!;
@@ -140,27 +125,6 @@ class QuestionModel {
         DateTime.tryParse((v ?? '').toString()) ??
         DateTime.fromMillisecondsSinceEpoch(0);
 
-    QuestionType parseType(String raw) {
-      switch (raw) {
-        case 'multiple_choice': return QuestionType.multipleChoice;
-        case 'true_false':      return QuestionType.trueFalse;
-        case 'short_answer':    return QuestionType.shortAnswer;
-        case 'essay':           return QuestionType.essay;
-        case 'multi_select':    return QuestionType.multiSelect;
-        case 'fill_in_the_blank': return QuestionType.fillInTheBlank;
-        case 'numeric':         return QuestionType.numeric;
-        case 'code':            return QuestionType.code;
-        default:                return QuestionType.multipleChoice;
-      }
-    }
-
-    QuestionDifficulty parseDifficulty(String raw) {
-      switch (raw) {
-        case 'easy':   return QuestionDifficulty.easy;
-        case 'hard':   return QuestionDifficulty.hard;
-        default:       return QuestionDifficulty.medium;
-      }
-    }
 
     QuestionSource parseSource(String raw) {
       switch (raw) {
@@ -191,8 +155,8 @@ class QuestionModel {
       id: remoteId?.toString() ?? DateTime.now().microsecondsSinceEpoch.toString(),
       remoteId: remoteId,
       text: (json['question_text'] ?? '').toString(),
-      type: parseType((json['type'] ?? 'multiple_choice').toString()),
-      difficulty: parseDifficulty((json['difficulty'] ?? 'medium').toString()),
+      type: parseQuestionType((json['type'] ?? 'multiple_choice').toString()),
+      difficulty: parseQuestionDifficulty((json['difficulty'] ?? 'medium').toString()),
       source: parseSource((json['source'] ?? 'manual').toString()),
       approvalStatus: parseApproval((json['approval_status'] ?? 'approved').toString()),
       options: options,
@@ -212,22 +176,10 @@ class QuestionModel {
   }
 
   Map<String, dynamic> toJson() {
-    String typeStr() {
-      switch (type) {
-        case QuestionType.multipleChoice:   return 'multiple_choice';
-        case QuestionType.trueFalse:        return 'true_false';
-        case QuestionType.shortAnswer:      return 'short_answer';
-        case QuestionType.essay:            return 'essay';
-        case QuestionType.multiSelect:      return 'multi_select';
-        case QuestionType.fillInTheBlank:   return 'fill_in_the_blank';
-        case QuestionType.numeric:          return 'numeric';
-        case QuestionType.code:             return 'code';
-      }
-    }
     return {
       'question_text': text,
-      'type': typeStr(),
-      'difficulty': difficulty.name,
+      'type': type.backendValue,
+      'difficulty': difficulty.backendValue,
       if (options.isNotEmpty) 'options': options.map((o) => o.toJson()).toList(),
       if (explanation != null) 'explanation': explanation,
       if (expectedAnswer != null) 'expected_answer': expectedAnswer,

@@ -150,10 +150,8 @@ class _GlobalErrorToastListenerState
             Text(AppFailurePresenter.title(f)),
           ],
         ),
-        content: Text(
-          f.message.trim().isNotEmpty
-              ? f.message.trim()
-              : 'Your session has expired. Please log in again.',
+        content: const Text(
+          'Your session has expired. Please log in again.',
         ),
         actions: [
           TextButton(

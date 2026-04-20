@@ -1,10 +1,8 @@
 import 'dart:typed_data';
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/utils/browser_file_picker.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Result
@@ -70,7 +68,7 @@ class _UploadMaterialSheetState extends State<UploadMaterialSheet>
   bool _hovering = false;
   late final AnimationController _pulseCtrl;
   late final Animation<double> _pulse;
-  static const int _maxBytes = 500 * 1024 * 1024;
+  static const int _maxBytes = 50 * 1024 * 1024;
 
   @override
   void initState() {
@@ -89,45 +87,40 @@ class _UploadMaterialSheetState extends State<UploadMaterialSheet>
   }
 
   Future<void> _browse() async {
-    final c = Completer<void>();
-    final input = html.FileUploadInputElement()
-      ..accept = '.pdf,.docx,.pptx,.mp4'
-      ..multiple = true;
-    input.onChange.listen((_) async {
-      final files = input.files;
-      if (files != null) {
-        for (int i = 0; i < files.length; i++) {
-          final f = files[i];
-          await _read(f);
-        }
-      }
-      c.complete();
-    });
-    input.click();
-    await c.future;
+    final files = await pickBrowserFiles(
+      acceptedExtensions: const ['pdf'],
+      multiple: true,
+    );
+    for (final file in files) {
+      _queuePickedFile(file);
+    }
   }
 
-  Future<void> _read(html.File file) async {
-    final c = Completer<void>();
-    final reader = html.FileReader();
-    reader.onLoad.listen((_) {
-      final bytes = reader.result as Uint8List;
-      final valid = bytes.length <= _maxBytes &&
-          RegExp(r'\.(pdf|docx|pptx|mp4)$', caseSensitive: false)
-              .hasMatch(file.name);
-      setState(() {
-        _queue.add(_QueuedFile(
-          name: file.name,
-          sizeBytes: bytes.length,
-          bytes: bytes,
-          status: valid ? _FileStatus.ready : _FileStatus.error,
-          errorMsg: valid ? null : 'Unsupported or exceeds 500 MB',
-        ));
-      });
-      c.complete();
+  void _queuePickedFile(PickedBrowserFile file) {
+    final valid = file.sizeBytes <= _maxBytes && _isSupportedPdf(file);
+    setState(() {
+      _queue.add(_QueuedFile(
+        name: file.name,
+        sizeBytes: file.sizeBytes,
+        bytes: file.bytes,
+        status: valid ? _FileStatus.ready : _FileStatus.error,
+        errorMsg: valid ? null : 'Only PDF files are supported right now, up to 50 MB',
+      ));
     });
-    reader.readAsArrayBuffer(file);
-    await c.future;
+  }
+
+  static final RegExp _pdfExtension = RegExp(r'\.pdf$', caseSensitive: false);
+
+  bool _isSupportedPdf(PickedBrowserFile file) {
+    final hasPdfExtension = _pdfExtension.hasMatch(file.name);
+    final mime = file.mimeType.trim().toLowerCase();
+    final mimeLooksPdf = mime.isEmpty || mime == 'application/pdf';
+    return hasPdfExtension && mimeLooksPdf;
+  }
+
+  String _contentTypeForUpload(String filename) {
+    if (_pdfExtension.hasMatch(filename)) return 'application/pdf';
+    throw StateError('Unsupported upload type for $filename');
   }
 
   void _remove(int i) => setState(() => _queue.removeAt(i));
@@ -142,7 +135,7 @@ class _UploadMaterialSheetState extends State<UploadMaterialSheet>
       return UploadSheetResult(
         bytes: f.bytes,
         filename: f.name,
-        contentType: 'application/pdf',
+        contentType: _contentTypeForUpload(f.name),
         title: dot > 0 ? f.name.substring(0, dot) : f.name,
       );
     }).toList();
@@ -311,7 +304,7 @@ class _LeftPanel extends StatelessWidget {
 
               // Big headline
               const Text(
-                'Drop your\nfiles here.',
+                'Drop your\nPDFs here.',
                 style: TextStyle(
                   fontSize: 38,
                   fontWeight: FontWeight.w800,
@@ -322,7 +315,7 @@ class _LeftPanel extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'PDF, DOCX, PPTX, MP4  ·  Max 500 MB',
+                'PDF only  ·  Max 50 MB',
                 style: TextStyle(
                     fontSize: 13,
                     color: Colors.white.withOpacity(0.45)),
@@ -391,8 +384,8 @@ class _LeftPanel extends StatelessWidget {
                             const SizedBox(height: 20),
                             Text(
                               hovering
-                                  ? 'Release to add files'
-                                  : 'Drag & drop files',
+                                  ? 'Release to add PDFs'
+                                  : 'Drag & drop PDFs',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -458,7 +451,7 @@ class _LeftPanel extends StatelessWidget {
                 const SizedBox(width: 16),
                 const Icon(Icons.layers_outlined, size: 13, color: Color(0xFF60AFFE)),
                 const SizedBox(width: 6),
-                Text('Multi-file upload', style: TextStyle(fontSize: 11.5, color: Colors.white.withOpacity(0.45))),
+                Text('Multi-PDF upload', style: TextStyle(fontSize: 11.5, color: Colors.white.withOpacity(0.45))),
                 const SizedBox(width: 16),
                 const Icon(Icons.text_snippet_outlined, size: 13, color: Color(0xFF60AFFE)),
                 const SizedBox(width: 6),

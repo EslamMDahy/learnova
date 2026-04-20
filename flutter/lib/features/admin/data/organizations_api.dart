@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/endpoints.dart';
+import '../../../core/utils/organization_member_status.dart';
 
 class OrganizationsApi {
   final ApiClient _client;
@@ -108,14 +109,12 @@ class OrganizationsApi {
     }
 
     
-    const allowed = {'pending', 'accepted', 'suspended', 'declinate'};
-    if (!allowed.contains(status)) {
-      throw ArgumentError('Invalid newStatus value: $status');
-    }
+    final normalizedStatus = parseOrganizationMemberStatus(status);
+    final apiStatus = toOrganizationMemberApiStatus(normalizedStatus);
 
     final res = await _client.patch<Map<String, dynamic>>(
       Endpoints.updateMemberStatus(orgId, mId),
-      data: {'new_status': status},
+      data: {'new_status': apiStatus},
     );
 
     final data = res.data;

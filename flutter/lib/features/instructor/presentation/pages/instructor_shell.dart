@@ -57,8 +57,6 @@ class _InstructorShellState extends ConsumerState<InstructorShell> {
   int _selectedIndexFromPath(String path) {
     if (path.startsWith(Routes.instructorDashboard)) return InstructorTabs.dashboard;
     if (path.startsWith(Routes.instructorCourses)) return InstructorTabs.course;
-    if (path.startsWith(Routes.instructorQuestionBank)) return InstructorTabs.questionBank;
-    if (path.startsWith(Routes.instructorQuizzes)) return InstructorTabs.quizzes;
     if (path.startsWith(Routes.instructorSettings)) return InstructorTabs.settings;
     if (path.startsWith(Routes.instructorHelp)) return InstructorTabs.help;
 
@@ -72,12 +70,6 @@ class _InstructorShellState extends ConsumerState<InstructorShell> {
         return;
       case InstructorTabs.course:
         context.go(Routes.instructorCourses);
-        return;
-      case InstructorTabs.questionBank:
-        context.go(Routes.instructorQuestionBank);
-        return;
-      case InstructorTabs.quizzes:
-        context.go(Routes.instructorQuizzes);
         return;
       case InstructorTabs.settings:
         context.go(Routes.instructorSettings);

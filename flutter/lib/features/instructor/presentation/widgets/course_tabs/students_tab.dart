@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/network/endpoints.dart';
+import '../../../../../core/network/error_mapper.dart';
 import '../../../data/courses_models.dart';
 import '../../../../../features/auth/data/auth_providers.dart';
 
@@ -51,10 +52,11 @@ class _CourseStudentsTabState extends ConsumerState<CourseStudentsTab> {
       });
     } catch (e) {
       // 404 / 403 on public courses with no invitations — treat as empty
-      final msg = e.toString();
-      final isEmptyOk = msg.contains('404') ||
-          msg.contains('403') ||
-          msg.contains('not found');
+      final failure = mapApiFailure(e);
+      final msg = failure.message;
+      final isEmptyOk = failure.statusCode == 404 ||
+          failure.statusCode == 403 ||
+          msg.toLowerCase().contains('not found');
       setState(() {
         _loading = false;
         _invites = [];

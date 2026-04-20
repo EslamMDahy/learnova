@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:learnova/core/theme/app_theme.dart';
 import 'package:learnova/core/ui/toast.dart';
 import 'package:learnova/features/instructor/data/courses_models.dart';
+import 'package:learnova/features/instructor/data/course_vocabulary.dart';
 import 'package:learnova/features/instructor/data/learning_outcomes_models.dart';
 import 'package:learnova/shared/widgets/components/dropdowns.dart';
 import 'learning_outcomes_section.dart';
@@ -112,16 +113,19 @@ class _CreateCourseDialogState extends State<CreateCourseDialog> {
       return;
     }
     final isPublic = _visibility == _VisibilityChoice.publicCourse;
-    final status   = _publish == _PublishChoice.published ? 'published' : 'draft';
+    final status = (_publish == _PublishChoice.published
+            ? CourseLifecycleStatus.published
+            : CourseLifecycleStatus.draft)
+        .backendValue;
     final request  = CourseCreateRequest(
-      courseType: 'individual',
+      courseType: CourseAccessType.individual.backendValue,
       organizationId: null,
       title: _titleCtrl.text.trim(),
       description: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
       coverImageUrl: null,
       bannerImageUrl: null,
       isPublic: isPublic,
-      visibilityLevel: isPublic ? 'public' : 'private',
+      visibilityLevel: (isPublic ? CourseVisibility.public : CourseVisibility.private).backendValue,
       requiresEnrollmentApproval: !isPublic,
       learningOutcomes: _outcomes.map((o) => '${o.code}: ${o.description}').toList(),
       tags: const [],

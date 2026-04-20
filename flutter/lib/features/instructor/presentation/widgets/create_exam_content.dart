@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
-import 'create_exam_content2.dart';
-import 'create_exam_content3.dart';
+import 'exam_question_selection_step.dart';
+import 'exam_settings_step.dart';
 
 class CreateExamContent extends StatefulWidget {
   final int currentStep;
   final VoidCallback onNext;
   final VoidCallback onBack;
 
+  final String? courseTitle;
+  final String? scopeLabel;
+  final List<dynamic>? topicTargets;
+  final VoidCallback? onAddQuestion;
+
   const CreateExamContent({
     super.key,
     required this.currentStep,
     required this.onNext,
     required this.onBack,
+    this.courseTitle,
+    this.scopeLabel,
+    this.topicTargets,
+    this.onAddQuestion,
   });
 
   @override
@@ -26,7 +35,6 @@ class _CreateExamContentState extends State<CreateExamContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- Header Section ---
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -43,16 +51,23 @@ class _CreateExamContentState extends State<CreateExamContent> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Step ${widget.currentStep}: ${widget.currentStep == 1
-                        ? 'Basic Details'
-                        : widget.currentStep == 2
-                        ? 'Add Questions'
-                        : 'Settings'}",
+                    "Step ${widget.currentStep}: ${widget.currentStep == 1 ? 'Basic Details' : widget.currentStep == 2 ? 'Add Questions' : 'Settings'}",
                     style: const TextStyle(
                       color: Color(0xFF617589),
                       fontSize: 14,
                     ),
                   ),
+                  if ((widget.scopeLabel ?? '').trim().isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.scopeLabel!,
+                      style: const TextStyle(
+                        color: Color(0xFF137FEC),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ],
               ),
               Row(
@@ -65,8 +80,6 @@ class _CreateExamContentState extends State<CreateExamContent> {
             ],
           ),
           const SizedBox(height: 32),
-
-          // --- Stepper Section (Visual indicators) ---
           Row(
             children: [
               _buildStepItem(
@@ -92,52 +105,36 @@ class _CreateExamContentState extends State<CreateExamContent> {
             ],
           ),
           const SizedBox(height: 40),
-
-          // --- Dynamic Content Area (The Switcher) ---
-          
           _buildStepFormContent(),
-
           const SizedBox(height: 40),
-
-          // --- Navigation Buttons (Bottom) ---
           Padding(
             padding: const EdgeInsets.only(bottom: 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 OutlinedButton.icon(
-                  onPressed:
-                      widget.onBack, 
+                  onPressed: widget.onBack,
                   icon: const Icon(Icons.arrow_back, size: 18),
                   label: Text(
-                    widget.currentStep == 1
-                        ? 'Back to Dashboard'
-                        : 'Back to Previous',
+                    widget.currentStep == 1 ? 'Back to Dashboard' : 'Back to Previous',
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF0F172A),
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 20,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: widget
-                      .onNext, 
+                  onPressed: widget.onNext,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF137FEC),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 48,
-                      vertical: 20,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -153,22 +150,30 @@ class _CreateExamContentState extends State<CreateExamContent> {
     );
   }
 
-  
   Widget _buildStepFormContent() {
     switch (widget.currentStep) {
       case 1:
-        return _buildStep1Fields(); 
+        return _buildStep1Fields();
       case 2:
-        return const CreateExamContent2(); 
+        return ExamQuestionSelectionStep(
+          scopeLabel: widget.scopeLabel ?? 'Selected content',
+          topicTargets: widget.topicTargets ?? const [],
+          onAddQuestion: widget.onAddQuestion,
+        );
       case 3:
-        return const CreateExamContent3(); 
+        return const ExamSettingsStep();
       default:
         return const SizedBox.shrink();
     }
   }
 
-  // --- Step 1 Fields (Basic Details) ---
   Widget _buildStep1Fields() {
+    final selectedContent = (widget.scopeLabel ?? '').trim().isNotEmpty
+        ? widget.scopeLabel!
+        : ((widget.topicTargets?.isNotEmpty ?? false)
+            ? '${widget.topicTargets!.length} selected target(s)'
+            : 'Not specified');
+
     return Container(
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
@@ -182,7 +187,9 @@ class _CreateExamContentState extends State<CreateExamContent> {
           _buildLabel('Quiz Title *'),
           TextField(
             decoration: _inputDecoration(
-              'e.g., Midterm Exam - Data Structures',
+              widget.courseTitle == null || widget.courseTitle!.trim().isEmpty
+                  ? 'e.g., Midterm Exam - Data Structures'
+                  : 'e.g., Midterm Exam - ${widget.courseTitle}',
             ),
           ),
           const SizedBox(height: 24),
@@ -206,6 +213,7 @@ class _CreateExamContentState extends State<CreateExamContent> {
                     _buildLabel('Exam Category'),
                     DropdownButtonFormField<String>(
                       decoration: _inputDecoration('Quiz'),
+                      initialValue: 'Quiz',
                       items: const [
                         DropdownMenuItem(value: 'Quiz', child: Text('Quiz')),
                       ],
@@ -219,11 +227,11 @@ class _CreateExamContentState extends State<CreateExamContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLabel('Tags (Optional)'),
+                    _buildLabel('Selected Content'),
                     TextField(
-                      decoration: _inputDecoration(
-                        'Add tags separated by comma...',
-                      ),
+                      enabled: false,
+                      controller: TextEditingController(text: selectedContent),
+                      decoration: _inputDecoration('Selected content'),
                     ),
                   ],
                 ),
@@ -235,16 +243,13 @@ class _CreateExamContentState extends State<CreateExamContent> {
     );
   }
 
-  
   Widget _headerActionBtn(String label, {required bool isPrimary}) {
     return ElevatedButton(
       onPressed: () {},
       style: ElevatedButton.styleFrom(
         backgroundColor: isPrimary ? const Color(0xFF137FEC) : Colors.white,
         foregroundColor: isPrimary ? Colors.white : const Color(0xFF0F172A),
-        side: isPrimary
-            ? BorderSide.none
-            : const BorderSide(color: Color(0xFFE2E8F0)),
+        side: isPrimary ? BorderSide.none : const BorderSide(color: Color(0xFFE2E8F0)),
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -289,9 +294,7 @@ class _CreateExamContentState extends State<CreateExamContent> {
         Text(
           label,
           style: TextStyle(
-            color: isActive || isCompleted
-                ? const Color(0xFF0F172A)
-                : const Color(0xFF94A3B8),
+            color: isActive || isCompleted ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
             fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
             fontSize: 14,
           ),
@@ -301,31 +304,31 @@ class _CreateExamContentState extends State<CreateExamContent> {
   }
 
   Widget _buildDivider() => Container(
-    width: 40,
-    height: 1,
-    margin: const EdgeInsets.symmetric(horizontal: 16),
-    color: const Color(0xFFE2E8F0),
-  );
+        width: 40,
+        height: 1,
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        color: const Color(0xFFE2E8F0),
+      );
 
   Widget _buildLabel(String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      text,
-      style: const TextStyle(
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF1E293B),
-      ),
-    ),
-  );
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+      );
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
-    hintText: hint,
-    filled: true,
-    fillColor: Colors.white,
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-    ),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-  );
+        hintText: hint,
+        filled: true,
+        fillColor: Colors.white,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      );
 }

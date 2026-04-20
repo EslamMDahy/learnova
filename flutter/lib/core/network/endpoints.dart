@@ -61,8 +61,8 @@ class Endpoints {
       '$_courses/$courseId/modules/$moduleId/materials/$materialId/download-url';
   static String deleteMaterial(int courseId, int moduleId, int materialId) =>
       '$_courses/$courseId/modules/$moduleId/materials/$materialId';
-  static String reassignMaterial(int courseId, int moduleId, int materialId) =>
-      '$_courses/$courseId/modules/$moduleId/materials/$materialId/reassign';
+  static String reassignMaterial(int materialId) =>
+      '/materials/$materialId/reassign';
 
   // ─── TOPICS ──────────────────────────────────────────────────────────────
   static String materialTopics(int courseId, int moduleId, int materialId) =>

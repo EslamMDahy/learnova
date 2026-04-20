@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/storage/key_value_store_factory.dart';
+import '../../../../../core/network/error_mapper.dart';
 import '../../../data/courses_models.dart';
 import '../../../data/courses_providers.dart';
 import '../../controllers/course_details_controller.dart';
@@ -118,7 +119,7 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
           ref.watch(selectedCourseByIdProvider(widget.cachedCourseId!));
       return asyncCourse.when(
         loading: () => _buildLoadingShell(),
-        error: (e, _) => _buildErrorShell(e.toString()),
+        error: (e, _) => _buildErrorShell(mapApiFailure(e).message),
         data: (course) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) _loadCourseData(course);

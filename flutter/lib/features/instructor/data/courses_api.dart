@@ -47,9 +47,7 @@ class CoursesApi {
   }
 
   /// POST /courses
-  ///
-  /// NOTE: kept as Map to avoid breaking existing code.
-  Future<Map<String, dynamic>> createCourse({
+  Future<CourseCreatedResponse> createCourse({
     required CourseCreateRequest payload,
     CancelToken? cancelToken,
   }) async {
@@ -65,7 +63,9 @@ class CoursesApi {
     );
 
     final data = res.data;
-    if (data is Map<String, dynamic>) return data;
+    if (data is Map<String, dynamic>) {
+      return CourseCreatedResponse.fromJson(data);
+    }
     throw const FormatException('Invalid response from POST /courses');
   }
 

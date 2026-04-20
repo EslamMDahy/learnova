@@ -1,23 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/ui/toast.dart';
 import '../../../data/courses_models.dart';
 import '../../../data/materials_models.dart';
 import '../../../data/modules_models.dart';
+import '../../../data/question_models.dart';
 import '../../../data/topics_models.dart';
 import '../../controllers/course_details_controller.dart';
-import '../../controllers/course_details_state.dart';
-import 'question_bank_question_editor_dialog.dart';
+import '../add_question_sheet.dart';
 
 class QuestionBankAuthoringFlow extends ConsumerStatefulWidget {
   final MyCourseItem course;
-  final VoidCallback? onQuestionsSaved;
+  final Set<int> initialModuleIds;
+  final Set<int> initialMaterialIds;
+  final Set<int> initialTopicIds;
+  final bool embedded;
+  final VoidCallback? onClose;
 
   const QuestionBankAuthoringFlow({
     super.key,
     required this.course,
-    this.onQuestionsSaved,
+    this.initialModuleIds = const <int>{},
+    this.initialMaterialIds = const <int>{},
+    this.initialTopicIds = const <int>{},
+    this.embedded = false,
+    this.onClose,
   });
 
   @override
@@ -27,11 +35,13 @@ class QuestionBankAuthoringFlow extends ConsumerStatefulWidget {
 
 class _QuestionBankAuthoringFlowState
     extends ConsumerState<QuestionBankAuthoringFlow> {
-  final Set<int> _selectedModuleIds = <int>{};
-  final Set<int> _selectedMaterialIds = <int>{};
-  final Set<int> _selectedTopicIds = <int>{};
-  String _search = '';
-  bool _bootstrapping = true;
+  bool _loading = true;
+  List<QuestionAuthoringTarget> _targets = const [];
+
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _selectedTopicFilter = 'All Topics';
+  String _selectedDifficultyFilter = 'Any Difficulty';
+  String _selectedTypeFilter = 'All Types';
 
   @override
   void initState() {
@@ -39,724 +49,933 @@ class _QuestionBankAuthoringFlowState
     WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
   }
 
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _bootstrap() async {
-    setState(() => _bootstrapping = true);
     await ref
         .read(courseDetailsControllerProvider(widget.course.id).notifier)
         .loadModulesAndAllMaterials(force: false);
     if (!mounted) return;
-    setState(() => _bootstrapping = false);
+    final st = ref.read(courseDetailsControllerProvider(widget.course.id));
+    setState(() {
+      _targets = _resolveTargets(st);
+      _loading = false;
+    });
+  }
+
+  List<QuestionAuthoringTarget> _resolveTargets(dynamic st) {
+    final modules = st.modules as List<ModuleItem>;
+    final Map<int, List<MaterialItem>> materialsMap =
+        Map<int, List<MaterialItem>>.from(st.materials as Map);
+    final Map<int, List<TopicItem>> topicsMap =
+        Map<int, List<TopicItem>>.from(st.topics as Map);
+    final resolved = <QuestionAuthoringTarget>[];
+    final seen = <int>{};
+
+    ModuleItem? findModule(int id) =>
+        modules.cast<ModuleItem?>().firstWhere((m) => m?.id == id, orElse: () => null);
+
+    MaterialItem? findMaterial(int id) {
+      for (final mats in materialsMap.values) {
+        for (final mat in mats) {
+          if (mat.id == id) return mat;
+        }
+      }
+      return null;
+    }
+
+    TopicItem? findTopic(int id) {
+      for (final tops in topicsMap.values) {
+        for (final topic in tops) {
+          if (topic.id == id) return topic;
+        }
+      }
+      return null;
+    }
+
+    void addLeafTargets(
+      ModuleItem module,
+      MaterialItem material,
+      TopicItem topic,
+      List<TopicItem> materialTopics,
+    ) {
+      final children = materialTopics
+          .where((t) => t.parentTopicId == topic.id)
+          .toList()
+        ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+
+      if (children.isEmpty || topic.parentTopicId != null) {
+        if (seen.add(topic.id)) {
+          final parent = topic.parentTopicId == null
+              ? null
+              : materialTopics.cast<TopicItem?>().firstWhere(
+                    (t) => t?.id == topic.parentTopicId,
+                    orElse: () => null,
+                  );
+          resolved.add(
+            QuestionAuthoringTarget(
+              moduleId: module.id,
+              moduleName: module.title,
+              materialId: material.id,
+              materialName: material.displayTitle,
+              topicId: topic.id,
+              topicName: topic.title,
+              isSubtopic: topic.parentTopicId != null,
+              parentTopicName: parent?.title,
+            ),
+          );
+        }
+        return;
+      }
+
+      for (final child in children) {
+        addLeafTargets(module, material, child, materialTopics);
+      }
+    }
+
+    for (final topicId in widget.initialTopicIds) {
+      final topic = findTopic(topicId);
+      if (topic == null) continue;
+      final material = findMaterial(topic.materialId);
+      if (material == null) continue;
+      final module = findModule(topic.moduleId);
+      if (module == null) continue;
+      final materialTopics = (topicsMap[module.id] ?? const <TopicItem>[])
+          .where((t) => t.materialId == material.id)
+          .toList();
+      addLeafTargets(module, material, topic, materialTopics);
+    }
+
+    for (final materialId in widget.initialMaterialIds) {
+      final material = findMaterial(materialId);
+      if (material == null) continue;
+      final module = findModule(material.moduleId);
+      if (module == null) continue;
+      final materialTopics = (topicsMap[module.id] ?? const <TopicItem>[])
+          .where((t) => t.materialId == material.id)
+          .toList();
+      final roots = materialTopics.where((t) => t.parentTopicId == null).toList()
+        ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+      for (final root in roots) {
+        addLeafTargets(module, material, root, materialTopics);
+      }
+    }
+
+    for (final moduleId in widget.initialModuleIds) {
+      final module = findModule(moduleId);
+      if (module == null) continue;
+      final materials = materialsMap[module.id] ?? const <MaterialItem>[];
+      final moduleTopics = topicsMap[module.id] ?? const <TopicItem>[];
+      for (final material in materials) {
+        final materialTopics =
+            moduleTopics.where((t) => t.materialId == material.id).toList();
+        final roots = materialTopics.where((t) => t.parentTopicId == null).toList()
+          ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+        for (final root in roots) {
+          addLeafTargets(module, material, root, materialTopics);
+        }
+      }
+    }
+
+    return resolved;
+  }
+
+  Future<void> _openAddQuestion() async {
+    if (_targets.isEmpty) {
+      AppToast.error(
+        context,
+        title: 'No topics found',
+        message: 'Add topics or subtopics first.',
+      );
+      return;
+    }
+
+    await showAddQuestionDialog(
+      context,
+      moduleId: _targets.first.moduleId,
+      moduleName: _targets.first.moduleName,
+      materialId: _targets.first.materialId,
+      materialName: _targets.first.materialName,
+      topicId: _targets.first.topicId,
+      topicName: _targets.first.topicName,
+      topicTargets: _targets,
+      onAdd: (q) => ref
+          .read(courseDetailsControllerProvider(widget.course.id).notifier)
+          .addQuestion(q),
+    );
+  }
+
+  void _closeFlow() {
+    if (widget.onClose != null) {
+      widget.onClose!.call();
+      return;
+    }
+    Navigator.of(context).maybePop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final courseState = ref.watch(courseDetailsControllerProvider(widget.course.id));
-    final moduleEntries = _buildEntries(courseState);
-    final targets = _resolveTargets(moduleEntries);
+    if (_loading) {
+      return _wrapBody(
+        const Center(child: CircularProgressIndicator()),
+      );
+    }
 
-    return Dialog.fullscreen(
-      child: Scaffold(
-        backgroundColor: AppColors.pageBg,
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: Colors.white,
-          foregroundColor: AppColors.textTitle,
-          titleSpacing: 20,
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Question Bank Authoring',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-              Text(
-                widget.course.title,
-                style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton.icon(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.close_rounded),
-              label: const Text('Close'),
-            ),
-            const SizedBox(width: 12),
-          ],
-        ),
-        body: Row(
+    final st = ref.watch(courseDetailsControllerProvider(widget.course.id));
+    final filteredQuestions = _filteredQuestions(st.questions);
+
+    final body = Container(
+      color: const Color(0xFFF8FAFC),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 22, 24, 24),
+        child: Column(
           children: [
+            _buildHeader(),
+            const SizedBox(height: 20),
             Expanded(
-              flex: 6,
-              child: ListView(
-                padding: const EdgeInsets.all(24),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _AuthoringHero(
-                    selectedModules: _selectedModuleIds.length,
-                    selectedMaterials: _selectedMaterialIds.length,
-                    selectedTopics: targets.length,
+                  Expanded(
+                    child: _buildLeftPane(filteredQuestions),
                   ),
-                  const SizedBox(height: 18),
-                  Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Select source content',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.textTitle,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    'Choose modules, materials, and/or specific topics. Broad selections expand to eligible topics automatically.',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textMuted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(
-                              width: 280,
-                              child: TextField(
-                                onChanged: (value) => setState(() => _search = value),
-                                decoration: InputDecoration(
-                                  hintText: 'Search modules, materials, or topics...',
-                                  prefixIcon: const Icon(Icons.search_rounded),
-                                  filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                    borderSide: const BorderSide(color: AppColors.border),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                    borderSide: const BorderSide(color: AppColors.border),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-                        if (_bootstrapping || courseState.modulesLoading)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
-                            child: Center(child: CircularProgressIndicator()),
-                          )
-                        else if (moduleEntries.isEmpty)
-                          const _TreeEmptyState()
-                        else
-                          ...moduleEntries.map((entry) {
-                            if (!_matchesSearch(entry)) return const SizedBox.shrink();
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 14),
-                              child: _ModuleSelectionCard(
-                                entry: entry,
-                                selectedModuleIds: _selectedModuleIds,
-                                selectedMaterialIds: _selectedMaterialIds,
-                                selectedTopicIds: _selectedTopicIds,
-                                onToggleModule: () => _toggleModule(entry),
-                                onToggleMaterial: (material) => _toggleMaterial(entry, material),
-                                onToggleTopic: (topic) => _toggleTopic(topic),
-                              ),
-                            );
-                          }),
-                      ],
-                    ),
+                  const SizedBox(width: 20),
+                  SizedBox(
+                    width: 320,
+                    child: _buildRightPane(st.questions),
                   ),
                 ],
-              ),
-            ),
-            Container(width: 1, color: AppColors.border),
-            Expanded(
-              flex: 4,
-              child: Container(
-                color: Colors.white,
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Resolved topic scope',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textTitle,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'The question editor will only save questions against these exact topics.',
-                        style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-                      ),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: [
-                          _SummaryPill(label: 'Modules', value: '${_selectedModuleIds.length}'),
-                          _SummaryPill(label: 'Materials', value: '${_selectedMaterialIds.length}'),
-                          _SummaryPill(label: 'Eligible topics', value: '${targets.length}'),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Expanded(
-                        child: targets.isEmpty
-                            ? const _ScopeEmptyState()
-                            : ListView.separated(
-                                itemCount: targets.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                                itemBuilder: (context, index) {
-                                  final target = targets[index];
-                                  return Container(
-                                    padding: const EdgeInsets.all(14),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF8FAFC),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(color: AppColors.border),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          target.topic.title,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w800,
-                                            color: AppColors.textTitle,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          target.material.displayTitle,
-                                          style: const TextStyle(fontSize: 11.5, color: AppColors.textTitle),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          target.module.title,
-                                          style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: targets.isEmpty
-                              ? null
-                              : () async {
-                                  final savedCount = await showDialog<int>(
-                                    context: context,
-                                    builder: (_) => QuestionBankQuestionEditorDialog(
-                                      courseId: widget.course.id,
-                                      topicTargets: targets,
-                                    ),
-                                  );
-                                  if (savedCount != null && savedCount > 0) {
-                                    widget.onQuestionsSaved?.call();
-                                  }
-                                },
-                          icon: const Icon(Icons.arrow_forward_rounded),
-                          label: const Text('Start question authoring'),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _selectedModuleIds.clear();
-                            _selectedMaterialIds.clear();
-                            _selectedTopicIds.clear();
-                          });
-                        },
-                        icon: const Icon(Icons.restart_alt_rounded, size: 18),
-                        label: const Text('Clear selection'),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ),
           ],
         ),
       ),
     );
+
+    return _wrapBody(body);
   }
 
-  List<_ModuleEntry> _buildEntries(CourseDetailsState state) {
-    return state.modules.map((module) {
-      final materials = state.materials[module.id] ?? const <MaterialItem>[];
-      final topics = state.topics[module.id] ?? const <TopicItem>[];
-      final materialEntries = materials.map((material) {
-        final materialTopics = topics.where((topic) => topic.materialId == material.id).toList()
-          ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-        return _MaterialEntry(material: material, topics: materialTopics);
-      }).toList();
-      return _ModuleEntry(module: module, materials: materialEntries);
-    }).toList()
-      ..sort((a, b) => a.module.orderIndex.compareTo(b.module.orderIndex));
+  Widget _wrapBody(Widget child) {
+    if (widget.embedded) return child;
+    return Dialog.fullscreen(child: child);
   }
 
-  bool _matchesSearch(_ModuleEntry entry) {
-    final term = _search.trim().toLowerCase();
-    if (term.isEmpty) return true;
-    if (entry.module.title.toLowerCase().contains(term)) return true;
-    for (final material in entry.materials) {
-      if (material.material.displayTitle.toLowerCase().contains(term)) return true;
-      for (final topic in material.topics) {
-        if (topic.title.toLowerCase().contains(term)) return true;
-      }
-    }
-    return false;
-  }
-
-  void _toggleModule(_ModuleEntry entry) {
-    final isSelecting = !_selectedModuleIds.contains(entry.module.id);
-    setState(() {
-      if (isSelecting) {
-        _selectedModuleIds.add(entry.module.id);
-        for (final material in entry.materials) {
-          _selectedMaterialIds.add(material.material.id);
-          for (final topic in material.topics) {
-            _selectedTopicIds.add(topic.id);
-          }
-        }
-      } else {
-        _selectedModuleIds.remove(entry.module.id);
-        for (final material in entry.materials) {
-          _selectedMaterialIds.remove(material.material.id);
-          for (final topic in material.topics) {
-            _selectedTopicIds.remove(topic.id);
-          }
-        }
-      }
-    });
-  }
-
-  void _toggleMaterial(_ModuleEntry entry, _MaterialEntry materialEntry) {
-    final isSelecting = !_selectedMaterialIds.contains(materialEntry.material.id);
-    setState(() {
-      if (isSelecting) {
-        _selectedMaterialIds.add(materialEntry.material.id);
-        for (final topic in materialEntry.topics) {
-          _selectedTopicIds.add(topic.id);
-        }
-      } else {
-        _selectedMaterialIds.remove(materialEntry.material.id);
-        for (final topic in materialEntry.topics) {
-          _selectedTopicIds.remove(topic.id);
-        }
-      }
-
-      final allMaterialsSelected = entry.materials.every(
-        (m) => _selectedMaterialIds.contains(m.material.id),
-      );
-      if (allMaterialsSelected && entry.materials.isNotEmpty) {
-        _selectedModuleIds.add(entry.module.id);
-      } else {
-        _selectedModuleIds.remove(entry.module.id);
-      }
-    });
-  }
-
-  void _toggleTopic(TopicItem topic) {
-    setState(() {
-      if (_selectedTopicIds.contains(topic.id)) {
-        _selectedTopicIds.remove(topic.id);
-      } else {
-        _selectedTopicIds.add(topic.id);
-      }
-    });
-  }
-
-  List<QuestionAuthoringTopicTarget> _resolveTargets(List<_ModuleEntry> entries) {
-    final targets = <QuestionAuthoringTopicTarget>[];
-    final seen = <int>{};
-
-    for (final moduleEntry in entries) {
-      final moduleSelected = _selectedModuleIds.contains(moduleEntry.module.id);
-      for (final materialEntry in moduleEntry.materials) {
-        final materialSelected = _selectedMaterialIds.contains(materialEntry.material.id);
-        for (final topic in materialEntry.topics) {
-          final topicSelected = _selectedTopicIds.contains(topic.id);
-          if (moduleSelected || materialSelected || topicSelected) {
-            if (seen.add(topic.id)) {
-              targets.add(
-                QuestionAuthoringTopicTarget(
-                  module: moduleEntry.module,
-                  material: materialEntry.material,
-                  topic: topic,
-                ),
-              );
-            }
-          }
-        }
-      }
-    }
-
-    targets.sort((a, b) {
-      final moduleCompare = a.module.orderIndex.compareTo(b.module.orderIndex);
-      if (moduleCompare != 0) return moduleCompare;
-      final materialCompare = a.material.displayTitle.compareTo(b.material.displayTitle);
-      if (materialCompare != 0) return materialCompare;
-      return a.topic.orderIndex.compareTo(b.topic.orderIndex);
-    });
-
-    return targets;
-  }
-}
-
-class _AuthoringHero extends StatelessWidget {
-  final int selectedModules;
-  final int selectedMaterials;
-  final int selectedTopics;
-
-  const _AuthoringHero({
-    required this.selectedModules,
-    required this.selectedMaterials,
-    required this.selectedTopics,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0F4CBA), Color(0xFF2D8CFF)],
-        ),
-        borderRadius: BorderRadius.circular(22),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
         children: [
-          const Expanded(
+          InkWell(
+            onTap: _closeFlow,
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0F172A)),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Build reusable Question Bank content',
+                const Text(
+                  'Add Questions',
                   style: TextStyle(
-                    fontSize: 26,
+                    fontSize: 30,
                     fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                    color: Color(0xFF0F172A),
+                    height: 1.1,
                   ),
                 ),
-                SizedBox(height: 8),
-                Text(
-                  'Select course structure items first, then move straight into question authoring. No exam setup, no extra assessment metadata.',
+                const SizedBox(height: 6),
+                const Text(
+                  'Build the question bank for the selected content.',
                   style: TextStyle(
-                    fontSize: 12.5,
-                    color: Colors.white,
-                    height: 1.6,
+                    fontSize: 14,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _headerPill(
+                      icon: Icons.account_tree_outlined,
+                      label: _scopeLabel(),
+                    ),
+                    _headerPill(
+                      icon: Icons.ads_click_outlined,
+                      label: '${_targets.length} target${_targets.length == 1 ? '' : 's'}',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          ElevatedButton.icon(
+            onPressed: _openAddQuestion,
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('Add New Question'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF137FEC),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLeftPane(List<QuestionModel> filteredQuestions) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'AI Question Generator',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Let AI analyze the selected content and suggest relevant questions for your bank.',
+                            style: TextStyle(
+                              color: Color(0xFF64748B),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: () {},
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 16,
+                        ),
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Generate Questions',
+                        style: TextStyle(
+                          color: Color(0xFF137FEC),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchCtrl,
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          hintText: 'Search questions by keyword',
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            size: 20,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 16,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE2E8F0),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE2E8F0),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF137FEC),
+                              width: 1.2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    _buildFilterDropdown(
+                      value: _selectedTopicFilter,
+                      width: 132,
+                      items: ['All Topics', ..._targets.map((e) => e.label)],
+                      onChanged: (value) => setState(() => _selectedTopicFilter = value!),
+                    ),
+                    const SizedBox(width: 12),
+                    _buildFilterDropdown(
+                      value: _selectedDifficultyFilter,
+                      width: 132,
+                      items: const ['Any Difficulty', 'Easy', 'Medium', 'Hard'],
+                      onChanged: (value) =>
+                          setState(() => _selectedDifficultyFilter = value!),
+                    ),
+                    const SizedBox(width: 12),
+                    _buildFilterDropdown(
+                      value: _selectedTypeFilter,
+                      width: 116,
+                      items: const [
+                        'All Types',
+                        'Multiple Choice',
+                        'True / False',
+                        'Short Answer',
+                        'Essay',
+                        'Multi Select',
+                      ],
+                      onChanged: (value) => setState(() => _selectedTypeFilter = value!),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 10),
+            child: Row(
+              children: [
+                const Text(
+                  'AVAILABLE QUESTIONS',
+                  style: TextStyle(
+                    fontSize: 12,
+                    letterSpacing: 1.0,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Text(
+                    '${filteredQuestions.length} question${filteredQuestions.length == 1 ? '' : 's'}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF334155),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _HeroMetric(label: 'Modules', value: '$selectedModules'),
-              const SizedBox(height: 10),
-              _HeroMetric(label: 'Materials', value: '$selectedMaterials'),
-              const SizedBox(height: 10),
-              _HeroMetric(label: 'Resolved topics', value: '$selectedTopics'),
-            ],
+          Expanded(
+            child: filteredQuestions.isEmpty
+                ? _buildEmptyQuestionsState()
+                : Scrollbar(
+                    thumbVisibility: true,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                      itemCount: filteredQuestions.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 14),
+                      itemBuilder: (context, index) =>
+                          _buildQuestionCard(filteredQuestions[index]),
+                    ),
+                  ),
           ),
         ],
       ),
     );
   }
-}
 
-class _HeroMetric extends StatelessWidget {
-  final String label;
-  final String value;
-  const _HeroMetric({required this.label, required this.value});
+  Widget _buildRightPane(List<QuestionModel> allQuestions) {
+    final manualCount = allQuestions
+        .where((q) => q.source == QuestionSource.manual)
+        .length;
+    final aiCount = allQuestions
+        .where((q) => q.source == QuestionSource.aiGenerated)
+        .length;
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 150,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.12)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: Colors.white70)),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
-        ],
-      ),
-    );
-  }
-}
-
-class _ModuleSelectionCard extends StatefulWidget {
-  final _ModuleEntry entry;
-  final Set<int> selectedModuleIds;
-  final Set<int> selectedMaterialIds;
-  final Set<int> selectedTopicIds;
-  final VoidCallback onToggleModule;
-  final ValueChanged<_MaterialEntry> onToggleMaterial;
-  final ValueChanged<TopicItem> onToggleTopic;
-
-  const _ModuleSelectionCard({
-    required this.entry,
-    required this.selectedModuleIds,
-    required this.selectedMaterialIds,
-    required this.selectedTopicIds,
-    required this.onToggleModule,
-    required this.onToggleMaterial,
-    required this.onToggleTopic,
-  });
-
-  @override
-  State<_ModuleSelectionCard> createState() => _ModuleSelectionCardState();
-}
-
-class _ModuleSelectionCardState extends State<_ModuleSelectionCard> {
-  bool _expanded = true;
-
-  @override
-  Widget build(BuildContext context) {
-    final module = widget.entry.module;
-    final moduleSelected = widget.selectedModuleIds.contains(module.id);
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-            onTap: () => setState(() => _expanded = !_expanded),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                children: [
-                  Checkbox(value: moduleSelected, onChanged: (_) => widget.onToggleModule()),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(module.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-                        if ((module.description ?? '').trim().isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              module.description!,
-                              style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
-                            ),
-                          ),
-                      ],
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Quiz Summary',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _summaryRow('Total Questions', '${allQuestions.length}'),
+                _summaryRow('Selected Targets', '${_targets.length}'),
+                _summaryRow('Difficulty', _difficultySummary(allQuestions)),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _openAddQuestion,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                    backgroundColor: const Color(0xFF137FEC),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  Text(
-                    '${widget.entry.materials.length} material${widget.entry.materials.length == 1 ? '' : 's'}',
-                    style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted, fontWeight: FontWeight.w700),
+                  child: const Text(
+                    'Add New Question',
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(width: 8),
-                  Icon(_expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          if (_expanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                children: widget.entry.materials.map((materialEntry) {
-                  final materialSelected = widget.selectedMaterialIds.contains(materialEntry.material.id);
-                  return Container(
-                    margin: const EdgeInsets.only(top: 10),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: materialSelected,
-                              onChanged: (_) => widget.onToggleMaterial(materialEntry),
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    materialEntry.material.displayTitle,
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${materialEntry.topics.length} topic${materialEntry.topics.length == 1 ? '' : 's'} · ${materialEntry.material.type}',
-                                    style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (materialEntry.topics.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 42, top: 8),
-                            child: Column(
-                              children: materialEntry.topics.map((topic) {
-                                final topicSelected = widget.selectedTopicIds.contains(topic.id);
-                                return CheckboxListTile(
-                                  value: topicSelected,
-                                  onChanged: (_) => widget.onToggleTopic(topic),
-                                  dense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                  controlAffinity: ListTileControlAffinity.leading,
-                                  title: Text(
-                                    topic.title,
-                                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
-                                  ),
-                                  subtitle: topic.description == null || topic.description!.trim().isEmpty
-                                      ? null
-                                      : Text(
-                                          topic.description!,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryPill extends StatelessWidget {
-  final String label;
-  final String value;
-  const _SummaryPill({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Text(
-        '$label: $value',
-        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-}
-
-class _TreeEmptyState extends StatelessWidget {
-  const _TreeEmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 32),
-      child: Center(
-        child: Text(
-          'No modules or materials are available yet for this course.',
-          style: TextStyle(color: AppColors.textMuted),
         ),
-      ),
+        const SizedBox(height: 16),
+        OutlinedButton.icon(
+          onPressed: _closeFlow,
+          icon: const Icon(Icons.arrow_back_rounded, size: 18),
+          label: const Text('Back to tree'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 48),
+            foregroundColor: const Color(0xFF0F172A),
+            side: const BorderSide(color: Color(0xFFE2E8F0)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        const Spacer(),
+      ],
     );
   }
-}
 
-class _ScopeEmptyState extends StatelessWidget {
-  const _ScopeEmptyState();
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildEmptyQuestionsState() {
     return Center(
       child: Container(
-        padding: const EdgeInsets.all(22),
+        width: 420,
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 34),
         decoration: BoxDecoration(
           color: const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
-        child: const Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.account_tree_outlined, size: 32, color: AppColors.primary),
-            SizedBox(height: 12),
-            Text(
-              'Select at least one module, material, or topic',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: const BoxDecoration(
+                color: Color(0xFFEFF6FF),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.edit_note_rounded,
+                size: 30,
+                color: Color(0xFF137FEC),
+              ),
             ),
-            SizedBox(height: 8),
-            Text(
-              'Your selection will be converted into exact topic targets so each saved question has one precise topic owner.',
+            const SizedBox(height: 18),
+            const Text(
+              'No questions yet',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Start by adding your first manual question for the selected topic or subtopic.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.6),
+              style: TextStyle(
+                color: Color(0xFF64748B),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 18),
+            ElevatedButton.icon(
+              onPressed: _openAddQuestion,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('Add New Question'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF137FEC),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
   }
-}
 
-class _ModuleEntry {
-  final ModuleItem module;
-  final List<_MaterialEntry> materials;
+  Widget _buildQuestionCard(QuestionModel question) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            margin: const EdgeInsets.only(top: 2),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  question.text,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _metaPill(question.contextLabel),
+                    _metaPill(question.typeLabel),
+                    _metaPill(
+                      question.usageCount > 0
+                          ? 'Used ${question.usageCount} time${question.usageCount == 1 ? '' : 's'}'
+                          : 'New',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          _difficultyPill(question.difficultyLabel),
+        ],
+      ),
+    );
+  }
 
-  const _ModuleEntry({required this.module, required this.materials});
-}
+  Widget _buildFilterDropdown({
+    required String value,
+    required List<String> items,
+    required double width,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return SizedBox(
+      width: width,
+      child: DropdownButtonFormField<String>(
+        value: items.contains(value) ? value : items.first,
+        onChanged: onChanged,
+        icon: const Icon(Icons.keyboard_arrow_down_rounded),
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF137FEC), width: 1.2),
+          ),
+        ),
+        items: items
+            .map(
+              (item) => DropdownMenuItem<String>(
+                value: item,
+                child: Text(
+                  item,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF0F172A),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
 
-class _MaterialEntry {
-  final MaterialItem material;
-  final List<TopicItem> topics;
+  Widget _headerPill({required IconData icon, required String label}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF64748B)),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF334155),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  const _MaterialEntry({required this.material, required this.topics});
+  Widget _metaPill(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 12,
+          color: Color(0xFF64748B),
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _difficultyPill(String label) {
+    final normalized = label.toLowerCase();
+    Color textColor;
+    Color bgColor;
+
+    switch (normalized) {
+      case 'easy':
+        textColor = const Color(0xFF15803D);
+        bgColor = const Color(0xFFDCFCE7);
+        break;
+      case 'hard':
+        textColor = const Color(0xFFB91C1C);
+        bgColor = const Color(0xFFFEE2E2);
+        break;
+      default:
+        textColor = const Color(0xFFC2410C);
+        bgColor = const Color(0xFFFFEDD5);
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: textColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _summaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Color(0xFF0F172A),
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<QuestionModel> _filteredQuestions(List<QuestionModel> questions) {
+    final targetTopicIds = _targets.map((e) => e.topicId).toSet();
+    final rawSearch = _searchCtrl.text.trim().toLowerCase();
+
+    return questions.where((question) {
+      final topicAllowed =
+          question.topicId != null && targetTopicIds.contains(question.topicId);
+      if (!topicAllowed) return false;
+
+      if (_selectedTopicFilter != 'All Topics') {
+        final target = _targets.cast<QuestionAuthoringTarget?>().firstWhere(
+              (t) => t?.label == _selectedTopicFilter,
+              orElse: () => null,
+            );
+        if (target == null || question.topicId != target.topicId) return false;
+      }
+
+      if (_selectedDifficultyFilter != 'Any Difficulty' &&
+          question.difficultyLabel.toLowerCase() !=
+              _selectedDifficultyFilter.toLowerCase()) {
+        return false;
+      }
+
+      if (_selectedTypeFilter != 'All Types' &&
+          question.typeLabel.toLowerCase() != _selectedTypeFilter.toLowerCase()) {
+        return false;
+      }
+
+      if (rawSearch.isNotEmpty) {
+        final haystack = [
+          question.text,
+          question.contextLabel,
+          question.typeLabel,
+          ...question.tags,
+        ].join(' ').toLowerCase();
+        if (!haystack.contains(rawSearch)) return false;
+      }
+
+      return true;
+    }).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
+  String _difficultySummary(List<QuestionModel> questions) {
+    final filtered = _filteredQuestions(questions);
+    if (filtered.isEmpty) return 'Medium';
+
+    int easy = 0;
+    int medium = 0;
+    int hard = 0;
+
+    for (final question in filtered) {
+      switch (question.difficulty) {
+        case QuestionDifficulty.easy:
+          easy++;
+          break;
+        case QuestionDifficulty.medium:
+          medium++;
+          break;
+        case QuestionDifficulty.hard:
+          hard++;
+          break;
+      }
+    }
+
+    if (hard >= medium && hard >= easy) return 'Hard';
+    if (easy >= medium && easy >= hard) return 'Easy';
+    return 'Medium';
+  }
+
+  String _scopeLabel() {
+    if (widget.initialTopicIds.isNotEmpty) return 'Selected topic / subtopic';
+    if (widget.initialMaterialIds.isNotEmpty) return 'Selected file';
+    if (widget.initialModuleIds.isNotEmpty) return 'Selected module';
+    return 'Selected content';
+  }
 }
