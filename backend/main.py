@@ -12,8 +12,10 @@ from app.features.modules.router                 import router as modules_router
 from app.features.materials.router               import router as materials_router
 from app.features.topics.router                  import router as topics_router
 from app.features.questions.router               import router as questions_router
+from app.features.exams.router                   import router as exams_router
 from app.features.organizations.router           import router as organizations_router
 from app.features.settings.router                import router as settings_router
+from app.features.ai.router                      import router as ai_router
 
 app = FastAPI()
 
@@ -39,3 +41,5 @@ app.include_router(topics_router)
 app.include_router(questions_router)
 app.include_router(organizations_router)
 app.include_router(settings_router)
+app.include_router(ai_router)
+app.include_router(exams_router)

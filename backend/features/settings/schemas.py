@@ -8,7 +8,7 @@ AvatarContentType = Literal["image/png", "image/jpeg", "image/jpg"]
 
 class UpdateProfileRequest(BaseModel):
     full_name: Optional[str] = None
-    avatar_url: Optional[str] = None
+    # avatar_url: Optional[str] = None
 
     # Flutter sends "phone" but DB column is phone_number
     phone: Optional[str] = None

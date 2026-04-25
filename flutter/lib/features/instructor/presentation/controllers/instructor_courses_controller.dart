@@ -20,6 +20,7 @@ class InstructorCoursesController extends StateNotifier<InstructorCoursesState> 
   CancelToken? _cancel;
 
   Future<void> load({bool force = false}) async {
+    
     if (state.loading && !force) return;
 
     _cancel?.cancel();

@@ -9,6 +9,7 @@ class MaterialInitUploadRequest(BaseModel):
     filename: str = Field(..., min_length=1, max_length=255, description="Original filename")
     content_type: str = Field(..., min_length=1, max_length=100, description="Must be application/pdf")
     file_size_bytes: int = Field(..., gt=0, le=50 * 1024 * 1024, description="Max 50MB")
+    use_ai_processing: bool = Field(default=False, description="Whether the uploaded material should be sent for AI processing after upload confirmation")
 
     # Optional metadata (MVP-friendly)
     title: Optional[str] = Field(default=None, max_length=255)
@@ -48,6 +49,7 @@ class MaterialConfirmUploadResponse(BaseModel):
     course_id: int
 
     status: str
+    ai_processing_started: bool
     updated_at: datetime
 
     download_url: Optional[str] = None

@@ -51,10 +51,10 @@ class LearningOutcome(Base):
         index=True,
     )
 
-    ai_ref_key: Mapped[str | None] = mapped_column(
-        String(100),
-        nullable=True,
-    )
+    # ai_ref_key: Mapped[str | None] = mapped_column(
+    #     String(100),
+    #     nullable=True,
+    # )
 
     is_ai_generated: Mapped[bool] = mapped_column(
         Boolean,
@@ -81,5 +81,5 @@ class LearningOutcome(Base):
 
     __table_args__ = (
         Index("ix_learning_outcomes_course_level", "course_id", "level"),
-        Index("ix_learning_outcomes_course_ai_ref", "course_id", "ai_ref_key"),
+        # Index("ix_learning_outcomes_course_ai_ref", "course_id", "ai_ref_key"),
     )

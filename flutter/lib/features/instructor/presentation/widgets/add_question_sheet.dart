@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../../../../../core/theme/app_theme.dart';
-import '../../data/question_models.dart';
 import '../../data/modules_models.dart';
+import '../../data/question_models.dart';
 
 class QuestionAuthoringTarget {
   final int? moduleId;
@@ -24,19 +25,14 @@ class QuestionAuthoringTarget {
     this.parentTopicName,
   });
 
-  String get label => isSubtopic && parentTopicName != null
-      ? '$parentTopicName / $topicName'
-      : topicName;
+  String get label =>
+      isSubtopic && parentTopicName != null ? '$parentTopicName / $topicName' : topicName;
 
   String get subtitle {
     final parts = <String>[];
     if (moduleName != null && moduleName!.isNotEmpty) parts.add(moduleName!);
     if (materialName != null && materialName!.isNotEmpty) parts.add(materialName!);
-    if (isSubtopic && parentTopicName != null && parentTopicName!.isNotEmpty) {
-      parts.add('Subtopic');
-    } else {
-      parts.add('Topic');
-    }
+    parts.add(isSubtopic ? 'Subtopic' : 'Topic');
     return parts.join(' • ');
   }
 }
@@ -73,18 +69,31 @@ class AddQuestionSheet extends StatefulWidget {
   State<AddQuestionSheet> createState() => _AddQuestionSheetState();
 }
 
+class _QuestionTabSpec {
+  final String label;
+  final QuestionType type;
+
+  const _QuestionTabSpec(this.label, this.type);
+}
+
 class _AddQuestionSheetState extends State<AddQuestionSheet>
     with SingleTickerProviderStateMixin {
-  late TabController _tab;
+  static const List<_QuestionTabSpec> _tabs = <_QuestionTabSpec>[
+    _QuestionTabSpec('Multiple Choice', QuestionType.multipleChoice),
+    _QuestionTabSpec('True / False', QuestionType.trueFalse),
+    _QuestionTabSpec('Problem', QuestionType.essay),
+    _QuestionTabSpec('Short Answer', QuestionType.shortAnswer),
+  ];
+
+  late final TabController _tabController;
 
   QuestionType _type = QuestionType.multipleChoice;
-  final QuestionDifficulty _diff = QuestionDifficulty.medium;
+  final QuestionDifficulty _difficulty = QuestionDifficulty.medium;
 
-  final _questionCtrl = TextEditingController();
-  final _explanationCtrl = TextEditingController();
-  final _answerCtrl = TextEditingController();
-
-  final List<TextEditingController> _optionCtrls = [
+  final TextEditingController _questionCtrl = TextEditingController();
+  final TextEditingController _explanationCtrl = TextEditingController();
+  final TextEditingController _answerCtrl = TextEditingController();
+  final List<TextEditingController> _optionCtrls = <TextEditingController>[
     TextEditingController(),
     TextEditingController(),
     TextEditingController(),
@@ -93,13 +102,12 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
   int _correctIdx = 0;
   bool _correctBool = true;
   String? _error;
-  int? _selectedModuleId;
   int? _selectedTopicId;
 
   List<QuestionAuthoringTarget> get _targets {
     if (widget.topicTargets.isNotEmpty) return widget.topicTargets;
     if (widget.topicId != null && widget.topicName != null) {
-      return [
+      return <QuestionAuthoringTarget>[
         QuestionAuthoringTarget(
           moduleId: widget.moduleId,
           moduleName: widget.moduleName,
@@ -110,13 +118,13 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
         ),
       ];
     }
-    return const [];
+    return const <QuestionAuthoringTarget>[];
   }
 
   QuestionAuthoringTarget? get _selectedTarget {
     if (_targets.isEmpty) return null;
     return _targets.firstWhere(
-      (t) => t.topicId == _selectedTopicId,
+      (QuestionAuthoringTarget t) => t.topicId == _selectedTopicId,
       orElse: () => _targets.first,
     );
   }
@@ -124,32 +132,43 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 4, vsync: this);
-    _tab.addListener(() {
-      if (!_tab.indexIsChanging) return;
+    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) return;
       setState(() {
-        _type = QuestionType.values[_tab.index];
+        _type = _tabs[_tabController.index].type;
         _error = null;
       });
     });
-    _selectedModuleId = widget.moduleId;
     _selectedTopicId = widget.topicId ?? (_targets.isNotEmpty ? _targets.first.topicId : null);
   }
 
   @override
   void dispose() {
-    _tab.dispose();
+    _tabController.dispose();
     _questionCtrl.dispose();
     _explanationCtrl.dispose();
     _answerCtrl.dispose();
-    for (final c in _optionCtrls) {
-      c.dispose();
+    for (final TextEditingController controller in _optionCtrls) {
+      controller.dispose();
     }
     super.dispose();
   }
 
-  void _submit({bool addAnother = false}) {
-    final text = _questionCtrl.text.trim();
+  void _resetForAnother() {
+    _questionCtrl.clear();
+    _explanationCtrl.clear();
+    _answerCtrl.clear();
+    for (final TextEditingController controller in _optionCtrls) {
+      controller.clear();
+    }
+    _correctIdx = 0;
+    _correctBool = true;
+    _error = null;
+  }
+
+  void _submit({required bool addAnother}) {
+    final String text = _questionCtrl.text.trim();
     if (text.isEmpty) {
       setState(() => _error = 'Question text is required.');
       return;
@@ -160,41 +179,47 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
       return;
     }
 
-    List<QuestionOption> options = [];
+    List<QuestionOption> options = <QuestionOption>[];
     String? correctOptionId;
     bool? correctBool;
     String? sampleAnswer;
 
     if (_type == QuestionType.multipleChoice) {
-      final nonEmpty = _optionCtrls.where((c) => c.text.trim().isNotEmpty).toList();
+      final List<TextEditingController> nonEmpty = _optionCtrls
+          .where((TextEditingController c) => c.text.trim().isNotEmpty)
+          .toList();
       if (nonEmpty.length < 2) {
         setState(() => _error = 'Add at least 2 answer options.');
         return;
       }
-      options = nonEmpty
-          .asMap()
-          .entries
-          .map((e) => QuestionOption(id: 'opt_${e.key}', text: e.value.text.trim()))
-          .toList();
+      options = nonEmpty.asMap().entries.map((MapEntry<int, TextEditingController> entry) {
+        return QuestionOption(
+          id: 'opt_${entry.key}',
+          text: entry.value.text.trim(),
+          isCorrect: entry.key == _correctIdx,
+          orderIndex: entry.key,
+        );
+      }).toList();
       correctOptionId = _correctIdx < options.length ? options[_correctIdx].id : options.first.id;
     } else if (_type == QuestionType.trueFalse) {
       correctBool = _correctBool;
+      sampleAnswer = _correctBool ? 'True' : 'False';
     } else {
       sampleAnswer = _answerCtrl.text.trim();
     }
 
-    final target = _selectedTarget;
-    final q = QuestionModel(
+    final QuestionAuthoringTarget? target = _selectedTarget;
+    final QuestionModel question = QuestionModel(
       id: 'q_${DateTime.now().millisecondsSinceEpoch}',
       text: text,
       type: _type,
-      difficulty: _diff,
+      difficulty: _difficulty,
       options: options,
       correctOptionId: correctOptionId,
       correctBool: correctBool,
       sampleAnswer: sampleAnswer,
       explanation: _explanationCtrl.text.trim().isEmpty ? null : _explanationCtrl.text.trim(),
-      moduleId: target?.moduleId ?? _selectedModuleId ?? widget.moduleId,
+      moduleId: target?.moduleId ?? widget.moduleId,
       moduleName: target?.moduleName ?? widget.moduleName,
       materialId: target?.materialId ?? widget.materialId,
       materialName: target?.materialName ?? widget.materialName,
@@ -203,270 +228,566 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
       createdAt: DateTime.now(),
     );
 
-    widget.onAdd(q);
+    widget.onAdd(question);
 
     if (addAnother) {
-      setState(() {
-        _questionCtrl.clear();
-        _explanationCtrl.clear();
-        _answerCtrl.clear();
-        for (final c in _optionCtrls) {
-          c.clear();
-        }
-        _correctIdx = 0;
-        _correctBool = true;
-        _error = null;
-      });
-    } else {
-      Navigator.of(context).pop();
+      setState(_resetForAnother);
+      return;
     }
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final selectedTarget = _selectedTarget;
     return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.92),
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F7F8),
-        borderRadius: BorderRadius.circular(widget.isDialog ? 18 : 20),
+        color: AppColors.pageBg,
+        borderRadius: BorderRadius.circular(widget.isDialog ? 16 : 20),
       ),
       child: Column(
-        children: [
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-            margin: EdgeInsets.fromLTRB(0, widget.isDialog ? 0 : 10, 0, 0),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
                 const Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Add New Question', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
-                    SizedBox(height: 2),
-                    Text('Create a new assessment item for your students.', style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
-                  ]),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded, color: AppColors.textMuted, size: 20),
-                  padding: EdgeInsets.zero,
-                ),
-              ]),
-              const SizedBox(height: 12),
-              if (_targets.isNotEmpty) ...[
-                Row(
-                  children: [
-                    const Icon(Icons.account_tree_outlined, size: 16, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    const Text('Question target', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<int>(
-                  value: _selectedTopicId,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  ),
-                  items: _targets
-                      .map((t) => DropdownMenuItem<int>(
-                            value: t.topicId,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(t.label, overflow: TextOverflow.ellipsis),
-                                Text(t.subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textMuted), overflow: TextOverflow.ellipsis),
-                              ],
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: (value) => setState(() => _selectedTopicId = value),
-                ),
-                if (selectedTarget != null) ...[
-                  const SizedBox(height: 8),
-                  Text(selectedTarget.subtitle, style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted)),
-                ],
-                const SizedBox(height: 14),
-              ],
-              TabBar(
-                controller: _tab,
-                isScrollable: true,
-                labelColor: AppColors.primary,
-                unselectedLabelColor: AppColors.textMuted,
-                indicatorColor: AppColors.primary,
-                tabs: const [
-                  Tab(text: 'Multiple Choice'),
-                  Tab(text: 'True / False'),
-                  Tab(text: 'Problem'),
-                  Tab(text: 'Short Answer'),
-                ],
-              ),
-            ]),
-          ),
-          Expanded(
-            child: Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tab,
-                      children: [
-                        _buildForm(),
-                        _buildForm(),
-                        _buildForm(),
-                        _buildForm(),
-                      ],
-                    ),
-                  ),
-                  if (_error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 12.5)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'Add New Question',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textTitle,
+                          height: 1.22,
+                        ),
                       ),
-                    ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: () => _submit(addAnother: false),
-                        icon: const Icon(Icons.save_outlined, size: 16),
-                        label: const Text('Save Draft'),
-                      ),
-                      const Spacer(),
-                      ElevatedButton(
-                        onPressed: () => _submit(addAnother: true),
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                        child: const Text('Add Another', style: TextStyle(color: Colors.white)),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton(
-                        onPressed: () => _submit(addAnother: false),
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                        child: const Text('Add', style: TextStyle(color: Colors.white)),
+                      SizedBox(height: 6),
+                      Text(
+                        'Create a new assessment item for your students.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildForm() {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionLabel('Question Text'),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _questionCtrl,
-            maxLines: 4,
-            decoration: _inputDecoration('Enter your question here...'),
-          ),
-          const SizedBox(height: 18),
-          if (_type == QuestionType.multipleChoice) ...[
-            Row(
-              children: [
-                _sectionLabel('Answer Options'),
-                const SizedBox(width: 8),
-                const Text('Select correct answer', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                ),
+                InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => Navigator.of(context).pop(),
+                  child: const Padding(
+                    padding: EdgeInsets.all(6),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 20,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
-            ...List.generate(_optionCtrls.length, (index) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    Radio<int>(value: index, groupValue: _correctIdx, onChanged: (v) => setState(() => _correctIdx = v ?? 0)),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE8EDF3)),
+                ),
+                child: Column(
+                  children: <Widget>[
+                    _buildTabs(),
                     Expanded(
-                      child: TextField(
-                        controller: _optionCtrls[index],
-                        decoration: _inputDecoration('Option ${String.fromCharCode(65 + index)}'),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(22, 16, 22, 18),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            _buildQuestionTextSection(),
+                            const SizedBox(height: 18),
+                            if (_type == QuestionType.multipleChoice) ...<Widget>[
+                              _buildMultipleChoiceSection(),
+                            ] else if (_type == QuestionType.trueFalse) ...<Widget>[
+                              _buildTrueFalseSection(),
+                            ] else ...<Widget>[
+                              _buildWrittenAnswerSection(),
+                            ],
+                            const SizedBox(height: 18),
+                            _buildExplanationSection(),
+                            if (_error != null) ...<Widget>[
+                              const SizedBox(height: 12),
+                              Text(
+                                _error!,
+                                style: const TextStyle(
+                                  color: AppColors.dangerText,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
-              );
-            }),
-            TextButton.icon(
-              onPressed: () => setState(() => _optionCtrls.add(TextEditingController())),
-              icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
-              label: const Text('Add another option'),
+              ),
             ),
-          ] else if (_type == QuestionType.trueFalse) ...[
-            _sectionLabel('Correct Answer'),
-            const SizedBox(height: 8),
-            SegmentedButton<bool>(
-              segments: const [
-                ButtonSegment<bool>(value: true, label: Text('True')),
-                ButtonSegment<bool>(value: false, label: Text('False')),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+            child: Row(
+              children: <Widget>[
+                OutlinedButton.icon(
+                  onPressed: () => _submit(addAnother: false),
+                  icon: const Icon(Icons.save_outlined, size: 16),
+                  label: const Text('Save Draft'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textTitle,
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: AppColors.border),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  ),
+                ),
+                const Spacer(),
+                ElevatedButton(
+                  onPressed: () => _submit(addAnother: true),
+                  style: _primaryButtonStyle(),
+                  child: const Text('Add Another'),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: () => _submit(addAnother: false),
+                  style: _primaryButtonStyle(),
+                  child: const Text('Add'),
+                ),
               ],
-              selected: {_correctBool},
-              onSelectionChanged: (s) => setState(() => _correctBool = s.first),
             ),
-          ] else ...[
-            _sectionLabel('Expected Answer'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _answerCtrl,
-              maxLines: 3,
-              decoration: _inputDecoration('Explain the correct answer or rubric...'),
-            ),
-          ],
-          const SizedBox(height: 18),
-          _sectionLabel('Explanation (Optional)'),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _explanationCtrl,
-            maxLines: 3,
-            decoration: _inputDecoration('Explain why the correct answer is correct.'),
           ),
         ],
       ),
     );
   }
 
-  Widget _sectionLabel(String text) => Text(
-        text,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textTitle),
-      );
+  Widget _buildTabs() {
+    return Container(
+      height: 62,
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE8EDF3))),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        labelColor: AppColors.primary,
+        unselectedLabelColor: AppColors.textMuted,
+        labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        unselectedLabelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        indicatorColor: AppColors.primary,
+        indicatorWeight: 2,
+        dividerColor: Colors.transparent,
+        overlayColor: WidgetStateProperty.all<Color>(Colors.transparent),
+        tabs: _tabs.map(( _QuestionTabSpec tab) => Tab(text: tab.label)).toList(),
+      ),
+    );
+  }
 
-  InputDecoration _inputDecoration(String hint) => InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: const Color(0xFFF8FAFC),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
+  Widget _buildQuestionTextSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            const Expanded(child: _SectionLabel('Question Text')),
+            TextButton.icon(
+              onPressed: widget.showAiHint ? () {} : null,
+              icon: const Icon(Icons.auto_awesome_outlined, size: 14),
+              label: const Text('Generate with AI'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                textStyle: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
+        const SizedBox(height: 10),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            children: <Widget>[
+              Container(
+                height: 36,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF8FAFC),
+                  border: Border(bottom: BorderSide(color: AppColors.border)),
+                ),
+                child: Row(
+                  children: <Widget>[
+                    _ToolbarButton(label: 'B'),
+                    const SizedBox(width: 4),
+                    _ToolbarButton(label: 'I', italic: true),
+                    const SizedBox(width: 4),
+                    _ToolbarButton(label: 'U', underlined: true),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.format_list_bulleted_rounded, size: 16, color: AppColors.textMuted),
+                    const SizedBox(width: 10),
+                    const Icon(Icons.image_outlined, size: 16, color: AppColors.textMuted),
+                    const SizedBox(width: 10),
+                    const Icon(Icons.code_rounded, size: 16, color: AppColors.textMuted),
+                    const Spacer(),
+                    if (_selectedTarget != null)
+                      Text(
+                        _selectedTarget!.label,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textMuted,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+              TextField(
+                controller: _questionCtrl,
+                maxLines: 5,
+                decoration: _inputDecoration(
+                  'Enter your question here... e.g. What is the primary function of the mitochondria?',
+                ).copyWith(
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  contentPadding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                ),
+              ),
+            ],
+          ),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.primary),
+      ],
+    );
+  }
+
+  Widget _buildMultipleChoiceSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            const _SectionLabel('Answer Options'),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: const Text(
+                'Select the correct answer',
+                style: TextStyle(fontSize: 10.5, color: AppColors.textMuted, fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
         ),
-      );
+        const SizedBox(height: 12),
+        ...List<Widget>.generate(_optionCtrls.length, (int index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(top: 30),
+                  child: InkWell(
+                    onTap: () => setState(() => _correctIdx = index),
+                    borderRadius: BorderRadius.circular(100),
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _correctIdx == index ? AppColors.primary : AppColors.borderSoft,
+                          width: _correctIdx == index ? 5 : 1.5,
+                        ),
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'Option ${String.fromCharCode(65 + index)}',
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _optionCtrls[index],
+                        decoration: _inputDecoration(
+                          index == 0 ? 'Powerhouse of the cell' : 'Enter answer option',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+        TextButton.icon(
+          onPressed: () => setState(() => _optionCtrls.add(TextEditingController())),
+          icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
+          label: const Text('Add another option'),
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTrueFalseSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        const _SectionLabel('Correct Answer'),
+        const SizedBox(height: 12),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: _BooleanAnswerCard(
+                label: 'True',
+                selected: _correctBool,
+                onTap: () => setState(() => _correctBool = true),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _BooleanAnswerCard(
+                label: 'False',
+                selected: !_correctBool,
+                onTap: () => setState(() => _correctBool = false),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWrittenAnswerSection() {
+    final String hint = _type == QuestionType.essay
+        ? 'Enter the expected problem-solving answer or rubric.'
+        : 'Enter the expected short answer.';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        const _SectionLabel('Expected Answer'),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _answerCtrl,
+          maxLines: 4,
+          decoration: _inputDecoration(hint),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExplanationSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const _SectionLabel('Explanation (Optional)'),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _explanationCtrl,
+            maxLines: 3,
+            decoration: _inputDecoration('Explain why the correct answer is correct...'),
+          ),
+          const SizedBox(height: 8),
+          const Row(
+            children: <Widget>[
+              Icon(Icons.info_outline_rounded, size: 14, color: AppColors.textMuted),
+              SizedBox(width: 6),
+              Text(
+                'This will be shown to students after they submit their answer.',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  ButtonStyle _primaryButtonStyle() {
+    return ElevatedButton.styleFrom(
+      backgroundColor: AppColors.primary,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(
+        fontSize: 13.5,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textHint,
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.primary),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String text;
+
+  const _SectionLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textTitle,
+      ),
+    );
+  }
+}
+
+class _ToolbarButton extends StatelessWidget {
+  final String label;
+  final bool italic;
+  final bool underlined;
+
+  const _ToolbarButton({
+    required this.label,
+    this.italic = false,
+    this.underlined = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    TextStyle style = const TextStyle(
+      fontSize: 11.5,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textMuted,
+    );
+    if (italic) {
+      style = style.copyWith(fontStyle: FontStyle.italic);
+    }
+    if (underlined) {
+      style = style.copyWith(decoration: TextDecoration.underline);
+    }
+    return Text(label, style: style);
+  }
+}
+
+class _BooleanAnswerCard extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _BooleanAnswerCard({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFF0F7FF) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? AppColors.primary : AppColors.border,
+          ),
+        ),
+        child: Row(
+          children: <Widget>[
+            Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected ? AppColors.primary : AppColors.borderSoft,
+                  width: selected ? 5 : 1.5,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                color: AppColors.textTitle,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 Future<void> showAddQuestionDialog(
@@ -477,21 +798,21 @@ Future<void> showAddQuestionDialog(
   String? materialName,
   int? topicId,
   String? topicName,
-  List<QuestionAuthoringTarget> topicTargets = const [],
-  List<ModuleItem> modules = const [],
-  bool showAiHint = false,
+  List<QuestionAuthoringTarget> topicTargets = const <QuestionAuthoringTarget>[],
+  List<ModuleItem> modules = const <ModuleItem>[],
+  bool showAiHint = true,
   required ValueChanged<QuestionModel> onAdd,
 }) {
-  final size = MediaQuery.of(context).size;
-  final width = size.width < 900 ? size.width * 0.96 : 980.0;
-  final height = size.height * 0.92;
+  final Size size = MediaQuery.of(context).size;
+  final double width = size.width < 760 ? size.width * 0.96 : 1120;
+  final double height = size.height < 760 ? size.height * 0.94 : 670;
 
   return showDialog<void>(
     context: context,
-    barrierColor: Colors.black.withOpacity(0.35),
+    barrierColor: Colors.black.withOpacity(0.36),
     builder: (_) => Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding: const EdgeInsets.all(24),
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: width, maxHeight: height),

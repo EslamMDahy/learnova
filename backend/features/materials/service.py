@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.core.config import settings
+from app.core.ai_service_integration.ai_transport import send_ai_request
 from app.core.storage_utils import split_object_key, sanitize_filename, delete_storage_object
 from app.core.supabase_client import supabase  # عدّل import حسب مكان supabase client عندك
 
@@ -64,6 +65,7 @@ def init_material_upload(*, course_id: int, module_id: int, payload, db: Session
     content_type = (getattr(payload, "content_type", None) or "").strip().lower()
     file_size_bytes = getattr(payload, "file_size_bytes", None)
     filename = getattr(payload, "filename", None)
+    use_ai_processing = bool(getattr(payload, "use_ai_processing", False))
 
     if not content_type:
         raise HTTPException(status_code=400, detail="content_type is required")
@@ -120,6 +122,7 @@ def init_material_upload(*, course_id: int, module_id: int, payload, db: Session
                     storage_key,
                     mime_type,
                     status,
+                    use_ai_processing,
                     is_ai_processed,
                     uploaded_by,
                     uploaded_at,
@@ -136,6 +139,7 @@ def init_material_upload(*, course_id: int, module_id: int, payload, db: Session
                     :storage_key,
                     :mime_type,
                     CAST(:status AS material_status_enum),
+                    :use_ai_processing,
                     FALSE,
                     :uploaded_by,
                     NOW(),
@@ -154,6 +158,7 @@ def init_material_upload(*, course_id: int, module_id: int, payload, db: Session
                 "storage_key": temp_key,
                 "mime_type": content_type,
                 "status": "draft_upload",
+                "use_ai_processing": use_ai_processing,
                 "uploaded_by": instructor_id,
             },
         ).mappings().first()
@@ -271,6 +276,10 @@ def confirm_material_upload(*, material_id: int, db: Session, current_user: dict
                 mt.storage_key,
                 mt.status,
                 mt.file_name,
+                mt.title,
+                mt.mime_type,
+                mt.type,
+                mt.use_ai_processing,
                 m.course_id,
                 c.created_by
             FROM materials mt
@@ -293,13 +302,12 @@ def confirm_material_upload(*, material_id: int, db: Session, current_user: dict
         raise HTTPException(status_code=500, detail="Material storage_key is missing")
 
     current_status = (mat["status"] or "").strip()
+    use_ai_processing = bool(mat["use_ai_processing"])
 
     # =========================
     # 3) Idempotency / status check
     # =========================
     if current_status != "draft_upload":
-        # لو بالفعل confirmed قبل كده (أو حالة تانية) رجّع 409 أو 200 حسب اللي تفضله
-        # أنا هخليه 409 عشان يبين misuse واضح
         raise HTTPException(
             status_code=409,
             detail=f"Material status must be 'draft_upload' to confirm upload (current: '{current_status}')",
@@ -318,7 +326,6 @@ def confirm_material_upload(*, material_id: int, db: Session, current_user: dict
     exists = False
     if isinstance(items, list):
         for it in items:
-            # غالبًا dict فيه "name"
             if isinstance(it, dict) and it.get("name") == expected_filename:
                 exists = True
                 break
@@ -330,7 +337,7 @@ def confirm_material_upload(*, material_id: int, db: Session, current_user: dict
         )
 
     # =========================
-    # 5) Update DB status to READY
+    # 5) Update DB status to UPLOADED
     # =========================
     try:
         row = db.execute(
@@ -354,7 +361,6 @@ def confirm_material_upload(*, material_id: int, db: Session, current_user: dict
 
     except SQLAlchemyError as e:
         db.rollback()
-        # مهم: ده ممكن يطلع لو READY_STATUS مش موجود في enum
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}") from e
 
     updated_at = row[0].isoformat() if row and row[0] else datetime.now(timezone.utc).isoformat()
@@ -375,15 +381,72 @@ def confirm_material_upload(*, material_id: int, db: Session, current_user: dict
         if isinstance(data, dict):
             download_url = data.get("signedUrl") or data.get("signed_url") or data.get("url")
 
-    # download_url اختياري — لو فشل، confirm نفسه يفضل ناجح
+    # =========================
+    # 7) Optional AI processing
+    # =========================
+    ai_processing_started = False
+
+    # if use_ai_processing:
+    if download_url:
+        ai_request_body = {
+            "module_id": int(mat["module_id"]),
+            "material_id": int(mat["material_id"]),
+            "material": {
+                "title": mat["title"],
+                "type": str(mat["type"]),
+                "file_name": mat["file_name"],
+                "mime_type": mat["mime_type"],
+                "signed_download_url": download_url,
+            },
+            "extraction_config": {
+                "extract_topics": True,
+                "extract_learning_outcomes": True,
+                "allow_subtopics": True,
+            },
+        }
+
+        try:
+            send_ai_request(
+                db,
+                operation_type="content_structure_generation",
+                endpoint_path="/api/v1/courses/documents/ingest", # !!!!!!UPDATE THIS AFTER GETING THE REAL ENDPOINT!!!!!!
+                course_id=int(mat["course_id"]),
+                primary_entity_type="material",
+                primary_entity_id=int(mat["material_id"]),
+                body=ai_request_body,
+            )
+
+            db.execute(
+                text("""
+                    UPDATE materials
+                    SET
+                        updated_at = NOW()
+                    WHERE id = :mid
+                """),
+                {"mid": material_id},
+            )
+            db.commit()
+
+            ai_processing_started = True
+
+        except Exception:
+            db.rollback()
+            ai_processing_started = False
+
+    # =========================
+    # 8) Final response
+    # =========================
+    final_status = "processing" if ai_processing_started else "uploaded"
+
     return {
         "material_id": int(mat["material_id"]),
         "module_id": int(mat["module_id"]),
         "course_id": int(mat["course_id"]),
-        "status": "uploaded",
+        "status": final_status,
         "updated_at": updated_at,
         "download_url": download_url,
         "download_url_expires_in": SIGNED_URL_EXPIRES_SECONDS,
+        "ai_processing_started": ai_processing_started,
     }
 
 

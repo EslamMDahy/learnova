@@ -47,9 +47,19 @@ class Settings:
         # ─────────────────────────────────────────────────────────────────────────
         is_production = os.getenv("ENV", "development").lower() == "production"
 
-        self.cookie_secure: bool   = is_production
-        self.cookie_samesite: str  = "none" if is_production else "lax"
-        self.cookie_path: str      = os.getenv("COOKIE_PATH", "/")
+        self.cookie_secure: bool = (
+            os.getenv("COOKIE_SECURE", "true" if is_production else "false")
+            .strip()
+            .lower()
+            == "true"
+        )
+
+        self.cookie_samesite: str = os.getenv(
+            "COOKIE_SAMESITE",
+            "none" if is_production else "lax",
+        ).strip().lower()
+
+        self.cookie_path: str = os.getenv("COOKIE_PATH", "/")
 
         # Supabase Storage
         self.supabase_url: str = os.getenv("SUPABASE_URL", "")
@@ -57,5 +67,10 @@ class Settings:
         self.supabase_public_bucket: str = os.getenv("SUPABASE_PUBLIC_BUCKET", "learnova-public-assets")
         self.supabase_private_bucket: str = os.getenv("SUPABASE_PRIVATE_BUCKET", "learnova-private-assets")
 
+        # AI Service Integration
+        self.ai_service_base_url: str = os.getenv("AI_SERVICE_BASE_URL", "http://127.0.0.1:8001")
+        self.ai_shared_secret: str = os.getenv("AI_SHARED_SECRET", "")
+        self.ai_request_timeout_seconds: int = int(os.getenv("AI_REQUEST_TIMEOUT_SECONDS", "120"))
+        self.ai_allowed_timestamp_drift_seconds: int = int(os.getenv("AI_ALLOWED_TIMESTAMP_DRIFT_SECONDS", "300"))
 
 settings = Settings()

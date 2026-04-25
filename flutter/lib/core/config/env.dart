@@ -25,11 +25,11 @@ class Env {
       final proto = Uri.base.scheme;
       final host = Uri.base.host;
       if (proto.isNotEmpty && host.isNotEmpty) {
-        return '$proto://$host:8000';
+        return 'https://collision-catchable-vitalize.ngrok-free.dev';
       }
     }
 
     // Non-web development fallback.
-    return 'http://localhost:8000';
+    return 'https://collision-catchable-vitalize.ngrok-free.dev';
   }
 }

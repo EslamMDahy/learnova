@@ -10,7 +10,9 @@ from .schemas import (QuestionCreateRequest,
                       TopicQuestionListResponse,
                       MaterialQuestionListResponse,
                       ModuleQuestionListResponse,
-                      CourseQuestionListResponse,)
+                      CourseQuestionListResponse,
+                      QuestionGetResponse,
+                      QuestionUpdateRequest)
 
 router = APIRouter(prefix="/courses/{course_id}", tags=["Questions"],)
 
@@ -79,3 +81,30 @@ def list_course_questions(
         course_id=course_id,
         db=db,
         current_user=current_user,)
+
+@router.get("/questions/{question_id}", response_model=QuestionGetResponse, status_code=status.HTTP_200_OK)
+def get_question(
+    course_id: int,
+    question_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),):
+    return service.get_question(
+        course_id=course_id,
+        question_id=question_id,
+        db=db,
+        current_user=current_user,)
+
+@router.patch("/questions/{question_id}/update", response_model=QuestionCreateResponse, status_code=status.HTTP_200_OK)
+def update_question(
+    course_id: int,
+    question_id: int,
+    payload: QuestionUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),):
+    return service.update_question(
+        course_id=course_id,
+        question_id=question_id,
+        payload=payload,
+        db=db,
+        current_user=current_user,)
+

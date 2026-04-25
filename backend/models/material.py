@@ -125,6 +125,12 @@ class Material(Base):
         nullable=True,
     )
 
+    use_ai_processing: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
     is_ai_processed: Mapped[bool] = mapped_column(
         Boolean,
         default=False,

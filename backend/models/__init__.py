@@ -2,6 +2,7 @@ from .ai_chat_messages import AIChatMessage
 from .ai_chat_sessions import AIChatSession
 from .ai_question_generation_log_questions import AIQuestionGenerationLogQuestion
 from .ai_question_generation_logs import AIQuestionGenerationLog
+from .ai_request_log import AIRequestLog
 from .analytics import AnalyticsDashboard
 
 from .course import Course

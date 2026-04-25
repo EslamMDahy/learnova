@@ -20,22 +20,25 @@ class ApiClient implements ITokenRefreshScheduler {
   ApiClient({Dio? dio, RefreshClient? refreshClient})
       : _dio = dio ?? Dio(),
         _refreshClient = refreshClient ?? createRefreshClient() {
-    _dio.options = BaseOptions(
-      baseUrl: Env.baseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
-      sendTimeout: const Duration(seconds: 15),
-      headers: const {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    );
+        _dio.options = BaseOptions(
+          baseUrl: Env.baseUrl,
+          connectTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 15),
+          sendTimeout: const Duration(seconds: 15),
+          headers: const {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        );
     configureDioAdapter(_dio);
 
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
           GlobalLoadingBus.beginIfNeeded(options);
+
+          options.headers['ngrok-skip-browser-warning'] = 'true';
 
           final token = TokenStorage.token;
           if (token != null && token.trim().isNotEmpty) {
