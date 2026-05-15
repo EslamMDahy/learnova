@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../../core/ui/app_colors.dart';
-import '../../../../data/materials_models.dart';
-import '../../../../data/modules_models.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../data/materials_models.dart';
+import '../../../data/modules_models.dart';
 import '../../../../data/topics_models.dart';
 import '../materials_tab_colors.dart';
 import '../materials_tab_context.dart';

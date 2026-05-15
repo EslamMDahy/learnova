@@ -17,6 +17,10 @@ CreateQuestionPayload mapDraftToCreateQuestionPayload(QuestionDraftItem draft) {
   Object? expectedAnswer;
   if (draft.type == QuestionType.multipleChoice && draft.correctOptionIndex != null) {
     expectedAnswer = String.fromCharCode(65 + draft.correctOptionIndex!);
+  } else if (draft.type == QuestionType.multiSelect) {
+    expectedAnswer = draft.correctOptionIndexes
+        .map((index) => String.fromCharCode(65 + index))
+        .toList();
   } else if (draft.type == QuestionType.trueFalse) {
     expectedAnswer = (draft.correctBool ?? false).toString();
   } else if (draft.type == QuestionType.shortAnswer || draft.type == QuestionType.essay) {

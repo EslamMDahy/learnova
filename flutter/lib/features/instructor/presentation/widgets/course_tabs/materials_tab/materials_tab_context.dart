@@ -1,6 +1,6 @@
-import '../../../../../data/materials_models.dart';
-import '../../../../../data/modules_models.dart';
-import '../../../../../data/topics_models.dart';
+import '../../../../data/materials_models.dart';
+import '../../../../data/modules_models.dart';
+import '../../../../data/topics_models.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Selection context types for the materials tab

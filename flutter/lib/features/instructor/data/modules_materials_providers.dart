@@ -5,6 +5,7 @@ import 'materials_api.dart';
 import 'topics_api.dart';
 import 'questions_api.dart';
 import 'learning_outcomes_api.dart';
+import 'exams_api.dart';
 
 final modulesApiProvider = Provider<ModulesApi>((ref) {
   return ModulesApi(ref.read(apiClientProvider));
@@ -24,4 +25,8 @@ final questionsApiProvider = Provider<QuestionsApi>((ref) {
 });
 final learningOutcomesApiProvider = Provider<LearningOutcomesApi>((ref) {
   return LearningOutcomesApi(ref.read(apiClientProvider));
+});
+
+final examsApiProvider = Provider<ExamsApi>((ref) {
+  return ExamsApi(ref.read(apiClientProvider));
 });

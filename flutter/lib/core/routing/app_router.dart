@@ -23,6 +23,7 @@ import '../../features/admin/presentation/pages/admin_route_pages.dart';
 import '../../features/instructor/presentation/pages/instructor_shell.dart';
 import '../../features/instructor/presentation/pages/instructor_route_pages.dart';
 import '../../features/instructor/presentation/pages/course_details/course_details_page.dart';
+import '../../features/instructor/presentation/widgets/Quizzes/quiz_screen.dart';
 import '../../features/instructor/presentation/controllers/selected_course_provider.dart';
 import '../../features/instructor/presentation/course_route_identity.dart';
 import '../../features/instructor/data/courses_providers.dart';
@@ -313,12 +314,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: Routes.instructorQuizzes,
             name: RouteNames.instructorQuizzes,
             pageBuilder: (_, __) => const NoTransitionPage(
-              child: EmptyStatePage(
-                icon: Icons.assignment_outlined,
-                title: 'Quizzes',
-                description:
-                    'Create timed quizzes and auto-grade student submissions. Coming soon.',
-              ),
+              child: InstructorQuizzesScreen(),
             ),
           ),
           GoRoute(

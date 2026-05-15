@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:learnova/shared/widgets/components/dropdowns.dart';
 
 import '../../../../../core/theme/app_theme.dart';
 import '../../data/modules_models.dart';
@@ -48,7 +49,7 @@ class AddQuestionSheet extends StatefulWidget {
   final List<QuestionAuthoringTarget> topicTargets;
   final List<ModuleItem> modules;
   final bool showAiHint;
-  final ValueChanged<QuestionModel> onAdd;
+  final Future<void> Function(QuestionModel question) onAdd;
 
   const AddQuestionSheet({
     super.key,
@@ -80,15 +81,16 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
     with SingleTickerProviderStateMixin {
   static const List<_QuestionTabSpec> _tabs = <_QuestionTabSpec>[
     _QuestionTabSpec('Multiple Choice', QuestionType.multipleChoice),
+    _QuestionTabSpec('Multi Select', QuestionType.multiSelect),
     _QuestionTabSpec('True / False', QuestionType.trueFalse),
-    _QuestionTabSpec('Problem', QuestionType.essay),
     _QuestionTabSpec('Short Answer', QuestionType.shortAnswer),
+    _QuestionTabSpec('Essay', QuestionType.essay),
   ];
 
   late final TabController _tabController;
 
   QuestionType _type = QuestionType.multipleChoice;
-  final QuestionDifficulty _difficulty = QuestionDifficulty.medium;
+  QuestionDifficulty _difficulty = QuestionDifficulty.medium;
 
   final TextEditingController _questionCtrl = TextEditingController();
   final TextEditingController _explanationCtrl = TextEditingController();
@@ -100,7 +102,9 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
   ];
 
   int _correctIdx = 0;
+  final Set<int> _multiCorrectIndexes = <int>{0};
   bool _correctBool = true;
+  bool _saving = false;
   String? _error;
   int? _selectedTopicId;
 
@@ -134,9 +138,10 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
     _tabController.addListener(() {
-      if (_tabController.indexIsChanging) return;
+      final QuestionType nextType = _tabs[_tabController.index].type;
+      if (_type == nextType) return;
       setState(() {
-        _type = _tabs[_tabController.index].type;
+        _type = nextType;
         _error = null;
       });
     });
@@ -163,11 +168,15 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
       controller.clear();
     }
     _correctIdx = 0;
+    _multiCorrectIndexes
+      ..clear()
+      ..add(0);
     _correctBool = true;
     _error = null;
   }
 
-  void _submit({required bool addAnother}) {
+  Future<void> _submit({required bool addAnother}) async {
+    if (_saving) return;
     final String text = _questionCtrl.text.trim();
     if (text.isEmpty) {
       setState(() => _error = 'Question text is required.');
@@ -184,7 +193,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
     bool? correctBool;
     String? sampleAnswer;
 
-    if (_type == QuestionType.multipleChoice) {
+    if (_type == QuestionType.multipleChoice || _type == QuestionType.multiSelect) {
       final List<TextEditingController> nonEmpty = _optionCtrls
           .where((TextEditingController c) => c.text.trim().isNotEmpty)
           .toList();
@@ -193,14 +202,25 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
         return;
       }
       options = nonEmpty.asMap().entries.map((MapEntry<int, TextEditingController> entry) {
+        final isCorrect = _type == QuestionType.multiSelect
+            ? _multiCorrectIndexes.contains(entry.key)
+            : entry.key == _correctIdx;
         return QuestionOption(
           id: 'opt_${entry.key}',
           text: entry.value.text.trim(),
-          isCorrect: entry.key == _correctIdx,
+          isCorrect: isCorrect,
           orderIndex: entry.key,
         );
       }).toList();
-      correctOptionId = _correctIdx < options.length ? options[_correctIdx].id : options.first.id;
+      if (_type == QuestionType.multipleChoice) {
+        correctOptionId = _correctIdx < options.length ? options[_correctIdx].id : options.first.id;
+      } else {
+        final hasValidMultiAnswer = _multiCorrectIndexes.any((idx) => idx >= 0 && idx < options.length);
+        if (!hasValidMultiAnswer) {
+          setState(() => _error = 'Select at least one correct answer.');
+          return;
+        }
+      }
     } else if (_type == QuestionType.trueFalse) {
       correctBool = _correctBool;
       sampleAnswer = _correctBool ? 'True' : 'False';
@@ -228,7 +248,19 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
       createdAt: DateTime.now(),
     );
 
-    widget.onAdd(question);
+    setState(() => _saving = true);
+    try {
+      await widget.onAdd(question);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _error = 'Could not save this question. Check the fields and try again.';
+      });
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _saving = false);
 
     if (addAnother) {
       setState(_resetForAnother);
@@ -309,9 +341,11 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
+                            _buildMetaSection(),
+                            const SizedBox(height: 18),
                             _buildQuestionTextSection(),
                             const SizedBox(height: 18),
-                            if (_type == QuestionType.multipleChoice) ...<Widget>[
+                            if (_type == QuestionType.multipleChoice || _type == QuestionType.multiSelect) ...<Widget>[
                               _buildMultipleChoiceSection(),
                             ] else if (_type == QuestionType.trueFalse) ...<Widget>[
                               _buildTrueFalseSection(),
@@ -344,30 +378,17 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
             child: Row(
               children: <Widget>[
-                OutlinedButton.icon(
-                  onPressed: () => _submit(addAnother: false),
-                  icon: const Icon(Icons.save_outlined, size: 16),
-                  label: const Text('Save Draft'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textTitle,
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: AppColors.border),
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                  ),
-                ),
                 const Spacer(),
                 ElevatedButton(
-                  onPressed: () => _submit(addAnother: true),
+                  onPressed: _saving ? null : () => _submit(addAnother: true),
                   style: _primaryButtonStyle(),
-                  child: const Text('Add Another'),
+                  child: Text(_saving ? 'Adding...' : 'Add Another'),
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton(
-                  onPressed: () => _submit(addAnother: false),
+                  onPressed: _saving ? null : () => _submit(addAnother: false),
                   style: _primaryButtonStyle(),
-                  child: const Text('Add'),
+                  child: Text(_saving ? 'Adding...' : 'Add'),
                 ),
               ],
             ),
@@ -393,8 +414,85 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
         indicatorWeight: 2,
         dividerColor: Colors.transparent,
         overlayColor: WidgetStateProperty.all<Color>(Colors.transparent),
-        tabs: _tabs.map(( _QuestionTabSpec tab) => Tab(text: tab.label)).toList(),
+        onTap: (int index) {
+          final QuestionType nextType = _tabs[index].type;
+          if (_type == nextType) return;
+          setState(() {
+            _type = nextType;
+            _error = null;
+          });
+        },
+        tabs: _tabs.map((_QuestionTabSpec tab) => Tab(text: tab.label)).toList(),
       ),
+    );
+  }
+
+  Widget _buildMetaSection() {
+    final List<Widget> fields = <Widget>[
+      Expanded(
+        flex: 2,
+        child: _targets.isEmpty || _selectedTopicId == null
+            ? const _ReadonlyField(
+                label: 'Target Topic',
+                value: 'No topic selected',
+              )
+            : AppModernDropdown<int>(
+                label: 'Target Topic',
+                value: _selectedTopicId!,
+                icon: Icons.topic_outlined,
+                items: _targets.map((QuestionAuthoringTarget target) {
+                  return DropdownMenuItem<int>(
+                    value: target.topicId,
+                    child: Text(target.label),
+                  );
+                }).toList(),
+                onChanged: (int? value) {
+                  if (value == null) return;
+                  setState(() => _selectedTopicId = value);
+                },
+              ),
+      ),
+      const SizedBox(width: 16),
+      Expanded(
+        child: AppModernDropdown<QuestionDifficulty>(
+          label: 'Difficulty',
+          value: _difficulty,
+          icon: Icons.signal_cellular_alt_rounded,
+          items: const <DropdownMenuItem<QuestionDifficulty>>[
+            DropdownMenuItem<QuestionDifficulty>(
+              value: QuestionDifficulty.easy,
+              child: Text('Easy'),
+            ),
+            DropdownMenuItem<QuestionDifficulty>(
+              value: QuestionDifficulty.medium,
+              child: Text('Medium'),
+            ),
+            DropdownMenuItem<QuestionDifficulty>(
+              value: QuestionDifficulty.hard,
+              child: Text('Hard'),
+            ),
+          ],
+          onChanged: (QuestionDifficulty? value) {
+            if (value == null) return;
+            setState(() => _difficulty = value);
+          },
+        ),
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        if (constraints.maxWidth < 720) {
+          return Column(
+            children: <Widget>[
+              fields.first,
+              const SizedBox(height: 16),
+              fields.last,
+            ],
+          );
+        }
+        return Row(children: fields);
+      },
     );
   }
 
@@ -422,9 +520,9 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
         const SizedBox(height: 10),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.border),
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
           child: Column(
             children: <Widget>[
@@ -432,8 +530,8 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                 height: 36,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF8FAFC),
-                  border: Border(bottom: BorderSide(color: AppColors.border)),
+                  color: Color(0xFFF9FAFB),
+                  border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
                 ),
                 child: Row(
                   children: <Widget>[
@@ -497,8 +595,8 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(color: AppColors.border),
               ),
-              child: const Text(
-                'Select the correct answer',
+              child: Text(
+                _type == QuestionType.multiSelect ? 'Select all correct answers' : 'Select the correct answer',
                 style: TextStyle(fontSize: 10.5, color: AppColors.textMuted, fontWeight: FontWeight.w500),
               ),
             ),
@@ -512,23 +610,36 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Padding(
-                  padding: const EdgeInsets.only(top: 30),
-                  child: InkWell(
-                    onTap: () => setState(() => _correctIdx = index),
-                    borderRadius: BorderRadius.circular(100),
-                    child: Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: _correctIdx == index ? AppColors.primary : AppColors.borderSoft,
-                          width: _correctIdx == index ? 5 : 1.5,
+                  padding: const EdgeInsets.only(top: 26),
+                  child: _type == QuestionType.multiSelect
+                      ? Checkbox(
+                          value: _multiCorrectIndexes.contains(index),
+                          onChanged: (value) {
+                            setState(() {
+                              if (value ?? false) {
+                                _multiCorrectIndexes.add(index);
+                              } else {
+                                _multiCorrectIndexes.remove(index);
+                              }
+                            });
+                          },
+                        )
+                      : InkWell(
+                          onTap: () => setState(() => _correctIdx = index),
+                          borderRadius: BorderRadius.circular(100),
+                          child: Container(
+                            width: 18,
+                            height: 18,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _correctIdx == index ? AppColors.primary : AppColors.borderSoft,
+                                width: _correctIdx == index ? 5 : 1.5,
+                              ),
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -667,25 +778,75 @@ class _AddQuestionSheetState extends State<AddQuestionSheet>
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(
+        fontFamily: 'Inter',
         fontSize: 13.5,
         fontWeight: FontWeight.w400,
         color: AppColors.textHint,
       ),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: const Color(0xFFF9FAFB),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.primary),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+    );
+  }
+}
+
+class _ReadonlyField extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _ReadonlyField({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 44,
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          alignment: Alignment.centerLeft,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Text(
+            value,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: Color(0xFF374151),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -801,21 +962,28 @@ Future<void> showAddQuestionDialog(
   List<QuestionAuthoringTarget> topicTargets = const <QuestionAuthoringTarget>[],
   List<ModuleItem> modules = const <ModuleItem>[],
   bool showAiHint = true,
-  required ValueChanged<QuestionModel> onAdd,
+  required Future<void> Function(QuestionModel question) onAdd,
 }) {
   final Size size = MediaQuery.of(context).size;
-  final double width = size.width < 760 ? size.width * 0.96 : 1120;
-  final double height = size.height < 760 ? size.height * 0.94 : 670;
+  final bool compact = size.width < 900;
+  final double width = compact ? size.width * 0.94 : 860;
+  final double height = size.height < 760 ? size.height * 0.94 : size.height * 0.86;
 
   return showDialog<void>(
     context: context,
     barrierColor: Colors.black.withOpacity(0.36),
     builder: (_) => Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(24),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: compact ? 16 : 32,
+        vertical: compact ? 18 : 36,
+      ),
       child: Center(
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: width, maxHeight: height),
+          constraints: BoxConstraints(
+            maxWidth: width,
+            maxHeight: height.clamp(640.0, 820.0),
+          ),
           child: AddQuestionSheet(
             isDialog: true,
             moduleId: moduleId,

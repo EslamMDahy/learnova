@@ -503,6 +503,10 @@ class _QuestionDraftCard extends StatelessWidget {
                       child: Text('Multiple Choice'),
                     ),
                     DropdownMenuItem(
+                      value: QuestionType.multiSelect,
+                      child: Text('Multi Select'),
+                    ),
+                    DropdownMenuItem(
                       value: QuestionType.trueFalse,
                       child: Text('True / False'),
                     ),
@@ -555,7 +559,7 @@ class _QuestionDraftCard extends StatelessWidget {
             onChanged: (value) => onChanged(draft.copyWith(questionText: value)),
           ),
           const SizedBox(height: 12),
-          if (draft.type == QuestionType.multipleChoice) ...[
+          if (draft.type == QuestionType.multipleChoice || draft.type == QuestionType.multiSelect) ...[
             _OptionEditor(
               draft: draft,
               onChanged: onChanged,
@@ -678,14 +682,28 @@ class _OptionEditor extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 10),
               child: Row(
                 children: [
-                  Radio<int>(
-                    value: index,
-                    groupValue: draft.correctOptionIndex,
-                    onChanged: (value) {
-                      if (value == null) return;
-                      onChanged(draft.copyWith(correctOptionIndex: value));
-                    },
-                  ),
+                  if (draft.type == QuestionType.multiSelect)
+                    Checkbox(
+                      value: draft.correctOptionIndexes.contains(index),
+                      onChanged: (value) {
+                        final next = [...draft.correctOptionIndexes];
+                        if (value ?? false) {
+                          if (!next.contains(index)) next.add(index);
+                        } else {
+                          next.remove(index);
+                        }
+                        onChanged(draft.copyWith(correctOptionIndexes: next));
+                      },
+                    )
+                  else
+                    Radio<int>(
+                      value: index,
+                      groupValue: draft.correctOptionIndex,
+                      onChanged: (value) {
+                        if (value == null) return;
+                        onChanged(draft.copyWith(correctOptionIndex: value));
+                      },
+                    ),
                   Container(
                     width: 28,
                     alignment: Alignment.center,
@@ -732,10 +750,15 @@ class _OptionEditor extends StatelessWidget {
                                 nextCorrect = currentCorrect - 1;
                               }
                             }
+                            final nextMultiCorrect = draft.correctOptionIndexes
+                                .where((answerIndex) => answerIndex != index)
+                                .map((answerIndex) => answerIndex > index ? answerIndex - 1 : answerIndex)
+                                .toList();
                             onChanged(
                               draft.copyWith(
                                 options: nextOptions,
                                 correctOptionIndex: nextCorrect,
+                                correctOptionIndexes: nextMultiCorrect,
                               ),
                             );
                           },
@@ -746,7 +769,7 @@ class _OptionEditor extends StatelessWidget {
             );
           }),
           const Text(
-            'Choose the correct option using the radio button.',
+            'Choose one correct option for MCQ, or all correct options for multi-select.',
             style: TextStyle(fontSize: 11.5, color: AppColors.textMuted),
           ),
         ],

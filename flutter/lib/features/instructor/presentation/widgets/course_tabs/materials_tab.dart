@@ -14,6 +14,7 @@ import '../../../data/modules_models.dart';
 import '../../../data/materials_models.dart';
 import '../../../data/topics_models.dart';
 import '../../../data/learning_outcomes_models.dart';
+import '../../../data/modules_materials_providers.dart';
 import '../../controllers/course_details_controller.dart';
 import '../../controllers/course_details_state.dart';
 import '../add_question_sheet.dart';
@@ -85,8 +86,8 @@ class _TreeSelectionState {
 
   static const empty = _TreeSelectionState();
 
-  bool get isEmpty => moduleIds.isEmpty && materialIds.isEmpty && topicIds.isEmpty;
-  int get totalCount => moduleIds.length + materialIds.length + topicIds.length;
+  bool get isEmpty => topicIds.isEmpty;
+  int get totalCount => topicIds.length;
 
   _TreeSelectionState copyWith({
     Set<int>? moduleIds,
@@ -468,42 +469,79 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
   }
 
 
+  Set<int> _selectableTopicIdsForTopic(List<TopicItem> materialTopics, TopicItem topic) {
+    final children = _childTopics(materialTopics, topic.id);
+    if (children.isEmpty) {
+      return <int>{topic.id};
+    }
+
+    final ids = <int>{};
+    for (final child in children) {
+      ids.addAll(_selectableTopicIdsForTopic(materialTopics, child));
+    }
+    return ids;
+  }
+
+  Set<int> _selectableTopicIdsForMaterial(
+    CourseDetailsState st,
+    int moduleId,
+    int materialId,
+  ) {
+    final materialTopics = _topicsForMaterial(st, moduleId, materialId);
+    final roots = materialTopics.where((topic) => topic.parentTopicId == null).toList()
+      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+
+    final ids = <int>{};
+    for (final root in roots) {
+      ids.addAll(_selectableTopicIdsForTopic(materialTopics, root));
+    }
+    return ids;
+  }
+
+  Set<int> _selectableTopicIdsForModule(CourseDetailsState st, int moduleId) {
+    final ids = <int>{};
+    for (final material in _materialsForModule(st, moduleId)) {
+      ids.addAll(_selectableTopicIdsForMaterial(st, moduleId, material.id));
+    }
+    return ids;
+  }
+
+  Set<int> _allSelectableTopicIds(CourseDetailsState st) {
+    final ids = <int>{};
+    for (final module in st.modules) {
+      ids.addAll(_selectableTopicIdsForModule(st, module.id));
+    }
+    return ids;
+  }
+
   _TreeSelectionState _normalizeTreeSelection(
     CourseDetailsState st, {
     required Set<int> moduleIds,
     required Set<int> materialIds,
     required Set<int> topicIds,
   }) {
-    final nextModules = <int>{...moduleIds};
-    final nextMaterials = <int>{...materialIds};
-    final nextTopics = <int>{...topicIds};
+    final nextTopics = topicIds.intersection(_allSelectableTopicIds(st));
+    final nextMaterials = <int>{};
+    final nextModules = <int>{};
 
     for (final module in st.modules) {
       final materials = _materialsForModule(st, module.id);
-      if (materials.isEmpty) {
-        if (!nextModules.contains(module.id)) nextModules.remove(module.id);
-        continue;
-      }
+      var selectableMaterialsCount = 0;
+      var selectedMaterialsCount = 0;
 
-      var allMaterialsSelected = true;
       for (final material in materials) {
-        final topics = _topicsForMaterial(st, module.id, material.id);
-        final isMaterialFullySelected = topics.isEmpty
-            ? nextMaterials.contains(material.id)
-            : topics.every((t) => nextTopics.contains(t.id));
+        final selectableTopicIds = _selectableTopicIdsForMaterial(st, module.id, material.id);
+        if (selectableTopicIds.isEmpty) continue;
+        selectableMaterialsCount++;
 
-        if (isMaterialFullySelected) {
+        if (nextTopics.containsAll(selectableTopicIds)) {
           nextMaterials.add(material.id);
-        } else {
-          nextMaterials.remove(material.id);
-          allMaterialsSelected = false;
+          selectedMaterialsCount++;
         }
       }
 
-      if (allMaterialsSelected) {
+      if (selectableMaterialsCount > 0 && selectedMaterialsCount == selectableMaterialsCount) {
         nextModules.add(module.id);
-      } else {
-        nextModules.remove(module.id);
       }
     }
 
@@ -533,58 +571,42 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
   }
 
   void _setModuleChecked(ModuleItem module, CourseDetailsState st, bool checked) {
-    final materials = _materialsForModule(st, module.id);
-    final materialIds = materials.map((m) => m.id).toSet();
-    final topicIds = <int>{};
-    for (final material in materials) {
-      topicIds.addAll(_topicsForMaterial(st, module.id, material.id).map((t) => t.id));
-    }
+    final selectableTopicIds = _selectableTopicIdsForModule(st, module.id);
+    if (selectableTopicIds.isEmpty) return;
 
     setState(() {
-      final nextModules = {..._treeSelection.moduleIds};
-      final nextMaterials = {..._treeSelection.materialIds};
       final nextTopics = {..._treeSelection.topicIds};
-
       if (checked) {
-        nextModules.add(module.id);
-        nextMaterials.addAll(materialIds);
-        nextTopics.addAll(topicIds);
+        nextTopics.addAll(selectableTopicIds);
       } else {
-        nextModules.remove(module.id);
-        nextMaterials.removeAll(materialIds);
-        nextTopics.removeAll(topicIds);
+        nextTopics.removeAll(selectableTopicIds);
       }
 
       _treeSelection = _normalizeTreeSelection(
         st,
-        moduleIds: nextModules,
-        materialIds: nextMaterials,
+        moduleIds: const <int>{},
+        materialIds: const <int>{},
         topicIds: nextTopics,
       );
     });
   }
 
   void _setMaterialChecked(ModuleItem module, MaterialItem material, CourseDetailsState st, bool checked) {
-    final topics = _topicsForMaterial(st, module.id, material.id);
-    final topicIds = topics.map((t) => t.id).toSet();
+    final selectableTopicIds = _selectableTopicIdsForMaterial(st, module.id, material.id);
+    if (selectableTopicIds.isEmpty) return;
 
     setState(() {
-      final nextModules = {..._treeSelection.moduleIds}..remove(module.id);
-      final nextMaterials = {..._treeSelection.materialIds};
       final nextTopics = {..._treeSelection.topicIds};
-
       if (checked) {
-        nextMaterials.add(material.id);
-        nextTopics.addAll(topicIds);
+        nextTopics.addAll(selectableTopicIds);
       } else {
-        nextMaterials.remove(material.id);
-        nextTopics.removeAll(topicIds);
+        nextTopics.removeAll(selectableTopicIds);
       }
 
       _treeSelection = _normalizeTreeSelection(
         st,
-        moduleIds: nextModules,
-        materialIds: nextMaterials,
+        moduleIds: const <int>{},
+        materialIds: const <int>{},
         topicIds: nextTopics,
       );
     });
@@ -598,26 +620,21 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
     bool checked,
   ) {
     final allTopics = _topicsForMaterial(st, module.id, material.id);
-    final descendantIds = <int>{topic.id};
-    if (topic.parentTopicId == null) {
-      descendantIds.addAll(_childTopics(allTopics, topic.id).map((t) => t.id));
-    }
+    final selectableTopicIds = _selectableTopicIdsForTopic(allTopics, topic);
+    if (selectableTopicIds.isEmpty) return;
 
     setState(() {
-      final nextModules = {..._treeSelection.moduleIds}..remove(module.id);
-      final nextMaterials = {..._treeSelection.materialIds}..remove(material.id);
       final nextTopics = {..._treeSelection.topicIds};
-
       if (checked) {
-        nextTopics.addAll(descendantIds);
+        nextTopics.addAll(selectableTopicIds);
       } else {
-        nextTopics.removeAll(descendantIds);
+        nextTopics.removeAll(selectableTopicIds);
       }
 
       _treeSelection = _normalizeTreeSelection(
         st,
-        moduleIds: nextModules,
-        materialIds: nextMaterials,
+        moduleIds: const <int>{},
+        materialIds: const <int>{},
         topicIds: nextTopics,
       );
     });
@@ -1733,8 +1750,20 @@ Future<void> _showCreateModuleDialog() async {
         moduleName: module.title,
         materialId: material.id,
         materialName: material.displayTitle,
+        topicId: topic.id,
         topicName: topic.title,
-        onAdd: (q) => ref.read(courseDetailsControllerProvider(widget.course.id).notifier).addQuestion(q),
+        onAdd: (q) async {
+          final api = ref.read(questionsApiProvider);
+          final payload = api.buildCreatePayloadFromQuestion(q);
+          if (payload == null) {
+            throw StateError('Question type or topic is not compatible with backend.');
+          }
+          final saved = await api.createQuestion(
+            courseId: widget.course.id,
+            payload: payload,
+          );
+          ref.read(courseDetailsControllerProvider(widget.course.id).notifier).addQuestion(saved);
+        },
       );
     } finally {
       if (mounted) setState(() => _dialogOpen = false);
@@ -1745,11 +1774,11 @@ Future<void> _showCreateModuleDialog() async {
     final hasTreeSelection = _selectionMode && !_treeSelection.isEmpty;
 
     final moduleIds = hasTreeSelection
-        ? _treeSelection.moduleIds
+        ? const <int>{}
         : (active.type == _CType.module ? <int>{if (active.module != null) active.module!.id} : const <int>{});
 
     final materialIds = hasTreeSelection
-        ? _treeSelection.materialIds
+        ? const <int>{}
         : (active.type == _CType.material ? <int>{if (active.material != null) active.material!.id} : const <int>{});
 
     final topicIds = hasTreeSelection

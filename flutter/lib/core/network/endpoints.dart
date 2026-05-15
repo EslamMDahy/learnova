@@ -90,8 +90,18 @@ class Endpoints {
   // ─── QUESTIONS ───────────────────────────────────────────────────────────
   static String courseQuestions(int courseId) =>
       '$_courses/$courseId/questions';
+  static String courseQuestion(int courseId, int questionId) =>
+      '$_courses/$courseId/questions/$questionId';
   static String batchCreateQuestions(int courseId, int moduleId, int materialId) =>
       '$_courses/$courseId/modules/$moduleId/materials/$materialId/questions';
+
+  // ─── EXAMS ───────────────────────────────────────────────────────────────
+  static String courseExams(int courseId) =>
+      '$_courses/$courseId/exams';
+  static String exam(int courseId, int examId) =>
+      '$_courses/$courseId/exams/$examId';
+  static String examQuestions(int courseId, int examId) =>
+      '$_courses/$courseId/exams/$examId/questions';
 
   // ─── SETTINGS ────────────────────────────────────────────────────────────
   static const updateProfile     = '$_settings/profile';

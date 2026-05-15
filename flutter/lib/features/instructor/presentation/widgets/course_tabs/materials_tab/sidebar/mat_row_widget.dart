@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:learnova/core/theme/app_theme.dart';
 
-import '../../../../../../core/ui/app_colors.dart';
-import '../../../../data/materials_models.dart';
-import '../../../../data/topics_models.dart';
+
+import '../../../../../data/materials_models.dart';
+import '../../../../../data/topics_models.dart';
 import '../materials_tab_colors.dart';
 import '../materials_tab_context.dart';
 import '../shared/status_dot_widget.dart';
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Material row (+ its nested topic rows)

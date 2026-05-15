@@ -6,6 +6,61 @@ mixin _CourseDetailsQuestionsMixin on StateNotifier<CourseDetailsState> {
   Ref get ref;
   int get courseId;
 // ── Question Bank (in-memory) ────────────────────────────────────────────
+  Future<QuestionModel?> createQuestion(QuestionModel question) async {
+    state = state.copyWith(questionsLoading: true, questionsError: null);
+
+    try {
+      final created = await ref.read(questionsApiProvider).createQuestionFromModel(
+            courseId: courseId,
+            question: question,
+          );
+
+      final hydrated = QuestionModel(
+        id: created.id,
+        remoteId: created.remoteId,
+        text: created.text,
+        type: created.type,
+        difficulty: created.difficulty,
+        source: created.source,
+        approvalStatus: created.approvalStatus,
+        options: created.options,
+        correctOptionId: created.correctOptionId ?? question.correctOptionId,
+        correctBool: created.correctBool ?? question.correctBool,
+        sampleAnswer: created.sampleAnswer ?? question.sampleAnswer,
+        explanation: created.explanation,
+        expectedAnswer: created.expectedAnswer,
+        tags: created.tags,
+        usageCount: created.usageCount,
+        successRate: created.successRate,
+        maxScore: created.maxScore,
+        autoGradable: created.autoGradable,
+        courseId: created.courseId ?? courseId,
+        moduleId: question.moduleId,
+        moduleName: question.moduleName,
+        materialId: question.materialId,
+        materialName: question.materialName,
+        topicId: created.topicId ?? question.topicId,
+        topicName: question.topicName,
+        createdAt: created.createdAt,
+      );
+
+      state = state.copyWith(
+        questionsLoading: false,
+        questions: [hydrated, ...state.questions],
+        lastSyncedCount: (state.lastSyncedCount ?? 0) + 1,
+      );
+      return hydrated;
+    } catch (e) {
+      final failure = mapApiFailure(e);
+      AppErrorReporter.report(ref, failure);
+      state = state.copyWith(
+        questionsLoading: false,
+        questionsError: failure.message,
+      );
+      return null;
+    }
+  }
+
 
   void addQuestion(QuestionModel question) {
     state = state.copyWith(questions: [question, ...state.questions]);

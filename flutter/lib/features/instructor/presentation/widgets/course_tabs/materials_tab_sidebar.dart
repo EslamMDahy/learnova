@@ -393,16 +393,40 @@ class _ModuleRowWidget extends StatelessWidget {
 
   bool get _isSel => active?.type == _CType.module && active?.module?.id == module.id;
 
+  Set<int> _selectableTopicIdsForTopic(TopicItem topic, List<TopicItem> allTopics) {
+    final children = _childTopicsForParent(allTopics, topic.id);
+    if (children.isEmpty) {
+      return <int>{topic.id};
+    }
+
+    final ids = <int>{};
+    for (final child in children) {
+      ids.addAll(_selectableTopicIdsForTopic(child, allTopics));
+    }
+    return ids;
+  }
+
+  Set<int> _selectableTopicIdsForMaterial(MaterialItem material) {
+    final materialTopics = moduleTopics.where((topic) => topic.materialId == material.id).toList();
+    final roots = _rootTopicsForMaterial(materialTopics);
+    final ids = <int>{};
+    for (final root in roots) {
+      ids.addAll(_selectableTopicIdsForTopic(root, materialTopics));
+    }
+    return ids;
+  }
+
   bool? _moduleCheckValue() {
-    if (materials.isEmpty) {
-      return treeSelection.moduleIds.contains(module.id);
+    final selectableTopicIds = <int>{};
+    for (final material in materials) {
+      selectableTopicIds.addAll(_selectableTopicIdsForMaterial(material));
     }
-    final allMaterialIds = materials.map((m) => m.id).toSet();
-    final selectedCount = allMaterialIds.where(treeSelection.materialIds.contains).length;
-    if (selectedCount == 0) {
-      return treeSelection.moduleIds.contains(module.id) ? true : false;
-    }
-    if (selectedCount == allMaterialIds.length) return true;
+
+    if (selectableTopicIds.isEmpty) return false;
+
+    final selectedCount = selectableTopicIds.where(treeSelection.topicIds.contains).length;
+    if (selectedCount == 0) return false;
+    if (selectedCount == selectableTopicIds.length) return true;
     return null;
   }
 
@@ -616,14 +640,35 @@ class _MatRowWidget extends StatelessWidget {
     required this.onToggleTopicExpanded,
   });
 
-  bool? _materialCheckValue() {
-    if (topics.isEmpty) {
-      return treeSelection.materialIds.contains(material.id);
+  Set<int> _selectableTopicIdsForTopic(TopicItem topic) {
+    final children = _childTopicsForParent(topics, topic.id);
+    if (children.isEmpty) {
+      return <int>{topic.id};
     }
-    final topicIds = topics.map((t) => t.id).toSet();
-    final selectedCount = topicIds.where(treeSelection.topicIds.contains).length;
-    if (selectedCount == 0) return treeSelection.materialIds.contains(material.id) ? true : false;
-    if (selectedCount == topicIds.length) return true;
+
+    final ids = <int>{};
+    for (final child in children) {
+      ids.addAll(_selectableTopicIdsForTopic(child));
+    }
+    return ids;
+  }
+
+  Set<int> _selectableTopicIdsForMaterial() {
+    final roots = _rootTopicsForMaterial(topics);
+    final ids = <int>{};
+    for (final root in roots) {
+      ids.addAll(_selectableTopicIdsForTopic(root));
+    }
+    return ids;
+  }
+
+  bool? _materialCheckValue() {
+    final selectableTopicIds = _selectableTopicIdsForMaterial();
+    if (selectableTopicIds.isEmpty) return false;
+
+    final selectedCount = selectableTopicIds.where(treeSelection.topicIds.contains).length;
+    if (selectedCount == 0) return false;
+    if (selectedCount == selectableTopicIds.length) return true;
     return null;
   }
 
@@ -782,14 +827,26 @@ class _SidebarTopicNode extends StatelessWidget {
     required this.onToggleExpanded,
   });
 
-  bool? _topicCheckValue(List<TopicItem> children) {
+  Set<int> _selectableTopicIdsForTopic(TopicItem item) {
+    final children = _childTopicsForParent(allTopics, item.id);
     if (children.isEmpty) {
-      return treeSelection.topicIds.contains(topic.id);
+      return <int>{item.id};
     }
-    final childIds = children.map((t) => t.id).toSet();
-    final selectedChildren = childIds.where(treeSelection.topicIds.contains).length;
-    if (selectedChildren == 0) return treeSelection.topicIds.contains(topic.id) ? true : false;
-    if (selectedChildren == childIds.length) return true;
+
+    final ids = <int>{};
+    for (final child in children) {
+      ids.addAll(_selectableTopicIdsForTopic(child));
+    }
+    return ids;
+  }
+
+  bool? _topicCheckValue() {
+    final selectableTopicIds = _selectableTopicIdsForTopic(topic);
+    if (selectableTopicIds.isEmpty) return false;
+
+    final selectedCount = selectableTopicIds.where(treeSelection.topicIds.contains).length;
+    if (selectedCount == 0) return false;
+    if (selectedCount == selectableTopicIds.length) return true;
     return null;
   }
 
@@ -850,7 +907,7 @@ class _SidebarTopicNode extends StatelessWidget {
                           child: Transform.scale(
                             scale: .84,
                             child: Checkbox(
-                              value: _topicCheckValue(children),
+                              value: _topicCheckValue(),
                               tristate: true,
                               visualDensity: VisualDensity.compact,
                               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,

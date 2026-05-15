@@ -43,6 +43,21 @@ class QuestionOption {
   };
 }
 
+
+class QuestionLearningOutcomeRef {
+  final int id;
+  final String title;
+
+  const QuestionLearningOutcomeRef({required this.id, required this.title});
+
+  factory QuestionLearningOutcomeRef.fromJson(Map<String, dynamic> json) {
+    return QuestionLearningOutcomeRef(
+      id: (json['id'] as num).toInt(),
+      title: (json['title'] ?? '').toString(),
+    );
+  }
+}
+
 class QuestionModel {
   // IDs — local uses String (uuid), remote uses int
   final String id;
@@ -76,6 +91,7 @@ class QuestionModel {
   final String? materialName;
   final int? topicId;
   final String? topicName;
+  final List<QuestionLearningOutcomeRef> learningOutcomes;
 
   final DateTime createdAt;
 
@@ -105,6 +121,7 @@ class QuestionModel {
     this.materialName,
     this.topicId,
     this.topicName,
+    this.learningOutcomes = const [],
     required this.createdAt,
   });
 
@@ -142,26 +159,52 @@ class QuestionModel {
       }
     }
 
+    final rawExpectedAnswer = json['expected_answer'];
+    final expectedAnswerText = rawExpectedAnswer is List
+        ? rawExpectedAnswer.map((e) => e.toString()).join(', ')
+        : rawExpectedAnswer?.toString();
+
+    final rawType = (json['type'] ?? 'multiple_choice').toString();
+    final parsedType = parseQuestionType(rawType);
     final rawOptions = (json['options'] as List?) ?? const [];
     final options = rawOptions
         .whereType<Map>()
-        .map((e) => QuestionOption.fromJson(Map<String, dynamic>.from(e)))
+        .map((e) {
+          final option = QuestionOption.fromJson(Map<String, dynamic>.from(e));
+          final isCorrect = rawExpectedAnswer is List
+              ? rawExpectedAnswer.map((v) => v.toString()).contains(option.id)
+              : rawExpectedAnswer?.toString() == option.id;
+          return QuestionOption(
+            id: option.id,
+            text: option.text,
+            isCorrect: option.isCorrect || isCorrect,
+            explanation: option.explanation,
+            orderIndex: option.orderIndex,
+          );
+        })
         .toList();
 
     final remoteId = json['id'] == null ? null : (json['id'] as num).toInt();
     final rawTags = (json['tags'] as List?) ?? const [];
+    final rawLearningOutcomes = (json['learning_outcomes'] as List?) ?? const [];
+    final topic = json['topic'] is Map
+        ? Map<String, dynamic>.from(json['topic'] as Map)
+        : const <String, dynamic>{};
 
     return QuestionModel(
       id: remoteId?.toString() ?? DateTime.now().microsecondsSinceEpoch.toString(),
       remoteId: remoteId,
       text: (json['question_text'] ?? '').toString(),
-      type: parseQuestionType((json['type'] ?? 'multiple_choice').toString()),
+      type: parsedType,
       difficulty: parseQuestionDifficulty((json['difficulty'] ?? 'medium').toString()),
       source: parseSource((json['source'] ?? 'manual').toString()),
       approvalStatus: parseApproval((json['approval_status'] ?? 'approved').toString()),
       options: options,
       explanation: json['explanation']?.toString(),
-      expectedAnswer: json['expected_answer']?.toString(),
+      expectedAnswer: expectedAnswerText,
+      correctOptionId: parsedType == QuestionType.multipleChoice ? expectedAnswerText : null,
+      correctBool: parsedType == QuestionType.trueFalse ? expectedAnswerText?.toLowerCase() == 'true' : null,
+      sampleAnswer: parsedType == QuestionType.shortAnswer || parsedType == QuestionType.essay ? expectedAnswerText : null,
       tags: rawTags.map((e) => e.toString()).toList(),
       usageCount: (json['usage_count'] as num?)?.toInt() ?? 0,
       successRate: json['success_rate'] == null ? null : (json['success_rate'] as num).toDouble(),
@@ -169,8 +212,17 @@ class QuestionModel {
       autoGradable: (json['auto_gradable'] as bool?) ?? true,
       courseId: json['course_id'] == null ? null : (json['course_id'] as num).toInt(),
       moduleId: json['module_id'] == null ? null : (json['module_id'] as num).toInt(),
+      moduleName: json['module_name']?.toString(),
       materialId: json['material_id'] == null ? null : (json['material_id'] as num).toInt(),
+      materialName: json['material_name']?.toString(),
       topicId: json['topic_id'] == null ? null : (json['topic_id'] as num).toInt(),
+      topicName: json['topic_title']?.toString() ??
+          json['topic_name']?.toString() ??
+          topic['title']?.toString(),
+      learningOutcomes: rawLearningOutcomes
+          .whereType<Map>()
+          .map((e) => QuestionLearningOutcomeRef.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
       createdAt: dt(json['created_at']),
     );
   }

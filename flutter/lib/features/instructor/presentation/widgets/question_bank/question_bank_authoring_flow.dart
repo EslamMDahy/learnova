@@ -6,6 +6,7 @@ import '../../../data/courses_models.dart';
 import '../../../data/materials_models.dart';
 import '../../../data/modules_models.dart';
 import '../../../data/question_models.dart';
+import '../../../data/modules_materials_providers.dart';
 import '../../../data/topics_models.dart';
 import '../../controllers/course_details_controller.dart';
 import '../add_question_sheet.dart' as add_question_sheet;
@@ -40,6 +41,8 @@ class _QuestionBankAuthoringFlowState
 
   final TextEditingController _searchCtrl = TextEditingController();
   final Set<String> _selectedQuestionIds = <String>{};
+  final List<QuestionModel> _draftQuestions = <QuestionModel>[];
+  bool _savingDrafts = false;
 
   String _selectedTopicFilter = 'All Topics';
   String _selectedDifficultyFilter = 'Any Difficulty';
@@ -155,7 +158,7 @@ class _QuestionBankAuthoringFlowState
       if (topic == null) continue;
       final MaterialItem? material = findMaterial(topic.materialId);
       if (material == null) continue;
-      final ModuleItem? module = findModule(topic.moduleId);
+      final ModuleItem? module = findModule(material.moduleId);
       if (module == null) continue;
       final List<TopicItem> materialTopics =
           (topicsMap[module.id] ?? const <TopicItem>[])
@@ -227,9 +230,11 @@ class _QuestionBankAuthoringFlowState
       topicId: _targets.first.topicId,
       topicName: _targets.first.topicName,
       topicTargets: _targets,
-      onAdd: (QuestionModel question) => ref
-          .read(courseDetailsControllerProvider(widget.course.id).notifier)
-          .addQuestion(question),
+      onAdd: (QuestionModel question) async {
+        setState(() {
+          _draftQuestions.insert(0, question);
+        });
+      },
     );
   }
 
@@ -260,6 +265,91 @@ class _QuestionBankAuthoringFlowState
     );
   }
 
+  Future<void> _saveDraftQuestions() async {
+    if (_draftQuestions.isEmpty || _savingDrafts) return;
+
+    setState(() => _savingDrafts = true);
+
+    final api = ref.read(questionsApiProvider);
+    final controller = ref.read(
+      courseDetailsControllerProvider(widget.course.id).notifier,
+    );
+    final List<QuestionModel> savedQuestions = <QuestionModel>[];
+
+    try {
+      for (final QuestionModel draft in _draftQuestions.reversed) {
+        final payload = api.buildCreatePayloadFromQuestion(draft);
+        if (payload == null) {
+          throw StateError(
+            'Question type or topic is not compatible with backend.',
+          );
+        }
+
+        final QuestionModel saved = await api.createQuestion(
+          courseId: widget.course.id,
+          payload: payload,
+        );
+
+        final QuestionModel hydrated = QuestionModel(
+          id: saved.id,
+          remoteId: saved.remoteId,
+          text: saved.text,
+          type: saved.type,
+          difficulty: saved.difficulty,
+          source: saved.source,
+          approvalStatus: saved.approvalStatus,
+          options: saved.options,
+          correctOptionId: saved.correctOptionId ?? draft.correctOptionId,
+          correctBool: saved.correctBool ?? draft.correctBool,
+          sampleAnswer: saved.sampleAnswer ?? draft.sampleAnswer,
+          explanation: saved.explanation ?? draft.explanation,
+          expectedAnswer: saved.expectedAnswer ?? draft.expectedAnswer,
+          tags: saved.tags.isEmpty ? draft.tags : saved.tags,
+          usageCount: saved.usageCount,
+          successRate: saved.successRate,
+          maxScore: saved.maxScore,
+          autoGradable: saved.autoGradable,
+          courseId: saved.courseId ?? widget.course.id,
+          moduleId: draft.moduleId,
+          moduleName: draft.moduleName,
+          materialId: draft.materialId,
+          materialName: draft.materialName,
+          topicId: saved.topicId ?? draft.topicId,
+          topicName: draft.topicName,
+          createdAt: saved.createdAt,
+        );
+
+        savedQuestions.add(hydrated);
+      }
+
+      if (!mounted) return;
+      for (final QuestionModel question in savedQuestions.reversed) {
+        controller.addQuestion(question);
+      }
+
+      setState(() {
+        _draftQuestions.clear();
+        _selectedQuestionIds.clear();
+        _savingDrafts = false;
+      });
+
+      AppToast.success(
+        context,
+        title: 'Questions saved',
+        message: 'Questions were added to the question bank.',
+      );
+      _closeFlow();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _savingDrafts = false);
+      AppToast.error(
+        context,
+        title: 'Could not save questions',
+        message: 'Check the question data and try again.',
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -272,8 +362,12 @@ class _QuestionBankAuthoringFlowState
     }
 
     final dynamic state = ref.watch(courseDetailsControllerProvider(widget.course.id));
-    final List<QuestionModel> allQuestions =
+    final List<QuestionModel> persistedQuestions =
         List<QuestionModel>.from(state.questions as List<dynamic>);
+    final List<QuestionModel> allQuestions = <QuestionModel>[
+      ..._draftQuestions,
+      ...persistedQuestions,
+    ];
     final List<QuestionModel> filteredQuestions = _filteredQuestions(allQuestions);
     final List<QuestionModel> selectedQuestions = allQuestions
         .where((QuestionModel question) => _selectedQuestionIds.contains(question.id))
@@ -382,19 +476,50 @@ class _QuestionBankAuthoringFlowState
             ),
           ),
           const SizedBox(width: 24),
-          ElevatedButton.icon(
-            onPressed: _openAddQuestion,
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text('Add New Question'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1570EF),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              OutlinedButton.icon(
+                onPressed: _savingDrafts || _draftQuestions.isEmpty
+                    ? null
+                    : _saveDraftQuestions,
+                icon: _savingDrafts
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save_outlined, size: 18),
+                label: Text(
+                  _savingDrafts
+                      ? 'Saving...'
+                      : 'Save Questions (${_draftQuestions.length})',
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1570EF),
+                  side: const BorderSide(color: Color(0xFF1570EF)),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: _savingDrafts ? null : _openAddQuestion,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Add New Question'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1570EF),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -666,6 +791,10 @@ class _QuestionBankAuthoringFlowState
               ),
             ),
             const SizedBox(width: 12),
+            if (_draftQuestions.any((QuestionModel item) => item.id == question.id)) ...<Widget>[
+              _draftPill(),
+              const SizedBox(width: 8),
+            ],
             _difficultyPill(question.difficultyLabel),
           ],
         ),
@@ -742,7 +871,7 @@ class _QuestionBankAuthoringFlowState
     required List<QuestionModel> allQuestions,
     required List<QuestionModel> selectedQuestions,
   }) {
-    final int selectedCount = selectedQuestions.length;
+    final int draftCount = _draftQuestions.length;
     final String difficulty = _difficultySummary(
       selectedQuestions.isEmpty ? allQuestions : selectedQuestions,
     );
@@ -768,7 +897,7 @@ class _QuestionBankAuthoringFlowState
                 ),
               ),
               const SizedBox(height: 18),
-              _summaryRow('Total Questions', '$selectedCount'),
+              _summaryRow('Draft Questions', '$draftCount'),
               _summaryRow('Selected Targets', '${_targets.length}'),
               _summaryRow('Difficulty', difficulty, emphasizeValue: true),
               const SizedBox(height: 12),
@@ -789,7 +918,7 @@ class _QuestionBankAuthoringFlowState
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Selected questions will be added to the question bank for the current content scope.',
+                        'Questions are kept as drafts here. They will be added to the database only when you click Save Questions.',
                         style: TextStyle(
                           fontSize: 12,
                           color: Color(0xFF475467),
@@ -902,6 +1031,24 @@ class _QuestionBankAuthoringFlowState
           fontSize: 12,
           fontWeight: FontWeight.w800,
           color: textColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _draftPill() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF3FF),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: const Text(
+        'Draft',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF1570EF),
         ),
       ),
     );

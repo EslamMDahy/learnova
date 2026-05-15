@@ -9,6 +9,7 @@ class QuestionDraftItem {
   final List<String> options;
   final int? correctOptionIndex;
   final bool? correctBool;
+  final List<int> correctOptionIndexes;
   final String explanation;
   final String expectedAnswer;
 
@@ -21,6 +22,7 @@ class QuestionDraftItem {
     required this.options,
     required this.correctOptionIndex,
     required this.correctBool,
+    this.correctOptionIndexes = const [],
     required this.explanation,
     required this.expectedAnswer,
   });
@@ -35,6 +37,7 @@ class QuestionDraftItem {
       options: const ['', '', '', ''],
       correctOptionIndex: 0,
       correctBool: null,
+      correctOptionIndexes: const [],
       explanation: '',
       expectedAnswer: '',
     );
@@ -49,6 +52,7 @@ class QuestionDraftItem {
     List<String>? options,
     Object? correctOptionIndex = _unset,
     Object? correctBool = _unset,
+    List<int>? correctOptionIndexes,
     String? explanation,
     String? expectedAnswer,
   }) {
@@ -65,18 +69,20 @@ class QuestionDraftItem {
       correctBool: identical(correctBool, _unset)
           ? this.correctBool
           : correctBool as bool?,
+      correctOptionIndexes: correctOptionIndexes ?? this.correctOptionIndexes,
       explanation: explanation ?? this.explanation,
       expectedAnswer: expectedAnswer ?? this.expectedAnswer,
     );
   }
 
   QuestionDraftItem withType(QuestionType nextType) {
-    if (nextType == QuestionType.multipleChoice) {
+    if (nextType == QuestionType.multipleChoice || nextType == QuestionType.multiSelect) {
       return copyWith(
         type: nextType,
         options: options.length >= 2 ? options : const ['', '', '', ''],
-        correctOptionIndex: 0,
+        correctOptionIndex: nextType == QuestionType.multipleChoice ? 0 : null,
         correctBool: null,
+        correctOptionIndexes: nextType == QuestionType.multiSelect ? const [0] : const [],
       );
     }
     if (nextType == QuestionType.trueFalse) {
@@ -96,12 +102,18 @@ class QuestionDraftItem {
   String? validate() {
     if (questionText.trim().isEmpty) return 'Question text is required.';
     if (topicId <= 0) return 'Each question must be assigned to a topic.';
-    if (type == QuestionType.multipleChoice) {
+    if (type == QuestionType.multipleChoice || type == QuestionType.multiSelect) {
       final cleaned = options.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
       if (cleaned.length < 2) return 'Multiple-choice questions need at least 2 options.';
-      if (correctOptionIndex == null) return 'Choose the correct answer option.';
-      if (correctOptionIndex! >= options.length || options[correctOptionIndex!].trim().isEmpty) {
-        return 'The correct option must point to a non-empty answer.';
+      if (type == QuestionType.multipleChoice) {
+        if (correctOptionIndex == null) return 'Choose the correct answer option.';
+        if (correctOptionIndex! >= options.length || options[correctOptionIndex!].trim().isEmpty) {
+          return 'The correct option must point to a non-empty answer.';
+        }
+      } else {
+        final validIndexes = correctOptionIndexes.where((index) =>
+            index >= 0 && index < options.length && options[index].trim().isNotEmpty);
+        if (validIndexes.isEmpty) return 'Choose at least one correct answer option.';
       }
     }
     if ((type == QuestionType.shortAnswer || type == QuestionType.essay) && expectedAnswer.trim().isEmpty) {
