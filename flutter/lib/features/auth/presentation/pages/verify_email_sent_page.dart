@@ -9,6 +9,7 @@ import '../../../../core/routing/routes.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../core/storage/user_storage.dart';
 import '../controllers/verify_email_sent_controller.dart';
+import '../widgets/auth_shell_widgets.dart';
 
 /// "Verify Your Email" screen.
 ///
@@ -92,8 +93,6 @@ class _VerifyEmailSentPageState extends ConsumerState<VerifyEmailSentPage>
     if (!mounted) return;
     if (ok) {
       TokenStorage.clearPendingVerificationEmail();
-      // Redirect to dashboard (role-aware) if user has a session,
-      // otherwise go to login with ?verified=1 banner.
       if (TokenStorage.hasToken || TokenStorage.isPersisted) {
         if (UserStorage.isOwner) {
           context.go(Routes.adminUsers);
@@ -127,11 +126,11 @@ class _VerifyEmailSentPageState extends ConsumerState<VerifyEmailSentPage>
       body: Stack(
         children: [
           // ── Header ────────────────────────────────────────────────────
-          Positioned(
+          const Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: _TopBar(),
+            child: AuthTopBar(),
           ),
 
           // ── Footer ────────────────────────────────────────────────────
@@ -139,7 +138,7 @@ class _VerifyEmailSentPageState extends ConsumerState<VerifyEmailSentPage>
             bottom: 0,
             left: 0,
             right: 0,
-            child: _Footer(),
+            child: AuthFooter(),
           ),
 
           // ── Content ───────────────────────────────────────────────────
@@ -153,7 +152,7 @@ class _VerifyEmailSentPageState extends ConsumerState<VerifyEmailSentPage>
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Ghost envelope text in background
+                      // Ghost envelope icon in background
                       const Opacity(
                         opacity: 0.04,
                         child: Icon(
@@ -181,67 +180,6 @@ class _VerifyEmailSentPageState extends ConsumerState<VerifyEmailSentPage>
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Top bar ──────────────────────────────────────────────────────────────────
-
-class _TopBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: [
-          Image.asset('assets/logo.webp', height: 32, cacheWidth: (32 * MediaQuery.of(context).devicePixelRatio).round()),
-          const SizedBox(width: 10),
-          const Text(
-            'Learnova',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF111827),
-              letterSpacing: -0.3,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Footer ───────────────────────────────────────────────────────────────────
-
-class _Footer extends StatelessWidget {
-  const _Footer();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 44,
-      alignment: Alignment.center,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 1,
-            height: 14,
-            color: const Color(0xFFD1D5DB),
-            margin: const EdgeInsets.only(right: 12),
-          ),
-          const Text(
-            'Contact Support',
-            style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFF6B7280),
-              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -278,7 +216,6 @@ class _Card extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Headline (above card, matching error page layout)
         const Text(
           'Check your inbox',
           textAlign: TextAlign.center,
@@ -309,8 +246,7 @@ class _Card extends StatelessWidget {
         // Spam tip
         const _TipRow(
           icon: Icons.folder_special_outlined,
-          text:
-              'Can\'t find it? Check your spam or junk folder.',
+          text: 'Can\'t find it? Check your spam or junk folder.',
         ),
         const SizedBox(height: 16),
 

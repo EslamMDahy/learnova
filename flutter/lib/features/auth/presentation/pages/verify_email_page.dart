@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/routes.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../controllers/verify_email_controller.dart';
+import '../widgets/auth_shell_widgets.dart';
 
 /// Email verification result page.
 ///
@@ -71,7 +72,6 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage>
 
     final state = ref.read(verifyEmailControllerProvider);
     if (state.success) {
-      // Clear any stored pending verification email
       TokenStorage.clearPendingVerificationEmail();
       _startRedirectCountdown();
     }
@@ -102,11 +102,11 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage>
       body: Stack(
         children: [
           // ── Header ──────────────────────────────────────────────────
-          Positioned(
+          const Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: _TopBar(),
+            child: AuthTopBar(),
           ),
 
           // ── Footer ──────────────────────────────────────────────────
@@ -114,7 +114,7 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage>
             bottom: 0,
             left: 0,
             right: 0,
-            child: _Footer(),
+            child: AuthFooter(),
           ),
 
           // ── Content ─────────────────────────────────────────────────
@@ -148,76 +148,13 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage>
                         success: state.success,
                         error: state.error,
                         redirectSecs: _redirectSecs,
-                        onGoLogin: () =>
-                            context.go(Routes.login),
-                        onGoSignup: () =>
-                            context.go(Routes.signup),
+                        onGoLogin: () => context.go(Routes.login),
+                        onGoSignup: () => context.go(Routes.signup),
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Top bar ──────────────────────────────────────────────────────────────────
-
-class _TopBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: [
-          Image.asset('assets/logo.webp', height: 32, cacheWidth: (32 * MediaQuery.of(context).devicePixelRatio).round()),
-          const SizedBox(width: 10),
-          const Text(
-            'Learnova',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF111827),
-              letterSpacing: -0.3,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Footer ───────────────────────────────────────────────────────────────────
-
-class _Footer extends StatelessWidget {
-  const _Footer();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 44,
-      alignment: Alignment.center,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 1,
-            height: 14,
-            color: const Color(0xFFD1D5DB),
-            margin: const EdgeInsets.only(right: 12),
-          ),
-          const Text(
-            'Contact Support',
-            style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFF6B7280),
-              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -301,7 +238,6 @@ class _SuccessState extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Success icon
         Container(
           width: 72,
           height: 72,
@@ -378,7 +314,6 @@ class _FailureState extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Failure icon  
         Container(
           width: 72,
           height: 72,
