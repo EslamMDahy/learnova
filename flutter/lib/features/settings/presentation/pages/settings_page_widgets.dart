@@ -78,74 +78,84 @@ class _ProfileCard extends StatelessWidget {
             child: Column(
               children: [
                 // Avatar with upload overlay
-                GestureDetector(
-                  onTap: uploadingAvatar ? null : onUploadAvatar,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        width: 128,
-                        height: 128,
-                        decoration: BoxDecoration(
-                          color: AppColors.borderSoft,
-                          borderRadius: BorderRadius.circular(9999),
-                          border: Border.all(color: AppColors.cardBg, width: 4),
-                          boxShadow: [
-                            const BoxShadow(
-                              blurRadius: 6,
-                              offset: Offset(0, 4),
-                              color: Color(0x1A000000),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(9999),
-                          child: (avatarUrl != null && avatarUrl!.isNotEmpty)
-                              ? Image.network(
-                                  avatarUrl!,
-                                  key: ValueKey(avatarUrl),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Icon(
-                                    Icons.person,
-                                    size: 54,
-                                    color: AppColors.muted,
-                                  ),
-                                )
-                              : Icon(Icons.person, size: 54, color: AppColors.muted),
-                        ),
-                      ),
-                      if (uploadingAvatar)
+                MouseRegion(
+                  cursor: uploadingAvatar
+                      ? SystemMouseCursors.basic
+                      : SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: uploadingAvatar ? null : onUploadAvatar,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
+                      children: [
                         Container(
                           width: 128,
                           height: 128,
                           decoration: BoxDecoration(
-                            color: Colors.black38,
+                            color: AppColors.borderSoft,
                             borderRadius: BorderRadius.circular(9999),
+                            border:
+                                Border.all(color: AppColors.cardBg, width: 4),
+                            boxShadow: [
+                              const BoxShadow(
+                                blurRadius: 6,
+                                offset: Offset(0, 4),
+                                color: Color(0x1A000000),
+                              ),
+                            ],
                           ),
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.white,
-                            ),
-                          ),
-                        )
-                      else
-                        Positioned(
-                          bottom: 4,
-                          right: 4,
-                          child: Container(
-                            width: 30,
-                            height: 30,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.cardBg, width: 2),
-                            ),
-                            child: const Icon(Icons.camera_alt, size: 15, color: Colors.white),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(9999),
+                            child: (avatarUrl != null &&
+                                    avatarUrl!.isNotEmpty)
+                                ? Image.network(
+                                    avatarUrl!,
+                                    key: ValueKey(avatarUrl),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Icon(
+                                      Icons.person,
+                                      size: 54,
+                                      color: AppColors.muted,
+                                    ),
+                                  )
+                                : Icon(Icons.person,
+                                    size: 54, color: AppColors.muted),
                           ),
                         ),
-                    ],
+                        if (uploadingAvatar)
+                          Container(
+                            width: 128,
+                            height: 128,
+                            decoration: BoxDecoration(
+                              color: Colors.black38,
+                              borderRadius: BorderRadius.circular(9999),
+                            ),
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            ),
+                          )
+                        else
+                          Positioned(
+                            bottom: 4,
+                            right: 4,
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                    color: AppColors.cardBg, width: 2),
+                              ),
+                              child: const Icon(Icons.camera_alt,
+                                  size: 15, color: Colors.white),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -170,7 +180,8 @@ class _ProfileCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.successBg,
                     borderRadius: BorderRadius.circular(9999),
@@ -352,7 +363,12 @@ class _NavItem extends StatelessWidget {
     final color = selected ? AppColors.primary : AppColors.muted;
     final weight = selected ? FontWeight.w700 : FontWeight.w500;
 
-    return InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
+    return InkWell(
+      hoverColor: Colors.transparent,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      overlayColor:
+          const WidgetStatePropertyAll(Colors.transparent),
       onTap: onTap,
       child: Container(
         height: 56,
@@ -377,10 +393,8 @@ class _NavItem extends StatelessWidget {
       ),
     );
   }
-
-  
-
 }
+
 class _SettingsSkeleton extends StatelessWidget {
   const _SettingsSkeleton();
 
@@ -415,7 +429,7 @@ class _SettingsSkeleton extends StatelessWidget {
         child: Padding(
           padding: AppSpacing.cardPadding,
           child: Column(
-            mainAxisSize: MainAxisSize.min, 
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _line(h: 16, w: 180),
@@ -433,6 +447,7 @@ class _SettingsSkeleton extends StatelessWidget {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     Theme.of(context);
@@ -463,9 +478,7 @@ class _SettingsSkeleton extends StatelessWidget {
             ),
           ],
         ),
-
         const SizedBox(height: 24),
-
         // Body skeleton
         Expanded(
           child: SingleChildScrollView(
