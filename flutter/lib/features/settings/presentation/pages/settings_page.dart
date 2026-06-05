@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -284,6 +285,17 @@ void _onNavSelect(int i) {
   // Avatar Upload
   // =========================
   Future<void> _pickAndUploadAvatar() async {
+    if (!kIsWeb) {
+      _toast(
+        context,
+        title: 'Not supported',
+        message: 'Avatar upload is currently available in the web version only.',
+        type: AppToastType.warning,
+        icon: Icons.warning_amber_rounded,
+      );
+      return;
+    }
+
     final picked = await pickSingleImageFile(
       accept: ['image/png', 'image/jpeg'],
     );
