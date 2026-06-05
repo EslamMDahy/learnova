@@ -15,7 +15,7 @@ void registerPdfPreviewView({
   _registeredPdfViews.add(viewType);
 
   ui_web.platformViewRegistry.registerViewFactory(viewType, (int _) {
-    final pdfUrl = '${url}#toolbar=0&navpanes=0&scrollbar=1';
+    final pdfUrl = '$url#toolbar=0&navpanes=0&scrollbar=1';
     final iframe = html.IFrameElement()
       ..src = pdfUrl
       ..style.border = 'none'

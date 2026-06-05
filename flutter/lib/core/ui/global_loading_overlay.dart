@@ -40,7 +40,7 @@ class GlobalLoadingOverlay extends ConsumerWidget {
 
                 const SizedBox(height: 8),
 
-                const Text(
+                Text(
                   'Loading...',
                   style: AppText.mutedSmall,
                 ),

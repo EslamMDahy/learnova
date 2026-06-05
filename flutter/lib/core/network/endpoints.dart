@@ -5,6 +5,7 @@ class Endpoints {
   static const _orgs     = '/organizations';
   static const _settings = '/settings';
   static const _courses  = '/courses';
+  static const _ocr      = '/ocr';
 
   // ─── AUTH ────────────────────────────────────────────────────────────────
   static const login               = '$_auth/login';
@@ -92,16 +93,52 @@ class Endpoints {
       '$_courses/$courseId/questions';
   static String courseQuestion(int courseId, int questionId) =>
       '$_courses/$courseId/questions/$questionId';
+  static String updateCourseQuestion(int courseId, int questionId) =>
+      '$_courses/$courseId/questions/$questionId/update';
   static String batchCreateQuestions(int courseId, int moduleId, int materialId) =>
       '$_courses/$courseId/modules/$moduleId/materials/$materialId/questions';
+  static String aiGenerateQuestions(int courseId) =>
+      '$_courses/$courseId/questions/ai-generate';
 
   // ─── EXAMS ───────────────────────────────────────────────────────────────
   static String courseExams(int courseId) =>
       '$_courses/$courseId/exams';
   static String exam(int courseId, int examId) =>
       '$_courses/$courseId/exams/$examId';
-  static String examQuestions(int courseId, int examId) =>
-      '$_courses/$courseId/exams/$examId/questions';
+  static String updateExam(int courseId, int examId) =>
+      '$_courses/$courseId/exams/$examId';
+  static String examSections(int courseId, int examId) =>
+      '$_courses/$courseId/exams/$examId/sections';
+  static String reorderExamSections(int courseId, int examId) =>
+      '$_courses/$courseId/exams/$examId/sections/reorder';
+  static String examSection(int courseId, int examId, int sectionId) =>
+      '$_courses/$courseId/exams/$examId/sections/$sectionId';
+  static String examSectionQuestions(int courseId, int examId, int sectionId) =>
+      '$_courses/$courseId/exams/$examId/sections/$sectionId/questions';
+  static String reorderExamQuestions(int courseId, int examId, int sectionId) =>
+      '$_courses/$courseId/exams/$examId/sections/$sectionId/questions/reorder';
+  static String examSectionQuestion(int courseId, int examId, int sectionId, int examQuestionId) =>
+      '$_courses/$courseId/exams/$examId/sections/$sectionId/questions/$examQuestionId';
+  static String publishExam(int courseId, int examId) =>
+      '$_courses/$courseId/exams/$examId/publish';
+  static String exportExamPdf(int courseId, int examId) =>
+      '$_courses/$courseId/exams/$examId/export/pdf';
+
+  // ─── EXAM TEMPLATES ─────────────────────────────────────────────────────
+  static String examTemplates(int courseId) =>
+      '$_courses/$courseId/exams/templates';
+  static String examTemplate(int courseId, int templateId) =>
+      '$_courses/$courseId/exams/templates/$templateId';
+  static String examTemplateSections(int courseId, int templateId) =>
+      '$_courses/$courseId/exams/templates/$templateId/sections';
+  static String examTemplateSection(int courseId, int templateId, int sectionId) =>
+      '$_courses/$courseId/exams/templates/$templateId/sections/$sectionId';
+
+  // ─── OCR / EXAM CORRECTION ─────────────────────────────────────────────
+  static const examCorrection = '$_ocr/exam-correction';
+  static const examScanAnalyze = '$_ocr/exam-scan/analyze';
+  static const examScanSubmit = '$_ocr/exam-scan/submit';
+  static const ocrHealth = '$_ocr/health';
 
   // ─── SETTINGS ────────────────────────────────────────────────────────────
   static const updateProfile     = '$_settings/profile';

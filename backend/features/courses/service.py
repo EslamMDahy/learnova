@@ -28,6 +28,20 @@ from app.core.emailer import send_email  # <-- عدّل المسار حسب مش
 
 from .schemas import CourseInvitesSendRequest, CourseInvitesSendResponse
 
+# الأفضل تخليها في config.py بعدين (زي ما اتفقنا)
+COMMON_EMAIL_HEADERS = (
+    "email",
+    "e-mail",
+    "e_mail",
+    "email_address",
+    "e_mail_address",
+    "mail",
+    "invited_email",
+    "invitedemail",
+    "user_email",
+)
+
+
 def create_course(*, payload: CourseCreateRequest, db: Session, current_user: dict):
     role = current_user.get("system_role")
     if role != "instructor":
@@ -112,20 +126,7 @@ def create_course(*, payload: CourseCreateRequest, db: Session, current_user: di
     except SQLAlchemyError as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="Database error") from e
-# الأفضل تخليها في config.py بعدين (زي ما اتفقنا)
 
-
-COMMON_EMAIL_HEADERS = (
-    "email",
-    "e-mail",
-    "e_mail",
-    "email_address",
-    "e_mail_address",
-    "mail",
-    "invited_email",
-    "invitedemail",
-    "user_email",
-)
 
 
 def upload_course_invitations_excel(*, course_id: int, file: UploadFile, sheet_name: str | None,
@@ -270,7 +271,6 @@ def upload_course_invitations_excel(*, course_id: int, file: UploadFile, sheet_n
         # token_expires_at=expires_at,
         sample_invalid_emails=result.sample_invalid,
         sample_existing_emails=sample_existing,)
-
 
 
 

@@ -1,11 +1,13 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:learnova/core/theme/app_theme.dart';
 
 class LeftPanel extends StatelessWidget {
   const LeftPanel({super.key});
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return LayoutBuilder(
       builder: (context, c) {
         final w = c.maxWidth;
@@ -67,7 +69,7 @@ class LeftPanel extends StatelessWidget {
                     TextSpan(
                       text: 'Modern Campus',
                       style: TextStyle(
-                        color: const Color(0xFFBFDBFE),
+                        color: AppColors.badgeBlueBorder,
                         fontSize: w < 1100 ? 32 : 38,
                         fontWeight: FontWeight.bold,
                         height: 1.2,
@@ -121,10 +123,11 @@ class _FeatureTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withValues(alpha: 0.20), width: 1.2),
+        border: Border.all(color: AppColors.cardBg.withValues(alpha: 0.20), width: 1.2),
         borderRadius: BorderRadius.circular(50),
       ),
       child: Row(

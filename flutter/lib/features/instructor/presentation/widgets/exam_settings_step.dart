@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:learnova/core/theme/app_theme.dart';
 
 class ExamSettingsStep extends StatefulWidget {
   const ExamSettingsStep({super.key});
@@ -15,6 +16,7 @@ class _ExamSettingsStepState extends State<ExamSettingsStep> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -40,7 +42,7 @@ class _ExamSettingsStepState extends State<ExamSettingsStep> {
   Widget _buildTimingAttemptsCard() {
     return _buildSectionCard(
       icon: Icons.timer_outlined,
-      iconColor: const Color(0xFF137FEC),
+      iconColor: AppColors.primary,
       title: 'Timing & Attempts',
       subtitle: 'Control how students access and take the quiz.',
       child: Column(
@@ -132,26 +134,26 @@ class _ExamSettingsStepState extends State<ExamSettingsStep> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Quiz Summary',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18,
-              color: Color(0xFF1E293B),
+              color: AppColors.textGray,
             ),
           ),
           const SizedBox(height: 24),
           _summaryRow('Total Questions', '15'),
-          const Divider(height: 32, color: Color(0xFFF1F5F9)),
+          Divider(height: 32, color: AppColors.headerBg),
           _summaryRow('Total Points', '100'),
-          const Divider(height: 32, color: Color(0xFFF1F5F9)),
+          Divider(height: 32, color: AppColors.headerBg),
           _summaryRow('Difficulty', 'Medium', color: Colors.orange),
           const SizedBox(height: 24),
           _buildInfoBox(),
@@ -159,7 +161,7 @@ class _ExamSettingsStepState extends State<ExamSettingsStep> {
           _summaryButton(
             Icons.visibility_outlined,
             'Preview as Student',
-            Colors.black87,
+            AppColors.textTitle,
           ),
         ],
       ),
@@ -178,9 +180,9 @@ class _ExamSettingsStepState extends State<ExamSettingsStep> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,11 +249,11 @@ class _ExamSettingsStepState extends State<ExamSettingsStep> {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              borderSide: BorderSide(color: AppColors.border),
             ),
           ),
         ),
@@ -283,7 +285,7 @@ class _ExamSettingsStepState extends State<ExamSettingsStep> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppColors.border),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -330,7 +332,7 @@ class _ExamSettingsStepState extends State<ExamSettingsStep> {
             ],
           ),
         ),
-        Switch(value: value, onChanged: onChanged, activeThumbColor: const Color(0xFF137FEC)),
+        Switch(value: value, onChanged: onChanged, activeThumbColor: AppColors.primary),
       ],
     );
   }
@@ -341,14 +343,14 @@ class _ExamSettingsStepState extends State<ExamSettingsStep> {
       children: [
         Text(
           label,
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
+          style: TextStyle(color: AppColors.textMuted, fontSize: 14),
         ),
         Text(
           value,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            color: color ?? const Color(0xFF1E293B),
+            color: color ?? AppColors.textGray,
           ),
         ),
       ],
@@ -359,20 +361,20 @@ class _ExamSettingsStepState extends State<ExamSettingsStep> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F9FF),
+        color: AppColors.infoBg,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, size: 18, color: Color(0xFF0EA5E9)),
-          SizedBox(width: 10),
+          const Icon(Icons.info_outline, size: 18, color: AppColors.primary),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               'This quiz is currently saved as a draft. Publishing will make it visible to enrolled students immediately or on the scheduled date.',
               style: TextStyle(
                 fontSize: 11,
-                color: Color(0xFF617589),
+                color: AppColors.textMuted,
                 height: 1.4,
               ),
             ),

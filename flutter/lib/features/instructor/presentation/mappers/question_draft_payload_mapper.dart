@@ -11,7 +11,7 @@ CreateQuestionPayload mapDraftToCreateQuestionPayload(QuestionDraftItem draft) {
       .map((entry) => CreateQuestionOption(
             id: String.fromCharCode(65 + entry.key),
             text: entry.value.trim(),
-          ))
+          ),)
       .toList();
 
   Object? expectedAnswer;

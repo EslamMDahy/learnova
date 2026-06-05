@@ -90,7 +90,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         } else if (UserStorage.isInstructor) {
           context.go(Routes.instructorDashboard);
         } else {
-          context.go(Routes.home);
+          context.go(Routes.studentDashboard);
         }
         break;
 
@@ -107,6 +107,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final state = ref.watch(loginControllerProvider);
 
     // Derived from AsyncValue — no manual bool flags needed.

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:learnova/shared/widgets/design_tokens.dart';
 
 class ForgetPasswordLeftPanel extends StatelessWidget {
   const ForgetPasswordLeftPanel({super.key});
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final dpr = MediaQuery.of(context).devicePixelRatio;
     final w = MediaQuery.sizeOf(context).width;
     final bgCacheWidth = (w * dpr).clamp(800.0, 2000.0).round();
@@ -52,7 +54,7 @@ class ForgetPasswordLeftPanel extends StatelessWidget {
             const SizedBox(height: 40),
 
             /// Title
-            const Text(
+            Text(
               'Unlock your academic\npotential with AI-driven\nassessments.',
               style: TextStyle(
                 color: Colors.white,
@@ -62,8 +64,8 @@ class ForgetPasswordLeftPanel extends StatelessWidget {
                 shadows: [
                   Shadow(
                     blurRadius: 10,
-                    color: Colors.black54,
-                    offset: Offset(0, 4),
+                    color: AppColors.textMuted,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -72,7 +74,7 @@ class ForgetPasswordLeftPanel extends StatelessWidget {
             const SizedBox(height: 20),
 
             /// Subtitle
-            const Text(
+            Text(
               'Join thousands of students and instructors enhancing\ntheir learning experience.',
               style: TextStyle(
                 color: Colors.white70,
@@ -81,8 +83,8 @@ class ForgetPasswordLeftPanel extends StatelessWidget {
                 shadows: [
                   Shadow(
                     blurRadius: 8,
-                    color: Colors.black45,
-                    offset: Offset(0, 3),
+                    color: AppColors.textHint,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),

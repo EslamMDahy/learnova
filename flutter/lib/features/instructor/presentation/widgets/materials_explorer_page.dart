@@ -4,43 +4,44 @@ import 'upload_materials_dialog.dart';
 import 'package:learnova/features/instructor/data/courses_models.dart';
 import 'package:learnova/features/instructor/presentation/controllers/course_details_controller.dart';
 import 'package:learnova/features/instructor/data/topics_models.dart';
+import 'package:learnova/core/theme/app_theme.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Design tokens
 // ─────────────────────────────────────────────────────────────────────────────
 class _K {
-  static const bg         = Color(0xFFF5F7FA);
-  static const white      = Colors.white;
-  static const border     = Color(0xFFE8EAED);
-  static const text       = Color(0xFF0F1923);
-  static const sub        = Color(0xFF475569);
-  static const muted      = Color(0xFF7B8EA0);
-  static const hint       = Color(0xFFADB8C4);
+  static Color get bg => AppColors.pageBg;
+  static Color get white => AppColors.cardBg;
+  static Color get border => AppColors.border;
+  static Color get text => AppColors.textTitle;
+  static Color get sub => AppColors.textGray;
+  static Color get muted => AppColors.textMuted;
+  static Color get hint => AppColors.textHint;
   // primary blue
-  static const blue       = Color(0xFF137FEC);
-  static const blueHov    = Color(0xFF0E6DD0);
-  static const blueSoft   = Color(0xFFEBF5FF);
-  static const blueBorder = Color(0xFFBFDBFE);
+  static Color get blue => AppColors.primary;
+  static Color get blueHov => AppColors.primary;
+  static Color get blueSoft => AppColors.primarySoft;
+  static Color get blueBorder => AppColors.badgeBlueBorder;
   // semantic
-  static const green      = Color(0xFF12B76A);
+  static Color get green => AppColors.successDot;
   static const orange     = Color(0xFFF97316);
-  static const orangeSoft = Color(0xFFFFF4ED);
-  static const purple     = Color(0xFF7C3AED);
-  static const purpleSoft = Color(0xFFF5F3FF);
-  static const red        = Color(0xFFEF4444);
-  static const redSoft    = Color(0xFFFEF2F2);
+  static Color get orangeSoft => AppColors.warningBg;
+  static Color get purple => AppColors.purpleText;
+  static Color get purpleSoft => AppColors.purpleBg;
+  static Color get red => AppColors.errorDot;
+  static Color get redSoft => AppColors.dangerBg;
   static const yellow     = Color(0xFFEAB308);
   // badge
-  static const badgePdfBg  = Color(0xFFFEF2F2);
-  static const badgePdfFg  = Color(0xFFDC2626);
-  static const badgeVidBg  = Color(0xFFEBF5FF);
-  static const badgeVidFg  = Color(0xFF1D4ED8);
-  static const badgeDocBg  = Color(0xFFEFF6FF);
-  static const badgeDocFg  = Color(0xFF1E40AF);
-  static const badgePptBg  = Color(0xFFFFF7ED);
-  static const badgePptFg  = Color(0xFFC2410C);
-  static const badgeRevBg  = Color(0xFFFEF3C7);
-  static const badgeRevFg  = Color(0xFFD97706);
+  static Color get badgePdfBg => AppColors.dangerBg;
+  static Color get badgePdfFg => AppColors.dangerText;
+  static Color get badgeVidBg => AppColors.primarySoft;
+  static Color get badgeVidFg => AppColors.badgeBlueFg;
+  static Color get badgeDocBg => AppColors.primarySoft;
+  static Color get badgeDocFg => AppColors.badgeBlueFg;
+  static Color get badgePptBg => AppColors.warningBg;
+  static Color get badgePptFg => AppColors.warningText;
+  static Color get badgeRevBg => AppColors.warningSoftBg;
+  static Color get badgeRevFg => AppColors.warningText;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -220,7 +221,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         title: mod.title,
         children: matNodes,
         backendId: mod.id,
-      ));
+      ),);
     }
 
     if (!mounted) return;
@@ -263,7 +264,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
                 moduleId: moduleId,
                 materialId: materialId,
                 parentTopicId: child.parentTopicId,
-              ))
+              ),)
           .toList();
       return _Node.topic(
         id: 'topic_${topic.id}',
@@ -332,7 +333,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     await Future.delayed(const Duration(milliseconds: 1900));
     if (!mounted) { setState(() => _generatingTopics = false); return; }
     final suggest = ['Core Concepts', 'Key Definitions', 'Practical Examples',
-                     'Common Mistakes', 'Summary & Review'];
+                     'Common Mistakes', 'Summary & Review',];
     setState(() {
       for (final t in suggest) {
         if (!mat.children.any((c) => c.title == t)) {
@@ -370,15 +371,16 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
   // ── BUILD ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     super.build(context);
     return Column(children: [
       Expanded(child: Row(children: [
         _buildSidebar(),
         Container(width: 1, color: _K.border),
         Expanded(child: _buildRightPanel()),
-      ])),
+      ],),),
       _buildBottomBar(),
-    ]);
+    ],);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -393,22 +395,22 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         Container(
           height: 46,
           padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
-          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _K.border))),
+          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: _K.border))),
           child: Row(children: [
-            const Text('HIERARCHY',
+            Text('HIERARCHY',
               style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800,
-                color: _K.hint, letterSpacing: 0.9)),
+                color: _K.hint, letterSpacing: 0.9,),),
             const Spacer(),
             _TbBtn(icon: Icons.unfold_less_rounded, tip: 'Collapse all',
-              onTap: () => _setAllExpanded(false)),
+              onTap: () => _setAllExpanded(false),),
             _TbBtn(icon: Icons.unfold_more_rounded, tip: 'Expand all',
-              onTap: () => _setAllExpanded(true)),
-          ]),
+              onTap: () => _setAllExpanded(true),),
+          ],),
         ),
         // Tree
         Expanded(
           child: _loadingTree
-            ? const Center(child: CircularProgressIndicator(strokeWidth: 2, color: _K.blue))
+            ? Center(child: CircularProgressIndicator(strokeWidth: 2, color: _K.blue))
             : _roots.isEmpty
               ? _emptyTreeState()
               : ListView(
@@ -422,13 +424,13 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
                     onTopic:     (n) => setState(() => _selected = n),
                     onRename:    _rename,
                     onDelete:    _delete,
-                  )).toList(),
+                  ),).toList(),
                 ),
         ),
         // Footer button
         Container(
           padding: const EdgeInsets.all(10),
-          decoration: const BoxDecoration(border: Border(top: BorderSide(color: _K.border))),
+          decoration: BoxDecoration(border: Border(top: BorderSide(color: _K.border))),
           child: _BtnPrimary(
             label: 'Create New Module',
             icon: Icons.add_rounded,
@@ -436,7 +438,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
             full: true,
           ),
         ),
-      ]),
+      ],),
     ),
   );
 
@@ -446,17 +448,17 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
       Container(
         width: 56, height: 56,
         decoration: BoxDecoration(color: _K.blueSoft, borderRadius: BorderRadius.circular(14)),
-        child: const Icon(Icons.folder_open_rounded, size: 26, color: _K.blue),
+        child: Icon(Icons.folder_open_rounded, size: 26, color: _K.blue),
       ),
       const SizedBox(height: 14),
-      const Text('No modules yet',
+      Text('No modules yet',
         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _K.text),
-        textAlign: TextAlign.center),
+        textAlign: TextAlign.center,),
       const SizedBox(height: 6),
-      const Text('Create a module to start adding course materials.',
+      Text('Create a module to start adding course materials.',
         style: TextStyle(fontSize: 12, color: _K.muted, height: 1.5),
-        textAlign: TextAlign.center),
-    ]),
+        textAlign: TextAlign.center,),
+    ],),
   );
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -480,19 +482,19 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
           color: _K.white,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:0.07),
-            blurRadius: 20, offset: const Offset(0, 4))],
+            blurRadius: 20, offset: const Offset(0, 4),),],
         ),
-        child: const Icon(Icons.touch_app_outlined, size: 28, color: _K.blue),
+        child: Icon(Icons.touch_app_outlined, size: 28, color: _K.blue),
       ),
       const SizedBox(height: 18),
-      const Text('Select a module or material',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _K.text)),
+      Text('Select a module or material',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _K.text),),
       const SizedBox(height: 6),
-      const Text('Use the hierarchy panel on the left to navigate.',
-        style: TextStyle(fontSize: 13, color: _K.muted)),
+      Text('Use the hierarchy panel on the left to navigate.',
+        style: TextStyle(fontSize: 13, color: _K.muted),),
       const SizedBox(height: 20),
       _BtnOutline(label: 'Upload Material', icon: Icons.upload_rounded, onTap: _showUpload),
-    ])),
+    ],),),
   );
 
   // ── MODULE panel ─────────────────────────────────────────────────────────
@@ -504,7 +506,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
         // Header
         Container(
           padding: const EdgeInsets.fromLTRB(24, 16, 20, 16),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: _K.white,
             border: Border(bottom: BorderSide(color: _K.border)),
           ),
@@ -513,16 +515,16 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
             const SizedBox(width: 14),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(mod.title,
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _K.text),
-                maxLines: 1, overflow: TextOverflow.ellipsis),
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _K.text),
+                maxLines: 1, overflow: TextOverflow.ellipsis,),
               const SizedBox(height: 3),
               Text('Module  ·  ${mats.length} material${mats.length == 1 ? "" : "s"}',
-                style: const TextStyle(fontSize: 12.5, color: _K.muted)),
-            ])),
+                style: TextStyle(fontSize: 12.5, color: _K.muted),),
+            ],),),
             _IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: () => _rename(mod)),
             const SizedBox(width: 2),
             _IcBtn(icon: Icons.delete_outline, tip: 'Delete', onTap: () => _delete(mod), col: _K.red),
-          ]),
+          ],),
         ),
         // Body
         Expanded(child: SingleChildScrollView(
@@ -534,23 +536,23 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
             if (mats.isNotEmpty) ...[
               const SizedBox(height: 28),
               Row(children: [
-                const Text('MATERIALS IN THIS MODULE',
+                Text('MATERIALS IN THIS MODULE',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800,
-                    color: _K.muted, letterSpacing: 0.7)),
+                    color: _K.muted, letterSpacing: 0.7,),),
                 const SizedBox(width: 8),
                 _CountBadge('${mats.length}'),
-              ]),
+              ],),
               const SizedBox(height: 12),
               ...mats.map((m) => _MaterialListCard(
                 mat: m,
                 onTap: () => setState(() { m.isExpanded = !m.isExpanded; _selected = m; }),
                 onRename: () => _rename(m),
                 onDelete: () => _delete(m),
-              )),
+              ),),
             ],
-          ]),
-        )),
-      ]),
+          ],),
+        ),),
+      ],),
     );
   }
 
@@ -560,7 +562,7 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     return Row(children: [
       // Main scroll area
       Expanded(child: Container(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.surfaceBg,
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 22, 20, 80),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -579,13 +581,13 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
             const SizedBox(height: 20),
             // ── Transcript ─────────────────────────────────────────
             _TranscriptCard(mat: mat),
-          ]),
+          ],),
         ),
-      )),
+      ),),
       // AI sidebar
       Container(
         width: 228,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: _K.white,
           border: Border(left: BorderSide(color: _K.border)),
         ),
@@ -593,10 +595,10 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
           padding: const EdgeInsets.all(18),
           child: _AISidebar(mat: mat, onRegen: () => setState(() {
             mat.qualityScore = 65 + DateTime.now().second % 35;
-          })),
+          }),),
         ),
       ),
-    ]);
+    ],);
   }
 
   // ── TOPIC panel (leaf — just shows info) ─────────────────────────────────
@@ -606,21 +608,21 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
       Container(
         width: 54, height: 54,
         decoration: BoxDecoration(color: _K.purpleSoft, borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.label_rounded, size: 26, color: _K.purple),
+        child: Icon(Icons.label_rounded, size: 26, color: _K.purple),
       ),
       const SizedBox(height: 16),
       Text(t.title,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _K.text),
-        textAlign: TextAlign.center),
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _K.text),
+        textAlign: TextAlign.center,),
       const SizedBox(height: 6),
-      Text(t.nk == _NK.subtopic ? 'Subtopic' : 'Topic', style: const TextStyle(fontSize: 13, color: _K.muted)),
+      Text(t.nk == _NK.subtopic ? 'Subtopic' : 'Topic', style: TextStyle(fontSize: 13, color: _K.muted)),
       const SizedBox(height: 22),
       Row(mainAxisSize: MainAxisSize.min, children: [
         _BtnOutline(label: 'Rename', icon: Icons.edit_outlined, onTap: () => _rename(t)),
         const SizedBox(width: 10),
         _BtnDanger(label: 'Delete', icon: Icons.delete_outline, onTap: () => _delete(t)),
-      ]),
-    ])),
+      ],),
+    ],),),
   );
 
   // ── bottom bar ────────────────────────────────────────────────────────────
@@ -633,29 +635,29 @@ class _MaterialsExplorerPageState extends ConsumerState<MaterialsExplorerPage>
     return Container(
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: _K.white,
         border: Border(top: BorderSide(color: _K.border)),
       ),
       child: Row(children: [
-        const Icon(Icons.check_circle_outline_rounded, size: 14, color: _K.green),
+        Icon(Icons.check_circle_outline_rounded, size: 14, color: _K.green),
         const SizedBox(width: 6),
-        Text(txt, style: const TextStyle(fontSize: 12, color: _K.muted, fontWeight: FontWeight.w600)),
+        Text(txt, style: TextStyle(fontSize: 12, color: _K.muted, fontWeight: FontWeight.w600)),
         const Spacer(),
         _BtnOutline(label: 'Question Generation Unavailable', icon: Icons.info_outline_rounded,
-          onTap: _showQuestionGenerationUnavailable),
-      ]),
+          onTap: _showQuestionGenerationUnavailable,),
+      ],),
     );
   }
 
   // ── dialog helpers ────────────────────────────────────────────────────────
   Future<String?> _dlgInput(String t, String h, String init, String act) =>
     showDialog<String>(context: context, barrierDismissible: false,
-      builder: (_) => _DlgInput(title: t, hint: h, init: init, action: act));
+      builder: (_) => _DlgInput(title: t, hint: h, init: init, action: act),);
 
   Future<bool> _dlgConfirm(String body, String act, {bool danger = false}) async {
     final r = await showDialog<bool>(context: context, barrierDismissible: false,
-      builder: (_) => _DlgConfirm(body: body, action: act, danger: danger));
+      builder: (_) => _DlgConfirm(body: body, action: act, danger: danger),);
     return r ?? false;
   }
 }
@@ -678,6 +680,7 @@ class _ModuleTreeItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final sel = selectedId == module.id;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       // Module row
@@ -694,24 +697,24 @@ class _ModuleTreeItem extends StatelessWidget {
           Container(
             width: 20, height: 20,
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF0E0),
-              borderRadius: BorderRadius.circular(5)),
+              color: AppColors.warningSoftBg,
+              borderRadius: BorderRadius.circular(5),),
             child: const Icon(Icons.folder_rounded, size: 12, color: Color(0xFFF97316)),
           ),
-        ]),
+        ],),
         title: module.title,
         titleStyle: TextStyle(
           fontSize: 12.5, fontWeight: FontWeight.w700,
-          color: sel ? _K.blue : _K.text),
+          color: sel ? _K.blue : _K.text,),
         trailing: _CtxMenu(items: [
           _MItem(icon: Icons.upload_rounded, label: 'Upload material',
-            color: _K.blue, onTap: () => onModule(module)),
-          const _MDivider(),
+            color: _K.blue, onTap: () => onModule(module),),
+          _MDivider(),
           _MItem(icon: Icons.edit_outlined, label: 'Rename',
-            onTap: () => onRename(module)),
+            onTap: () => onRename(module),),
           _MItem(icon: Icons.delete_outline, label: 'Delete',
-            color: _K.red, onTap: () => onDelete(module)),
-        ]),
+            color: _K.red, onTap: () => onDelete(module),),
+        ],),
         onTap: () => onModule(module),
       ),
       // Materials
@@ -720,8 +723,8 @@ class _ModuleTreeItem extends StatelessWidget {
           mat: mat, selectedId: selectedId,
           onMaterial: onMaterial, onTopic: onTopic,
           onRename: onRename, onDelete: onDelete,
-        )),
-    ]);
+        ),),
+    ],);
   }
 }
 
@@ -741,6 +744,7 @@ class _MaterialTreeItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final sel = selectedId == mat.id;
     final icon = _mkIcon(mat.mk);
     final col = _mkColor(mat.mk);
@@ -768,7 +772,7 @@ class _MaterialTreeItem extends StatelessWidget {
             decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(5)),
             child: Icon(icon, size: 11, color: col),
           ),
-        ]),
+        ],),
         title: mat.title,
         titleStyle: TextStyle(
           fontSize: 12,
@@ -788,7 +792,7 @@ class _MaterialTreeItem extends StatelessWidget {
             color: _K.blue,
             onTap: () => onMaterial(mat),
           ),
-          const _MDivider(),
+          _MDivider(),
           _MItem(icon: Icons.edit_outlined, label: 'Rename', onTap: () => onRename(mat)),
           _MItem(
             icon: Icons.delete_outline,
@@ -796,7 +800,7 @@ class _MaterialTreeItem extends StatelessWidget {
             color: _K.red,
             onTap: () => onDelete(mat),
           ),
-        ]),
+        ],),
         onTap: () => onMaterial(mat),
       ),
       if (mat.isExpanded) ...topics.map(
@@ -806,7 +810,7 @@ class _MaterialTreeItem extends StatelessWidget {
           onTopic: onTopic,
         ),
       ),
-    ]);
+    ],);
   }
 
   static IconData _mkIcon(_MK? k) {
@@ -827,7 +831,7 @@ class _MaterialTreeItem extends StatelessWidget {
       case _MK.video:
         return _K.blue;
       case _MK.doc:
-        return const Color(0xFF1E40AF);
+        return AppColors.badgeBlueFg;
       case _MK.ppt:
         return _K.orange;
       default:
@@ -862,6 +866,7 @@ class _TopicTreeItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final isSelected = selectedId == topic.id;
     final hasSubtopics = topic.children.isNotEmpty;
 
@@ -887,9 +892,9 @@ class _TopicTreeItem extends StatelessWidget {
               color: _K.purpleSoft,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Icon(Icons.label_rounded, size: 10, color: _K.purple),
+            child: Icon(Icons.label_rounded, size: 10, color: _K.purple),
           ),
-        ]),
+        ],),
         title: topic.title,
         titleStyle: TextStyle(
           fontSize: 11.5,
@@ -912,11 +917,11 @@ class _TopicTreeItem extends StatelessWidget {
                   width: 18,
                   height: 18,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: AppColors.headerBg,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Icon(Icons.subdirectory_arrow_right_rounded,
-                      size: 11, color: _K.sub),
+                  child: Icon(Icons.subdirectory_arrow_right_rounded,
+                      size: 11, color: _K.sub,),
                 ),
                 title: subtopic.title,
                 titleStyle: TextStyle(
@@ -927,7 +932,7 @@ class _TopicTreeItem extends StatelessWidget {
                 onTap: () => onTopic(subtopic),
               ),
             ),
-    ]);
+    ],);
   }
 }
 
@@ -952,6 +957,7 @@ class _SidebarRowState extends State<_SidebarRow> {
   bool _h = false;
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final lp = 14.0 + widget.indent * 18.0;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -965,11 +971,11 @@ class _SidebarRowState extends State<_SidebarRow> {
             ? const EdgeInsets.symmetric(horizontal: 6, vertical: 1)
             : const EdgeInsets.symmetric(vertical: 1),
           padding: EdgeInsets.fromLTRB(
-            widget.isSelected ? lp - 4 : lp, 7, 8, 7),
+            widget.isSelected ? lp - 4 : lp, 7, 8, 7,),
           decoration: BoxDecoration(
             color: widget.isSelected
               ? _K.blueSoft
-              : (_h ? const Color(0xFFF4F6F8) : Colors.transparent),
+              : (_h ? AppColors.pageBg : Colors.transparent),
             borderRadius: widget.isSelected
               ? BorderRadius.circular(8) : null,
           ),
@@ -978,9 +984,9 @@ class _SidebarRowState extends State<_SidebarRow> {
             const SizedBox(width: 7),
             Expanded(child: Text(widget.title,
               maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: widget.titleStyle)),
+              style: widget.titleStyle,),),
             if (widget.trailing != null) widget.trailing!,
-          ]),
+          ],),
         ),
       ),
     );
@@ -1011,10 +1017,10 @@ class _UploadZoneState extends State<_UploadZone> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 40),
         decoration: BoxDecoration(
-          color: _h ? const Color(0xFFE4F2FE) : _K.white,
+          color: _h ? AppColors.infoBg : _K.white,
           border: Border.all(
             color: _h ? _K.blue : _K.border,
-            width: _h ? 1.5 : 1),
+            width: _h ? 1.5 : 1,),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -1023,32 +1029,32 @@ class _UploadZoneState extends State<_UploadZone> {
             width: 54, height: 54,
             decoration: BoxDecoration(
               color: _h ? _K.blue : _K.blueSoft,
-              borderRadius: BorderRadius.circular(16)),
+              borderRadius: BorderRadius.circular(16),),
             child: Icon(Icons.cloud_upload_rounded, size: 26,
-              color: _h ? Colors.white : _K.blue),
+              color: _h ? Colors.white : _K.blue,),
           ),
           const SizedBox(height: 14),
           Text('Upload materials to this module',
             style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700,
-              color: _h ? _K.blue : _K.text)),
+              color: _h ? _K.blue : _K.text,),),
           const SizedBox(height: 5),
-          const Text('PDF, DOCX, PPTX, MP4  ·  Max 500 MB',
-            style: TextStyle(fontSize: 12.5, color: _K.muted)),
+          Text('PDF, DOCX, PPTX, MP4  ·  Max 500 MB',
+            style: TextStyle(fontSize: 12.5, color: _K.muted),),
           const SizedBox(height: 18),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
             decoration: BoxDecoration(
               color: _K.blue,
-              borderRadius: BorderRadius.circular(9)),
+              borderRadius: BorderRadius.circular(9),),
             child: const Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.upload_rounded, size: 15, color: Colors.white),
               SizedBox(width: 7),
               Text('Browse Files',
                 style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700,
-                  color: Colors.white)),
-            ]),
+                  color: Colors.white,),),
+            ],),
           ),
-        ]),
+        ],),
       ),
     ),
   );
@@ -1059,13 +1065,14 @@ class _MaterialListCard extends StatefulWidget {
   final _Node mat;
   final VoidCallback onTap, onRename, onDelete;
   const _MaterialListCard({required this.mat, required this.onTap,
-    required this.onRename, required this.onDelete});
+    required this.onRename, required this.onDelete,});
   @override State<_MaterialListCard> createState() => _MaterialListCardState();
 }
 class _MaterialListCardState extends State<_MaterialListCard> {
   bool _h = false;
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final m = widget.mat;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -1078,7 +1085,7 @@ class _MaterialListCardState extends State<_MaterialListCard> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
           decoration: BoxDecoration(
-            color: _h ? const Color(0xFFF0F5FF) : _K.white,
+            color: _h ? AppColors.primarySoft : _K.white,
             border: Border.all(color: _h ? _K.blueBorder : _K.border),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -1087,31 +1094,31 @@ class _MaterialListCardState extends State<_MaterialListCard> {
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(m.title,
-                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700,
-                  color: _K.text),
-                maxLines: 1, overflow: TextOverflow.ellipsis),
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700,
+                  color: _K.text,),
+                maxLines: 1, overflow: TextOverflow.ellipsis,),
               const SizedBox(height: 3),
               Text(_mkLabel(m.mk),
-                style: const TextStyle(fontSize: 12, color: _K.muted)),
-            ])),
+                style: TextStyle(fontSize: 12, color: _K.muted),),
+            ],),),
             if (m.children.isNotEmpty) ...[
               Container(
                 margin: const EdgeInsets.only(right: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: _K.purpleSoft, borderRadius: BorderRadius.circular(999)),
+                  color: _K.purpleSoft, borderRadius: BorderRadius.circular(999),),
                 child: Text(
                   '${m.children.length} topic${m.children.length == 1 ? "" : "s"}',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                    color: _K.purple)),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                    color: _K.purple,),),
               ),
             ],
             _IcBtn(icon: Icons.edit_outlined,  tip: 'Rename',
-              onTap: widget.onRename),
+              onTap: widget.onRename,),
             _IcBtn(icon: Icons.delete_outline, tip: 'Delete',
-              onTap: widget.onDelete, col: _K.red),
-            const Icon(Icons.chevron_right_rounded, size: 16, color: _K.hint),
-          ]),
+              onTap: widget.onDelete, col: _K.red,),
+            Icon(Icons.chevron_right_rounded, size: 16, color: _K.hint),
+          ],),
         ),
       ),
     );
@@ -1139,24 +1146,24 @@ class _MatHeader extends StatelessWidget {
       _MatBadge(mat.mk),
       if (mat.qualityScore > 0 && mat.qualityScore < 60) ...[
         const SizedBox(width: 8),
-        const _Pill('⚠ REVIEW NEEDED', _K.badgeRevBg, _K.badgeRevFg),
+        _Pill('⚠ REVIEW NEEDED', _K.badgeRevBg, _K.badgeRevFg),
       ],
-    ]),
+    ],),
     const SizedBox(height: 12),
     Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _MatIcon(mk: mat.mk, size: 48),
       const SizedBox(width: 14),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(mat.title,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: _K.text)),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: _K.text),),
         const SizedBox(height: 4),
         Text(_mkLabel(mat.mk),
-          style: const TextStyle(fontSize: 12.5, color: _K.muted, fontWeight: FontWeight.w600)),
-      ])),
+          style: TextStyle(fontSize: 12.5, color: _K.muted, fontWeight: FontWeight.w600),),
+      ],),),
       _IcBtn(icon: Icons.edit_outlined,  tip: 'Rename', onTap: onRename),
       _IcBtn(icon: Icons.delete_outline, tip: 'Delete', onTap: onDelete, col: _K.red),
-    ]),
-  ]);
+    ],),
+  ],);
 
   static String _mkLabel(_MK? k) {
     switch (k) {
@@ -1197,47 +1204,47 @@ class _TopicsSection extends StatelessWidget {
           Container(
             width: 32, height: 32,
             decoration: BoxDecoration(
-              color: _K.purpleSoft, borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.label_rounded, size: 16, color: _K.purple),
+              color: _K.purpleSoft, borderRadius: BorderRadius.circular(8),),
+            child: Icon(Icons.label_rounded, size: 16, color: _K.purple),
           ),
           const SizedBox(width: 10),
-          const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Topics',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _K.text)),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _K.text),),
             Text('Organise this material into topics',
-              style: TextStyle(fontSize: 11.5, color: _K.muted)),
-          ])),
+              style: TextStyle(fontSize: 11.5, color: _K.muted),),
+          ],),),
           // AI button
           _BtnAI(generating: generating, onTap: onGenerateAI),
           const SizedBox(width: 8),
           // Manual
           _BtnOutline(label: 'Add', icon: Icons.add_rounded, onTap: onAddManual, small: true),
-        ]),
+        ],),
       ),
-      const Divider(height: 1, color: _K.border),
+      Divider(height: 1, color: _K.border),
 
       // Body
       if (topics.isEmpty && !generating)
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 22, 16, 22),
           child: Column(children: [
-            const Icon(Icons.label_off_outlined, size: 30, color: _K.hint),
+            Icon(Icons.label_off_outlined, size: 30, color: _K.hint),
             const SizedBox(height: 10),
-            const Text('No topics yet',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _K.text)),
+            Text('No topics yet',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _K.text),),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Add topics manually or let AI generate them from the material content.',
               style: TextStyle(fontSize: 12, color: _K.muted, height: 1.5),
-              textAlign: TextAlign.center),
+              textAlign: TextAlign.center,),
             const SizedBox(height: 16),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               _BtnAI(generating: generating, onTap: onGenerateAI, labeled: true),
               const SizedBox(width: 10),
               _BtnOutline(label: 'Add manually', icon: Icons.add_rounded,
-                onTap: onAddManual, small: true),
-            ]),
-          ]),
+                onTap: onAddManual, small: true,),
+            ],),
+          ],),
         )
       else if (generating)
         const Padding(
@@ -1252,10 +1259,10 @@ class _TopicsSection extends StatelessWidget {
               topic: t,
               onRename: () => onRenameTopic(t),
               onDelete: () => onDeleteTopic(t),
-            )),
-          ]),
+            ),),
+          ],),
         ),
-    ]),
+    ],),
   );
 }
 
@@ -1276,22 +1283,22 @@ class _TopicChipState extends State<_TopicChip> {
       duration: const Duration(milliseconds: 110),
       padding: const EdgeInsets.fromLTRB(10, 6, 8, 6),
       decoration: BoxDecoration(
-        color: _h ? _K.purpleSoft : const Color(0xFFFAFAFF),
+        color: _h ? _K.purpleSoft : AppColors.surfaceBg,
         border: Border.all(color: _h ? _K.purple : _K.border),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.label_rounded, size: 12, color: _K.purple),
+        Icon(Icons.label_rounded, size: 12, color: _K.purple),
         const SizedBox(width: 5),
         Text(widget.topic.title,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _K.text)),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _K.text),),
         const SizedBox(width: 6),
         GestureDetector(onTap: widget.onRename,
-          child: const Icon(Icons.edit_outlined, size: 11, color: _K.muted)),
+          child: Icon(Icons.edit_outlined, size: 11, color: _K.muted),),
         const SizedBox(width: 3),
         GestureDetector(onTap: widget.onDelete,
-          child: const Icon(Icons.close_rounded, size: 11, color: _K.muted)),
-      ]),
+          child: Icon(Icons.close_rounded, size: 11, color: _K.muted),),
+      ],),
     ),
   );
 }
@@ -1303,16 +1310,16 @@ class _AIGeneratingRow extends StatelessWidget {
     Container(
       width: 30, height: 30,
       decoration: BoxDecoration(color: _K.blueSoft, borderRadius: BorderRadius.circular(8)),
-      child: const Icon(Icons.auto_awesome_rounded, size: 14, color: _K.blue),
+      child: Icon(Icons.auto_awesome_rounded, size: 14, color: _K.blue),
     ),
     const SizedBox(width: 12),
-    const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('AI is analysing the content and generating topics…',
-        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _K.text)),
-      SizedBox(height: 6),
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _K.text),),
+      const SizedBox(height: 6),
       LinearProgressIndicator(minHeight: 3, color: _K.blue, backgroundColor: _K.blueSoft),
-    ])),
-  ]);
+    ],),),
+  ],);
 }
 
 // ── Transcript card ────────────────────────────────────────────────────────────
@@ -1332,10 +1339,10 @@ class _TranscriptCard extends StatelessWidget {
         Container(
           width: 28, height: 28,
           decoration: BoxDecoration(color: _K.blueSoft, borderRadius: BorderRadius.circular(7)),
-          child: const Icon(Icons.article_outlined, size: 14, color: _K.blue)),
+          child: Icon(Icons.article_outlined, size: 14, color: _K.blue),),
         const SizedBox(width: 10),
-        const Expanded(child: Text('Transcript & Content',
-          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: _K.text))),
+        Expanded(child: Text('Transcript & Content',
+          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: _K.text),),),
         const _TxBtn(label: 'B', bold: true),
         const SizedBox(width: 3),
         const _TxBtn(label: 'I', italic: true),
@@ -1343,21 +1350,21 @@ class _TranscriptCard extends StatelessWidget {
         const _TxBtn(label: 'S̶'),
         const SizedBox(width: 3),
         const _TxBtn(label: '↗'),
-      ]),
-      const Divider(height: 20, color: _K.border),
+      ],),
+      Divider(height: 20, color: _K.border),
       Text(
         mat.transcript.isNotEmpty
           ? mat.transcript
           : 'Transcript will appear here once the material has been processed.',
-        style: const TextStyle(fontSize: 13, height: 1.75, color: Color(0xFF1E293B))),
+        style: TextStyle(fontSize: 13, height: 1.75, color: AppColors.textGray),),
       const SizedBox(height: 12),
-      const Row(children: [
+      Row(children: [
         Icon(Icons.auto_fix_high_rounded, size: 12, color: _K.blue),
-        SizedBox(width: 6),
+        const SizedBox(width: 6),
         Text('Suggestion: Simplify sentence structure?',
-          style: TextStyle(fontSize: 11.5, color: _K.blue, fontWeight: FontWeight.w600)),
-      ]),
-    ]),
+          style: TextStyle(fontSize: 11.5, color: _K.blue, fontWeight: FontWeight.w600),),
+      ],),
+    ],),
   );
 }
 
@@ -1369,6 +1376,7 @@ class _AISidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final score = mat.qualityScore.clamp(0, 100);
     final val   = score / 100.0;
     final col   = val >= 0.8 ? _K.green : val >= 0.5 ? _K.yellow : _K.red;
@@ -1377,43 +1385,43 @@ class _AISidebar extends StatelessWidget {
         Container(
           width: 28, height: 28,
           decoration: BoxDecoration(color: _K.blueSoft, borderRadius: BorderRadius.circular(7)),
-          child: const Icon(Icons.auto_awesome_rounded, size: 13, color: _K.blue)),
+          child: Icon(Icons.auto_awesome_rounded, size: 13, color: _K.blue),),
         const SizedBox(width: 9),
-        const Text('AI Analysis',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: _K.text)),
-      ]),
+        Text('AI Analysis',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: _K.text),),
+      ],),
       const SizedBox(height: 16),
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        const Text('Quality Score',
-          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: _K.muted)),
+        Text('Quality Score',
+          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: _K.muted),),
         Text('$score/100',
-          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: col)),
-      ]),
+          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: col),),
+      ],),
       const SizedBox(height: 6),
       ClipRRect(borderRadius: BorderRadius.circular(999),
         child: LinearProgressIndicator(value: val, minHeight: 6,
-          backgroundColor: _K.bg, color: col)),
+          backgroundColor: _K.bg, color: col,),),
       const SizedBox(height: 16),
-      const Text('Suggested Tags',
-        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: _K.muted)),
+      Text('Suggested Tags',
+        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: _K.muted),),
       const SizedBox(height: 8),
       Wrap(spacing: 6, runSpacing: 6, children: [
         ...mat.tags.map((t) => _Tag(t)),
         const _Tag('+', dashed: true),
-      ]),
+      ],),
       const SizedBox(height: 16),
       SizedBox(width: double.infinity, child: OutlinedButton.icon(
         onPressed: onRegen,
         icon: const Icon(Icons.refresh_rounded, size: 13),
         label: const Text('Regenerate',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),),
         style: OutlinedButton.styleFrom(
           foregroundColor: _K.muted,
-          side: const BorderSide(color: _K.border),
+          side: BorderSide(color: _K.border),
           padding: const EdgeInsets.symmetric(vertical: 9),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-      )),
-    ]);
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),),
+      ),),
+    ],);
   }
 }
 
@@ -1430,6 +1438,7 @@ class _MatIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     IconData ic; Color col, bg;
     if (isModule) {
       ic = Icons.folder_rounded; col = _K.blue; bg = _K.blueSoft;
@@ -1439,7 +1448,7 @@ class _MatIcon extends StatelessWidget {
           ic = Icons.play_circle_rounded; col = _K.blue; bg = _K.blueSoft; break;
         case _MK.doc:
           ic = Icons.description_rounded;
-          col = const Color(0xFF1E40AF); bg = _K.badgeDocBg; break;
+          col = AppColors.badgeBlueFg; bg = _K.badgeDocBg; break;
         case _MK.ppt:
           ic = Icons.slideshow_rounded; col = _K.orange; bg = _K.orangeSoft; break;
         default:
@@ -1462,6 +1471,7 @@ class _MatBadge extends StatelessWidget {
   const _MatBadge(this.mk);
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     String label; Color bg, fg;
     switch (mk) {
       case _MK.video:
@@ -1486,7 +1496,7 @@ class _Pill extends StatelessWidget {
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
     child: Text(label,
       style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800,
-        color: fg, letterSpacing: 0.4)),
+        color: fg, letterSpacing: 0.4,),),
   );
 }
 
@@ -1494,7 +1504,7 @@ class _Pill extends StatelessWidget {
 class _BtnPrimary extends StatefulWidget {
   final String label; final IconData icon; final VoidCallback onTap; final bool full;
   const _BtnPrimary({required this.label, required this.icon,
-    required this.onTap, this.full = false});
+    required this.onTap, this.full = false,});
   @override State<_BtnPrimary> createState() => _BtnPrimaryState();
 }
 class _BtnPrimaryState extends State<_BtnPrimary> {
@@ -1510,7 +1520,7 @@ class _BtnPrimaryState extends State<_BtnPrimary> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
         color: _h ? _K.blueHov : _K.blue,
-        borderRadius: BorderRadius.circular(8)),
+        borderRadius: BorderRadius.circular(8),),
       child: Row(
         mainAxisSize: widget.full ? MainAxisSize.max : MainAxisSize.min,
         mainAxisAlignment: widget.full ? MainAxisAlignment.center : MainAxisAlignment.start,
@@ -1519,9 +1529,9 @@ class _BtnPrimaryState extends State<_BtnPrimary> {
           const SizedBox(width: 6),
           Text(widget.label,
             style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700,
-              color: Colors.white)),
-        ]),
-    )),
+              color: Colors.white,),),
+        ],),
+    ),),
   );
 }
 
@@ -1529,7 +1539,7 @@ class _BtnPrimaryState extends State<_BtnPrimary> {
 class _BtnOutline extends StatefulWidget {
   final String label; final IconData icon; final VoidCallback onTap; final bool small;
   const _BtnOutline({required this.label, required this.icon,
-    required this.onTap, this.small = false});
+    required this.onTap, this.small = false,});
   @override State<_BtnOutline> createState() => _BtnOutlineState();
 }
 class _BtnOutlineState extends State<_BtnOutline> {
@@ -1543,19 +1553,19 @@ class _BtnOutlineState extends State<_BtnOutline> {
       duration: const Duration(milliseconds: 110),
       padding: EdgeInsets.symmetric(
         horizontal: widget.small ? 10 : 14,
-        vertical:   widget.small ? 6  : 9),
+        vertical:   widget.small ? 6  : 9,),
       decoration: BoxDecoration(
-        color: _h ? const Color(0xFFF1F5F9) : _K.white,
+        color: _h ? AppColors.headerBg : _K.white,
         border: Border.all(color: _K.border),
-        borderRadius: BorderRadius.circular(8)),
+        borderRadius: BorderRadius.circular(8),),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(widget.icon, size: 13, color: _K.text),
         const SizedBox(width: 5),
         Text(widget.label,
           style: TextStyle(fontSize: widget.small ? 12 : 12.5,
-            fontWeight: FontWeight.w600, color: _K.text)),
-      ]),
-    )),
+            fontWeight: FontWeight.w600, color: _K.text,),),
+      ],),
+    ),),
   );
 }
 
@@ -1578,14 +1588,14 @@ class _BtnDangerState extends State<_BtnDanger> {
       decoration: BoxDecoration(
         color: _h ? _K.redSoft : _K.white,
         border: Border.all(color: _h ? _K.red : _K.border),
-        borderRadius: BorderRadius.circular(8)),
+        borderRadius: BorderRadius.circular(8),),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(widget.icon, size: 13, color: _K.red),
         const SizedBox(width: 5),
         Text(widget.label,
-          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _K.red)),
-      ]),
-    )),
+          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: _K.red),),
+      ],),
+    ),),
   );
 }
 
@@ -1607,14 +1617,14 @@ class _BtnGenerateState extends State<_BtnGenerate> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
       decoration: BoxDecoration(
         color: _h ? _K.blueHov : _K.blue,
-        borderRadius: BorderRadius.circular(8)),
+        borderRadius: BorderRadius.circular(8),),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(widget.icon, size: 14, color: Colors.white),
         const SizedBox(width: 7),
         Text(widget.label,
-          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Colors.white)),
-      ]),
-    )),
+          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Colors.white),),
+      ],),
+    ),),
   );
 }
 
@@ -1639,25 +1649,25 @@ class _BtnAIState extends State<_BtnAI> {
         duration: const Duration(milliseconds: 110),
         padding: EdgeInsets.symmetric(
           horizontal: widget.labeled ? 12 : 8,
-          vertical:   widget.labeled ? 7  : 5),
+          vertical:   widget.labeled ? 7  : 5,),
         decoration: BoxDecoration(
           color: _h && !widget.generating
             ? const Color(0xFFD2E9FD)
             : _K.blueSoft,
           border: Border.all(
-            color: _h && !widget.generating ? _K.blue : _K.blueBorder),
-          borderRadius: BorderRadius.circular(8)),
+            color: _h && !widget.generating ? _K.blue : _K.blueBorder,),
+          borderRadius: BorderRadius.circular(8),),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           widget.generating
-            ? const SizedBox(width: 12, height: 12,
-                child: CircularProgressIndicator(strokeWidth: 1.5, color: _K.blue))
-            : const Icon(Icons.auto_awesome_rounded, size: 13, color: _K.blue),
+            ? SizedBox(width: 12, height: 12,
+                child: CircularProgressIndicator(strokeWidth: 1.5, color: _K.blue),)
+            : Icon(Icons.auto_awesome_rounded, size: 13, color: _K.blue),
           if (widget.labeled) ...[
             const SizedBox(width: 6),
-            const Text('Generate with AI',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _K.blue)),
+            Text('Generate with AI',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _K.blue),),
           ],
-        ]),
+        ],),
       ),
     ),
   );
@@ -1665,16 +1675,16 @@ class _BtnAIState extends State<_BtnAI> {
 
 // Icon button (edit / delete / etc)
 class _IcBtn extends StatelessWidget {
-  final IconData icon; final String tip; final VoidCallback onTap; final Color col;
+  final IconData icon; final String tip; final VoidCallback onTap; final Color? col;
   const _IcBtn({required this.icon, required this.tip, required this.onTap,
-    this.col = _K.muted});
+    this.col,});
   @override
   Widget build(BuildContext context) => Tooltip(
     message: tip,
     child: InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
       onTap: onTap, borderRadius: BorderRadius.circular(6),
       child: Padding(padding: const EdgeInsets.all(6),
-        child: Icon(icon, size: 17, color: col)),
+        child: Icon(icon, size: 17, color: col ?? _K.muted),),
     ),
   );
 }
@@ -1699,9 +1709,9 @@ class _TbBtnState extends State<_TbBtn> {
         width: 26, height: 26,
         decoration: BoxDecoration(
           color: _h ? _K.bg : Colors.transparent,
-          borderRadius: BorderRadius.circular(6)),
+          borderRadius: BorderRadius.circular(6),),
         child: Icon(widget.icon, size: 14, color: _K.hint),
-      )),
+      ),),
     ),
   );
 }
@@ -1723,12 +1733,12 @@ class _TxBtnState extends State<_TxBtn> {
       width: 26, height: 26,
       decoration: BoxDecoration(
         color: _h ? _K.bg : Colors.transparent,
-        borderRadius: BorderRadius.circular(5)),
+        borderRadius: BorderRadius.circular(5),),
       child: Center(child: Text(widget.label, style: TextStyle(
         fontSize: 12,
         fontWeight: widget.bold ? FontWeight.w900 : FontWeight.w500,
         fontStyle: widget.italic ? FontStyle.italic : FontStyle.normal,
-        color: _K.muted))),
+        color: _K.muted,),),),
     ),
   );
 }
@@ -1741,8 +1751,8 @@ class _CountBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
     decoration: BoxDecoration(color: _K.blueSoft, borderRadius: BorderRadius.circular(999)),
-    child: Text(label, style: const TextStyle(fontSize: 11,
-      fontWeight: FontWeight.w700, color: _K.blue)),
+    child: Text(label, style: TextStyle(fontSize: 11,
+      fontWeight: FontWeight.w700, color: _K.blue,),),
   );
 }
 
@@ -1754,11 +1764,11 @@ class _Tag extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(
-      color: dashed ? Colors.transparent : const Color(0xFFF1F5F9),
+      color: dashed ? Colors.transparent : AppColors.headerBg,
       border: Border.all(color: _K.border),
-      borderRadius: BorderRadius.circular(999)),
+      borderRadius: BorderRadius.circular(999),),
     child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-      color: dashed ? _K.hint : _K.sub)),
+      color: dashed ? _K.hint : _K.sub,),),
   );
 }
 
@@ -1767,7 +1777,7 @@ class _MItem {
   final IconData icon; final String label; final Color? color; final VoidCallback onTap;
   const _MItem({required this.icon, required this.label, this.color, required this.onTap});
 }
-class _MDivider { const _MDivider(); }
+class _MDivider { _MDivider(); }
 
 class _CtxMenu extends StatelessWidget {
   final List<dynamic> items;
@@ -1775,7 +1785,7 @@ class _CtxMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) => PopupMenuButton<int>(
     tooltip: '',
-    icon: const Icon(Icons.more_horiz_rounded, size: 14, color: _K.hint),
+    icon: Icon(Icons.more_horiz_rounded, size: 14, color: _K.hint),
     padding: EdgeInsets.zero, iconSize: 14,
     onSelected: (i) => (items[i] as _MItem).onTap(),
     itemBuilder: (_) {
@@ -1789,8 +1799,8 @@ class _CtxMenu extends StatelessWidget {
             Icon(item.icon, size: 14, color: item.color ?? _K.text),
             const SizedBox(width: 9),
             Text(item.label,
-              style: TextStyle(fontSize: 13, color: item.color ?? _K.text)),
-          ])));
+              style: TextStyle(fontSize: 13, color: item.color ?? _K.text),),
+          ],),),);
         }
       }
       return out;
@@ -1804,7 +1814,7 @@ class _CtxMenu extends StatelessWidget {
 class _DlgInput extends StatefulWidget {
   final String title, hint, init, action;
   const _DlgInput({required this.title, required this.hint,
-    required this.init, required this.action});
+    required this.init, required this.action,});
   @override State<_DlgInput> createState() => _DlgInputState();
 }
 class _DlgInputState extends State<_DlgInput> {
@@ -1819,7 +1829,7 @@ class _DlgInputState extends State<_DlgInput> {
   }
   @override
   Widget build(BuildContext context) => Dialog(
-    backgroundColor: Colors.white,
+    backgroundColor: AppColors.cardBg,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     child: Container(width: 400, padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
@@ -1827,51 +1837,51 @@ class _DlgInputState extends State<_DlgInput> {
           Row(children: [
             Container(width: 34, height: 34,
               decoration: BoxDecoration(color: _K.blueSoft,
-                borderRadius: BorderRadius.circular(9)),
-              child: const Icon(Icons.edit_rounded, size: 17, color: _K.blue)),
+                borderRadius: BorderRadius.circular(9),),
+              child: Icon(Icons.edit_rounded, size: 17, color: _K.blue),),
             const SizedBox(width: 12),
             Expanded(child: Text(widget.title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _K.text))),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _K.text),),),
             GestureDetector(onTap: () => Navigator.of(context).pop(),
-              child: const Icon(Icons.close_rounded, size: 17, color: _K.muted)),
-          ]),
+              child: Icon(Icons.close_rounded, size: 17, color: _K.muted),),
+          ],),
           const SizedBox(height: 18),
           TextField(
             controller: _c, autofocus: true,
             onSubmitted: (_) => _submit(),
             onChanged: (_) { if (_err) setState(() => _err = false); },
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _K.text),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _K.text),
             decoration: InputDecoration(
               hintText: widget.hint,
-              hintStyle: const TextStyle(color: _K.hint, fontWeight: FontWeight.w400),
-              filled: true, fillColor: const Color(0xFFF8FAFC),
+              hintStyle: TextStyle(color: _K.hint, fontWeight: FontWeight.w400),
+              filled: true, fillColor: AppColors.surfaceBg,
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: _err ? _K.red : _K.border)),
+                borderSide: BorderSide(color: _err ? _K.red : _K.border),),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: _err ? _K.red : _K.blue, width: 1.5)),
-              errorText: _err ? 'Name cannot be empty' : null),
+                borderSide: BorderSide(color: _err ? _K.red : _K.blue, width: 1.5),),
+              errorText: _err ? 'Name cannot be empty' : null,),
           ),
           const SizedBox(height: 18),
           Row(mainAxisAlignment: MainAxisAlignment.end, children: [
             OutlinedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: _K.border), foregroundColor: _K.muted,
+                side: BorderSide(color: _K.border), foregroundColor: _K.muted,
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600))),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),),
+              child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),),
             const SizedBox(width: 10),
             ElevatedButton(
               onPressed: _submit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: _K.blue, foregroundColor: Colors.white, elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),),
               child: Text(widget.action,
-                style: const TextStyle(fontWeight: FontWeight.w700))),
-          ]),
-        ]),
+                style: const TextStyle(fontWeight: FontWeight.w700),),),
+          ],),
+        ],),
     ),
   );
 }
@@ -1881,7 +1891,7 @@ class _DlgConfirm extends StatelessWidget {
   const _DlgConfirm({required this.body, required this.action, required this.danger});
   @override
   Widget build(BuildContext context) => Dialog(
-    backgroundColor: Colors.white,
+    backgroundColor: AppColors.cardBg,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     child: Container(width: 380, padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
@@ -1890,23 +1900,23 @@ class _DlgConfirm extends StatelessWidget {
             Container(width: 34, height: 34,
               decoration: BoxDecoration(
                 color: danger ? _K.redSoft : _K.blueSoft,
-                borderRadius: BorderRadius.circular(9)),
+                borderRadius: BorderRadius.circular(9),),
               child: Icon(
                 danger ? Icons.delete_outline_rounded : Icons.help_outline_rounded,
-                size: 17, color: danger ? _K.red : _K.blue)),
+                size: 17, color: danger ? _K.red : _K.blue,),),
             const SizedBox(width: 12),
             Expanded(child: Text(body,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _K.text))),
-          ]),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _K.text),),),
+          ],),
           const SizedBox(height: 20),
           Row(mainAxisAlignment: MainAxisAlignment.end, children: [
             OutlinedButton(
               onPressed: () => Navigator.of(context).pop(false),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: _K.border), foregroundColor: _K.muted,
+                side: BorderSide(color: _K.border), foregroundColor: _K.muted,
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600))),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),),
+              child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),),
             const SizedBox(width: 10),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
@@ -1914,11 +1924,11 @@ class _DlgConfirm extends StatelessWidget {
                 backgroundColor: danger ? _K.red : _K.blue,
                 foregroundColor: Colors.white, elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),),
               child: Text(action,
-                style: const TextStyle(fontWeight: FontWeight.w700))),
-          ]),
-        ]),
+                style: const TextStyle(fontWeight: FontWeight.w700),),),
+          ],),
+        ],),
     ),
   );
 }

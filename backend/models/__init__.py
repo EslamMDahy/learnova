@@ -17,6 +17,8 @@ from .enums import *
 
 from .exam_question import ExamQuestion
 from .exam_sections import ExamSection
+from .exam_template import ExamTemplate
+from .exam_template_section import ExamTemplateSection
 from .exam import Exam
 
 from .learning_outcomes import LearningOutcome

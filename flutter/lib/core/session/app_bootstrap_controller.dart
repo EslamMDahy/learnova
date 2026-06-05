@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,12 +25,6 @@ class AppBootstrapController extends Notifier<AppBootstrapState> {
       final hasToken = TokenStorage.hasToken;
       final isPersisted = TokenStorage.isPersisted;
 
-      // On web: even when sessionStorage is wiped (F5 / tab reopen / browser reopen),
-      // the HttpOnly refresh cookie may still be alive. Always attempt a silent
-      // refresh before declaring the user a guest.
-      //
-      // On native: no cookie mechanism — if there is no token and no persist
-      // flag the user is definitively a guest.
       const mightHaveCookie = kIsWeb;
 
       if (!hasToken && !isPersisted && !mightHaveCookie) {
@@ -36,26 +32,35 @@ class AppBootstrapController extends Notifier<AppBootstrapState> {
         return;
       }
 
-      if (UserStorage.hasMe && hasToken) {
+      final currentToken = TokenStorage.token?.trim();
+      final needsRefresh = currentToken == null ||
+          currentToken.isEmpty ||
+          _shouldRefreshAccessToken(currentToken);
+
+      if (!needsRefresh && UserStorage.hasMe && hasToken) {
+        ref.read(apiClientProvider).scheduleProactiveRefresh(currentToken);
         state = AppBootstrapState.done;
         return;
       }
 
       final api = ref.read(authApiProvider);
 
-      if (!hasToken) {
+      if (needsRefresh) {
         try {
           final newToken = await api.refresh();
           TokenStorage.saveSession(
             accessToken: newToken,
             persist: isPersisted,
           );
+          ref.read(apiClientProvider).scheduleProactiveRefresh(newToken);
         } catch (_) {
           TokenStorage.clear();
           UserStorage.clear();
           state = AppBootstrapState.done;
           return;
         }
+      } else {
+        ref.read(apiClientProvider).scheduleProactiveRefresh(currentToken);
       }
 
       final raw = await api.me();
@@ -93,6 +98,38 @@ class AppBootstrapController extends Notifier<AppBootstrapState> {
       UserStorage.clear();
     } finally {
       state = AppBootstrapState.done;
+    }
+  }
+
+  static bool _shouldRefreshAccessToken(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return true;
+
+      String pad(String s) {
+        final rem = s.length % 4;
+        return rem == 0 ? s : s + '=' * (4 - rem);
+      }
+
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(pad(parts[1]))),
+      ) as Map<String, dynamic>;
+
+      final exp = payload['exp'];
+      if (exp is! num) return true;
+
+      final expiry = DateTime.fromMillisecondsSinceEpoch(
+        exp.toInt() * 1000,
+        isUtc: true,
+      );
+
+      final refreshBefore = DateTime.now()
+          .toUtc()
+          .add(const Duration(minutes: 2));
+
+      return !expiry.isAfter(refreshBefore);
+    } catch (_) {
+      return true;
     }
   }
 

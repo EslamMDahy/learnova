@@ -61,7 +61,7 @@ class BatchCreateQuestionsResponse {
       questions: raw
           .whereType<Map>()
           .map((e) =>
-              QuestionCreatedItem.fromJson(Map<String, dynamic>.from(e)))
+              QuestionCreatedItem.fromJson(Map<String, dynamic>.from(e)),)
           .toList(),
     );
   }
@@ -149,6 +149,42 @@ class CreateQuestionPayload {
 }
 
 
+class UpdateQuestionPayload {
+  final int? topicId;
+  final String? questionText;
+  final String? difficulty;
+  final String? explanation;
+  final List<CreateQuestionOption>? options;
+  final Object? expectedAnswer;
+  final Object? gradingRubric;
+  final List<String>? tags;
+
+  const UpdateQuestionPayload({
+    this.topicId,
+    this.questionText,
+    this.difficulty,
+    this.explanation,
+    this.options,
+    this.expectedAnswer,
+    this.gradingRubric,
+    this.tags,
+  });
+
+  Map<String, dynamic> toJson() {
+    final data = <String, dynamic>{};
+    if (topicId != null) data['topic_id'] = topicId;
+    if (questionText != null) data['question_text'] = questionText;
+    if (difficulty != null) data['difficulty'] = difficulty;
+    if (explanation != null) data['explanation'] = explanation;
+    if (options != null) data['options'] = options!.map((e) => e.toJson()).toList();
+    if (expectedAnswer != null) data['expected_answer'] = expectedAnswer;
+    if (gradingRubric != null) data['grading_rubric'] = gradingRubric;
+    if (tags != null) data['tags'] = tags;
+    return data;
+  }
+}
+
+
 class _MCQChoice {
   final String id;   // e.g. "A", "B", "C", "D"
   final String text;
@@ -197,9 +233,44 @@ class _QuestionMCQCreate {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+
+
+class AiQuestionGenerationConfig {
+  final String type;
+  final String difficulty;
+  final int count;
+  const AiQuestionGenerationConfig({required this.type, required this.difficulty, required this.count});
+  Map<String,dynamic> toJson()=>{'type':type,'difficulty':difficulty,'count':count};
+}
+class AiQuestionGenerationTopic {
+  final int topicId;
+  final List<AiQuestionGenerationConfig> questionConfigs;
+  const AiQuestionGenerationTopic({required this.topicId,required this.questionConfigs});
+  Map<String,dynamic> toJson()=>{'topic_id':topicId,'question_configs':questionConfigs.map((e)=>e.toJson()).toList()};
+}
+class AiQuestionGenerationRequest {
+  final List<AiQuestionGenerationTopic> topics;
+  const AiQuestionGenerationRequest({required this.topics});
+  Map<String,dynamic> toJson()=>{'topics':topics.map((e)=>e.toJson()).toList()};
+}
+class AiQuestionGenerationResponse {
+  final String status;
+  final bool aiProcessingStarted;
+  final String? message;
+  const AiQuestionGenerationResponse({required this.status,required this.aiProcessingStarted,this.message});
+  factory AiQuestionGenerationResponse.fromJson(Map<String,dynamic> j)=>AiQuestionGenerationResponse(
+    status:(j['status']??'').toString(),
+    aiProcessingStarted:j['ai_processing_started']==true,
+    message:j['message']?.toString(),
+  );
+}
+
 class QuestionsApi {
   final ApiClient _client;
   QuestionsApi(this._client);
+
+Future<AiQuestionGenerationResponse> generateQuestions({required int courseId, required AiQuestionGenerationRequest payload, CancelToken? cancelToken}) async { final res = await _client.post<Map<String,dynamic>>(Endpoints.aiGenerateQuestions(courseId), data: payload.toJson(), cancelToken: cancelToken); return AiQuestionGenerationResponse.fromJson(Map<String,dynamic>.from(res.data ?? const {})); }
+
 
 
   Future<CourseQuestionsResponse> getCourseQuestions({
@@ -255,6 +326,26 @@ class QuestionsApi {
     throw const FormatException('Invalid response from POST /courses/{id}/questions');
   }
 
+
+  Future<QuestionModel> updateQuestion({
+    required int courseId,
+    required int questionId,
+    required UpdateQuestionPayload payload,
+    CancelToken? cancelToken,
+  }) async {
+    final res = await _client.patch<Map<String, dynamic>>(
+      Endpoints.updateCourseQuestion(courseId, questionId),
+      data: payload.toJson(),
+      cancelToken: cancelToken,
+    );
+
+    final data = res.data;
+    if (data is Map<String, dynamic>) {
+      return QuestionModel.fromJson(data);
+    }
+    throw const FormatException('Invalid response from PATCH /courses/{id}/questions/{questionId}/update');
+  }
+
   /// Compatibility helper for controller/UI flows that still pass a QuestionModel.
   Future<QuestionModel> createQuestionFromModel({
     required int courseId,
@@ -297,7 +388,7 @@ class QuestionsApi {
               QuestionType.trueFalse,
               QuestionType.shortAnswer,
               QuestionType.essay,
-            }.contains(q.type))
+            }.contains(q.type),)
         .toList();
 
     if (compatibleQuestions.isEmpty) {

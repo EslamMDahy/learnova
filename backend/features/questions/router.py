@@ -12,7 +12,10 @@ from .schemas import (QuestionCreateRequest,
                       ModuleQuestionListResponse,
                       CourseQuestionListResponse,
                       QuestionGetResponse,
-                      QuestionUpdateRequest)
+                      QuestionUpdateRequest,
+                      QuestionGenerationRequest,
+                      QuestionGenerationResponse)
+
 
 router = APIRouter(prefix="/courses/{course_id}", tags=["Questions"],)
 
@@ -108,3 +111,14 @@ def update_question(
         db=db,
         current_user=current_user,)
 
+@router.post("/questions/ai-generate", response_model=QuestionGenerationResponse, status_code=status.HTTP_200_OK,)
+def generate_questions(
+    course_id: int,
+    payload: QuestionGenerationRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),):
+    return service.generate_questions_for_topics(
+        course_id=course_id,
+        payload=payload,
+        db=db,
+        current_user=current_user,)

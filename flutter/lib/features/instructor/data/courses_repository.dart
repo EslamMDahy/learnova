@@ -60,13 +60,19 @@ class CoursesRepository {
   }) =>
       _api.getCourseById(id, cancelToken: cancelToken);
 
+
+
+  /// Course update/archive/delete endpoints are not exposed by the backend
+  /// currently uploaded for this project. Keep those UI actions disabled/graceful
+  /// instead of calling guessed routes that produce 404 responses.
+
   Future<CourseCreatedResponse> createCourse({
     required CourseCreateRequest payload,
     CancelToken? cancelToken,
   }) =>
       _api.createCourse(payload: payload, cancelToken: cancelToken);
 
-  /// Upload invitations Excel/CSV file
+  /// Upload invitations .xlsx file
   /// -> POST /courses/{id}/invitations/upload
   Future<Map<String, dynamic>> uploadInvitationsFile({
     required String courseId,

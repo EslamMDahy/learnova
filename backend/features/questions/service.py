@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, bindparam
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import json
 
-from .schemas import QuestionCreateRequest
+from .schemas import (QuestionCreateRequest, 
+                      QuestionGenerationRequest)
+from app.core.ai_service_integration.ai_transport import send_ai_request
 from .handlers import validate_and_normalize_question_payload
 
 
@@ -1023,3 +1025,211 @@ def update_question(*, course_id: int, question_id: int, payload, db: Session, c
         raise HTTPException(status_code=500, detail="Database error") from e
     
 
+
+def generate_questions_for_topics(*, course_id: int, payload: QuestionGenerationRequest, db: Session, current_user: dict,):
+    # =========================
+    # 1) Authorization
+    # =========================
+    role = (current_user.get("system_role") or "").strip().lower()
+    if role != "instructor":
+        raise HTTPException(status_code=403, detail="Only instructors can generate questions")
+
+    instructor_id = current_user.get("id")
+    if not instructor_id:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    if not course_id or course_id <= 0:
+        raise HTTPException(status_code=422, detail="Invalid course_id")
+
+    if not payload.topics:
+        raise HTTPException(status_code=422, detail="topics is required")
+
+    # =========================
+    # 2) Validate request topics + configs
+    # =========================
+    supported_question_types = {
+        "multiple_choice",
+        "multi_select",
+        "true_false",
+        "short_answer",
+        "essay",
+    }
+
+    supported_difficulties = {
+        "easy",
+        "medium",
+        "hard",
+    }
+
+    topic_ids = []
+    seen_topic_ids = set()
+    normalized_topic_configs = {}
+
+    for topic_payload in payload.topics:
+        topic_id = topic_payload.topic_id
+
+        if not topic_id or topic_id <= 0:
+            raise HTTPException(status_code=422, detail="Invalid topic_id")
+
+        if topic_id in seen_topic_ids:
+            raise HTTPException(status_code=422, detail="Duplicate topic_id in request")
+
+        seen_topic_ids.add(topic_id)
+        topic_ids.append(topic_id)
+
+        if not topic_payload.question_configs:
+            raise HTTPException(status_code=422, detail="question_configs is required")
+
+        normalized_configs = []
+
+        for config in topic_payload.question_configs:
+            question_type = (config.type or "").strip().lower()
+            difficulty = (config.difficulty or "").strip().lower()
+            count = config.count
+
+            if not question_type:
+                raise HTTPException(status_code=422, detail="type is required")
+
+            if question_type not in supported_question_types:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Unsupported question type: {question_type}"
+                )
+
+            if not difficulty:
+                raise HTTPException(status_code=422, detail="difficulty is required")
+
+            if difficulty not in supported_difficulties:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Unsupported question difficulty: {difficulty}"
+                )
+
+            if not count or count <= 0:
+                raise HTTPException(status_code=422, detail="count must be greater than 0")
+
+            normalized_configs.append({
+                "type": question_type,
+                "difficulty": difficulty,
+                "count": int(count),
+            })
+
+        normalized_topic_configs[topic_id] = normalized_configs
+
+    # =========================
+    # 3) Validate course exists + ownership
+    # =========================
+    course_row = db.execute(
+        text("""
+            SELECT id, created_by
+            FROM courses
+            WHERE id = :course_id
+            LIMIT 1
+        """),
+        {"course_id": course_id},
+    ).mappings().first()
+
+    if not course_row:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    if int(course_row["created_by"]) != int(instructor_id):
+        raise HTTPException(
+            status_code=403,
+            detail="You can only generate questions for your own course"
+        )
+
+    # =========================
+    # 4) Validate topics belong to same course
+    # =========================
+    topic_query = text("""
+        SELECT
+            t.id,
+            t.title,
+            mo.course_id
+        FROM topics t
+        JOIN materials m
+          ON m.id = t.material_id
+        JOIN modules mo
+          ON mo.id = m.module_id
+        WHERE t.id IN :topic_ids
+    """).bindparams(bindparam("topic_ids", expanding=True))
+
+    topic_rows = db.execute(
+        topic_query,
+        {"topic_ids": topic_ids},
+    ).mappings().all()
+
+    if len(topic_rows) != len(topic_ids):
+        found_topic_ids = {int(row["id"]) for row in topic_rows}
+        missing_topic_ids = [topic_id for topic_id in topic_ids if topic_id not in found_topic_ids]
+
+        raise HTTPException(
+            status_code=404,
+            detail=f"Topics not found: {missing_topic_ids}"
+        )
+
+    topic_titles = {}
+
+    for topic_row in topic_rows:
+        if int(topic_row["course_id"]) != int(course_id):
+            raise HTTPException(status_code=400, detail="One or more topics do not belong to this course")
+
+        topic_titles[int(topic_row["id"])] = topic_row["title"]
+
+    # =========================
+    # 5) Build AI request body
+    # =========================
+    ai_topics = []
+
+    for topic_payload in payload.topics:
+        topic_id = int(topic_payload.topic_id)
+
+        ai_topics.append({
+            "topic_id": topic_id,
+            "topic_title": topic_titles[topic_id],
+            "question_configs": normalized_topic_configs[topic_id],
+        })
+
+    ai_request_body = {
+        "topics": ai_topics,
+    }
+
+    # =========================
+    # 6) Send AI request
+    # =========================
+    try:
+        send_ai_request(
+            db,
+            operation_type="question_generation",
+            endpoint_path="api/v1/courses/questions/generate", # !!!!!!UPDATE THIS AFTER GETING THE REAL ENDPOINT!!!!!!
+            course_id=course_id,
+            primary_entity_type="course",
+            primary_entity_id=course_id,
+            body=ai_request_body,
+        )
+
+        db.commit()
+
+        return {
+            "status": "processing",
+            "ai_processing_started": True,
+            "message": "Question generation request sent successfully",
+        }
+
+    except HTTPException:
+        db.rollback()
+        raise
+
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Database error") from e
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=503,
+            detail="Failed to send AI question generation request"
+        ) from e
+    
+
+    

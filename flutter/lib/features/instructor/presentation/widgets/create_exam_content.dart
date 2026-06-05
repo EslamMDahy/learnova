@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'exam_question_selection_step.dart';
 import 'exam_settings_step.dart';
+import 'package:learnova/core/theme/app_theme.dart';
 
 class CreateExamContent extends StatefulWidget {
   final int currentStep;
@@ -30,6 +31,7 @@ class CreateExamContent extends StatefulWidget {
 class _CreateExamContentState extends State<CreateExamContent> {
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
       child: Column(
@@ -41,19 +43,19 @@ class _CreateExamContentState extends State<CreateExamContent> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Create New Exam',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: AppColors.textTitle,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     "Step ${widget.currentStep}: ${widget.currentStep == 1 ? 'Basic Details' : widget.currentStep == 2 ? 'Add Questions' : 'Settings'}",
-                    style: const TextStyle(
-                      color: Color(0xFF617589),
+                    style: TextStyle(
+                      color: AppColors.textMuted,
                       fontSize: 14,
                     ),
                   ),
@@ -62,7 +64,7 @@ class _CreateExamContentState extends State<CreateExamContent> {
                     Text(
                       widget.scopeLabel!,
                       style: const TextStyle(
-                        color: Color(0xFF137FEC),
+                        color: AppColors.primary,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -117,9 +119,9 @@ class _CreateExamContentState extends State<CreateExamContent> {
                   icon: const Icon(Icons.arrow_back, size: 18),
                   label: Text(
                     widget.currentStep == 1 ? 'Back to Dashboard' : 'Back to Previous',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF0F172A),
+                      color: AppColors.textTitle,
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
@@ -132,7 +134,7 @@ class _CreateExamContentState extends State<CreateExamContent> {
                 ElevatedButton(
                   onPressed: widget.onNext,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF137FEC),
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
                     shape: RoundedRectangleBorder(
@@ -177,9 +179,9 @@ class _CreateExamContentState extends State<CreateExamContent> {
     return Container(
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,9 +196,9 @@ class _CreateExamContentState extends State<CreateExamContent> {
           ),
           const SizedBox(height: 24),
           _buildLabel('Description / Instructions'),
-          const Text(
+          Text(
             'Provide instructions for students before they begin.',
-            style: TextStyle(color: Color(0xFF617589), fontSize: 13),
+            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -214,8 +216,8 @@ class _CreateExamContentState extends State<CreateExamContent> {
                     DropdownButtonFormField<String>(
                       decoration: _inputDecoration('Quiz'),
                       initialValue: 'Quiz',
-                      items: const [
-                        DropdownMenuItem(value: 'Quiz', child: Text('Quiz')),
+                      items: [
+                        const DropdownMenuItem(value: 'Quiz', child: Text('Quiz')),
                       ],
                       onChanged: (v) {},
                     ),
@@ -247,9 +249,9 @@ class _CreateExamContentState extends State<CreateExamContent> {
     return ElevatedButton(
       onPressed: () {},
       style: ElevatedButton.styleFrom(
-        backgroundColor: isPrimary ? const Color(0xFF137FEC) : Colors.white,
-        foregroundColor: isPrimary ? Colors.white : const Color(0xFF0F172A),
-        side: isPrimary ? BorderSide.none : const BorderSide(color: Color(0xFFE2E8F0)),
+        backgroundColor: isPrimary ? AppColors.primary : AppColors.cardBg,
+        foregroundColor: isPrimary ? Colors.white : AppColors.textTitle,
+        side: isPrimary ? BorderSide.none : BorderSide(color: AppColors.border),
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -265,15 +267,15 @@ class _CreateExamContentState extends State<CreateExamContent> {
     required bool isCompleted,
   }) {
     final Color mainColor = isActive
-        ? const Color(0xFF137FEC)
-        : (isCompleted ? const Color(0xFF10B981) : const Color(0xFFCBD5E1));
+        ? AppColors.primary
+        : (isCompleted ? AppColors.successDot : AppColors.borderSoft);
     return Row(
       children: [
         Container(
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: isActive || isCompleted ? mainColor : Colors.white,
+            color: isActive || isCompleted ? mainColor : AppColors.cardBg,
             shape: BoxShape.circle,
             border: Border.all(color: mainColor, width: 2),
           ),
@@ -294,7 +296,7 @@ class _CreateExamContentState extends State<CreateExamContent> {
         Text(
           label,
           style: TextStyle(
-            color: isActive || isCompleted ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+            color: isActive || isCompleted ? AppColors.textTitle : AppColors.textHint,
             fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
             fontSize: 14,
           ),
@@ -307,16 +309,16 @@ class _CreateExamContentState extends State<CreateExamContent> {
         width: 40,
         height: 1,
         margin: const EdgeInsets.symmetric(horizontal: 16),
-        color: const Color(0xFFE2E8F0),
+        color: AppColors.border,
       );
 
   Widget _buildLabel(String text) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
+            color: AppColors.textGray,
           ),
         ),
       );
@@ -324,10 +326,10 @@ class _CreateExamContentState extends State<CreateExamContent> {
   InputDecoration _inputDecoration(String hint) => InputDecoration(
         hintText: hint,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.cardBg,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       );

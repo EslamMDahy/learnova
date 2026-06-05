@@ -3,24 +3,19 @@ from __future__ import annotations
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.ai_service_integration.ai_callback_verifier import (
-    VerifiedAICallbackRequest,
-)
+from app.core.ai_service_integration.ai_callback_verifier import VerifiedAICallbackRequest
 
 from app.features.topics.helpers import bulk_insert_ai_topics
 from app.features.learningOutcomes.helpers import bulk_insert_ai_learning_outcomes
+from app.features.questions.helpers import validate_and_prepare_ai_generated_questions, insert_ai_generated_questions
 from app.features.ai.helpers import (
     insert_topic_learning_outcome_relations,
-    mark_material_ai_processing_completed,
-)
+    mark_material_ai_processing_completed,)
 
 
-def handle_content_structure_generation(
-    *,
-    db: Session,
-    verified_callback: VerifiedAICallbackRequest,
-    request_log: dict,
-) -> dict:
+
+
+def handle_content_structure_generation(*, db: Session, verified_callback: VerifiedAICallbackRequest, request_log: dict,) -> dict:
     payload = verified_callback.payload
     body = _extract_callback_body(payload)
 
@@ -120,6 +115,102 @@ def handle_content_structure_generation(
     }
 
 
+
+def handle_question_generation(*, db: Session, verified_callback: VerifiedAICallbackRequest, request_log: dict,) -> dict:
+    payload = verified_callback.payload
+    body = _extract_callback_body(payload)
+
+    print("\n========== ENTERED handle_question_generation ==========")
+    print(f"PAYLOAD KEYS: {list(payload.keys())}")
+    print("=====================================================\n")
+
+    callback_status = _extract_required_str(
+        payload,
+        "status",
+        "Missing status in callback payload",
+    ).lower()
+
+    if callback_status != "completed":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="question_generation callback status must be 'completed'",
+        )
+
+    course_id = _extract_required_positive_int(
+        payload,
+        "course_id",
+        "Missing or invalid course_id in callback payload",
+    )
+
+    print(f"\nCOURSE_ID = {course_id}\n")
+
+    questions = _extract_required_list(
+        body,
+        "questions",
+        "Missing questions list in callback body",
+    )
+
+    print(f"\nQUESTIONS COUNT = {len(questions)}\n")
+
+
+    print("\n========== BEFORE _validate_request_log_context ==========")
+    print(f"REQUEST LOG = {request_log}")
+    print("========================================================\n")
+
+    # =========================
+    # 1) Verify request_log context
+    # =========================
+    _validate_question_generation_request_log_context(
+        request_log=request_log,
+        course_id=course_id,
+    )
+
+    print("\n========== AFTER _validate_request_log_context ==========\n")
+
+
+    print("\n========== BEFORE validate_and_prepare_ai_generated_questions ==========\n")
+
+    # =========================
+    # 2) Validate + normalize all questions
+    # =========================
+    prepared_questions = validate_and_prepare_ai_generated_questions(
+        course_id=course_id,
+        questions=questions,
+        db=db,
+    )
+
+    print(f"\nPREPARED QUESTIONS COUNT = {len(prepared_questions)}\n")
+
+
+    print("\n========== BEFORE insert_ai_generated_questions ==========\n")
+
+    # =========================
+    # 3) Insert questions into DB
+    # =========================
+    insert_result = insert_ai_generated_questions(
+        course_id=course_id,
+        prepared_questions=prepared_questions,
+        db=db,
+        created_by=request_log.get("created_by"),
+    )
+
+    print(f"\nINSERT RESULT = {insert_result}\n")
+
+
+    print("\n========== QUESTION GENERATION COMPLETED ==========\n")
+
+    # =========================
+    # 4) Return summary
+    # =========================
+    return {
+        "course_id": course_id,
+        "inserted_count": insert_result["inserted_count"],
+        "question_ids": insert_result["question_ids"],
+    }
+
+
+
+
 def _extract_callback_body(payload: dict) -> dict:
     body = payload.get("body")
 
@@ -175,14 +266,64 @@ def _extract_required_list(source: dict, key: str, error_message: str) -> list:
     return value
 
 
-def _validate_request_log_context(
+def _validate_request_log_context(*, request_log: dict, course_id: int, material_id: int,) -> None:
+    request_log_course_id = request_log.get("course_id")
+    request_log_primary_entity_type = (request_log.get("primary_entity_type") or "").strip().lower()
+    request_log_primary_entity_id = request_log.get("primary_entity_id")
+
+    print("\n========== _validate_request_log_context ==========")
+    print(f"course_id = {course_id}")
+    print(f"material_id = {material_id}")
+    print(f"request_log_course_id = {request_log_course_id}")
+    print(f"request_log_primary_entity_type = {request_log_primary_entity_type}")
+    print(f"request_log_primary_entity_id = {request_log_primary_entity_id}")
+    print("==================================================\n")
+
+
+    if request_log_course_id is None or int(request_log_course_id) != int(course_id):
+        print("\n========== COURSE ID VALIDATION FAILED ==========")
+        print(f"CALLBACK COURSE_ID = {course_id}")
+        print(f"REQUEST LOG COURSE_ID = {request_log_course_id}")
+        print("================================================\n")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Callback course_id does not match AI request log",
+        )
+
+
+
+    if request_log_primary_entity_type != "material":
+        print("\n========== PRIMARY ENTITY TYPE VALIDATION FAILED ==========")
+        print(f"REQUEST LOG PRIMARY_ENTITY_TYPE = {request_log_primary_entity_type}")
+        print("EXPECTED = material")
+        print("=========================================================\n")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="AI request log primary_entity_type must be 'material'",
+        )
+
+
+
+    if request_log_primary_entity_id is None or int(request_log_primary_entity_id) != int(material_id):
+        print("\n========== MATERIAL ID VALIDATION FAILED ==========")
+        print(f"MATERIAL_ID ARGUMENT = {material_id}")
+        print(f"REQUEST LOG PRIMARY_ENTITY_ID = {request_log_primary_entity_id}")
+        print("==================================================\n")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Callback material_id does not match AI request log",
+        )
+
+
+def _validate_question_generation_request_log_context(
     *,
     request_log: dict,
     course_id: int,
-    material_id: int,
 ) -> None:
     request_log_course_id = request_log.get("course_id")
-    request_log_primary_entity_type = (request_log.get("primary_entity_type") or "").strip().lower()
+    request_log_primary_entity_type = (
+        request_log.get("primary_entity_type") or ""
+    ).strip().lower()
     request_log_primary_entity_id = request_log.get("primary_entity_id")
 
     if request_log_course_id is None or int(request_log_course_id) != int(course_id):
@@ -191,16 +332,16 @@ def _validate_request_log_context(
             detail="Callback course_id does not match AI request log",
         )
 
-    if request_log_primary_entity_type != "material":
+    if request_log_primary_entity_type != "course":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="AI request log primary_entity_type must be 'material'",
+            detail="AI request log primary_entity_type must be 'course'",
         )
 
-    if request_log_primary_entity_id is None or int(request_log_primary_entity_id) != int(material_id):
+    if request_log_primary_entity_id is None or int(request_log_primary_entity_id) != int(course_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Callback material_id does not match AI request log",
+            detail="Callback course_id does not match AI request log primary_entity_id",
         )
 
 
@@ -344,3 +485,4 @@ def _validate_relations_payload(
             )
 
         seen_pairs.add(pair)
+        

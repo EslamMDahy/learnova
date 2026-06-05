@@ -6,7 +6,6 @@ import '../../../data/materials_models.dart';
 import '../../../data/modules_materials_providers.dart';
 import '../../../data/modules_models.dart';
 import '../../../data/question_models.dart';
-import '../../../data/questions_api.dart';
 import '../../../data/topics_models.dart';
 import '../../mappers/question_draft_payload_mapper.dart';
 import '../../models/question_draft_item.dart';
@@ -91,6 +90,7 @@ class _QuestionBankQuestionEditorDialogState
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
       child: ConstrainedBox(
@@ -99,7 +99,7 @@ class _QuestionBankQuestionEditorDialogState
           children: [
             Container(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 18),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(bottom: BorderSide(color: AppColors.border)),
               ),
               child: Row(
@@ -108,7 +108,7 @@ class _QuestionBankQuestionEditorDialogState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Question Bank Authoring',
                           style: TextStyle(
                             fontSize: 22,
@@ -142,12 +142,12 @@ class _QuestionBankQuestionEditorDialogState
                   SizedBox(
                     width: 300,
                     child: Container(
-                      color: const Color(0xFFF8FAFC),
+                      color: AppColors.surfaceBg,
                       padding: const EdgeInsets.all(18),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Selected authoring scope',
                             style: TextStyle(
                               fontSize: 14,
@@ -158,7 +158,7 @@ class _QuestionBankQuestionEditorDialogState
                           const SizedBox(height: 6),
                           Text(
                             '${widget.topicTargets.length} topic target${widget.topicTargets.length == 1 ? '' : 's'} available for assignment.',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textMuted,
                             ),
@@ -173,7 +173,7 @@ class _QuestionBankQuestionEditorDialogState
                                 return Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: AppColors.cardBg,
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(color: AppColors.border),
                                   ),
@@ -182,7 +182,7 @@ class _QuestionBankQuestionEditorDialogState
                                     children: [
                                       Text(
                                         target.topic.title,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w800,
                                           color: AppColors.textTitle,
@@ -191,7 +191,7 @@ class _QuestionBankQuestionEditorDialogState
                                       const SizedBox(height: 4),
                                       Text(
                                         target.material.displayTitle,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 11.5,
                                           color: AppColors.textTitle,
                                         ),
@@ -199,7 +199,7 @@ class _QuestionBankQuestionEditorDialogState
                                       const SizedBox(height: 2),
                                       Text(
                                         target.module.title,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 11,
                                           color: AppColors.textMuted,
                                         ),
@@ -222,7 +222,7 @@ class _QuestionBankQuestionEditorDialogState
                         children: [
                           Row(
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   'Draft questions',
                                   style: TextStyle(
@@ -239,7 +239,7 @@ class _QuestionBankQuestionEditorDialogState
                                         setState(() {
                                           _drafts.add(QuestionDraftItem.empty(
                                             widget.topicTargets.first.topic.id,
-                                          ));
+                                          ),);
                                         });
                                       },
                                 icon: const Icon(Icons.add_rounded, size: 18),
@@ -260,7 +260,7 @@ class _QuestionBankQuestionEditorDialogState
                               ),
                               child: Text(
                                 _error!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.dangerText,
                                   height: 1.5,
@@ -276,7 +276,7 @@ class _QuestionBankQuestionEditorDialogState
                                             setState(() {
                                               _drafts.add(QuestionDraftItem.empty(
                                                 widget.topicTargets.first.topic.id,
-                                              ));
+                                              ),);
                                             });
                                           },
                                   )
@@ -311,14 +311,14 @@ class _QuestionBankQuestionEditorDialogState
             ),
             Container(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: AppColors.border)),
               ),
               child: Row(
                 children: [
                   Text(
                     '${_drafts.length} draft question${_drafts.length == 1 ? '' : 's'}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12.5,
                       color: AppColors.textMuted,
                       fontWeight: FontWeight.w700,
@@ -357,12 +357,13 @@ class _EditorEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 420),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.border),
         ),
@@ -373,7 +374,7 @@ class _EditorEmptyState extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: AppColors.primarySoft,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: const Icon(Icons.edit_note_rounded, color: AppColors.primary),
@@ -384,7 +385,7 @@ class _EditorEmptyState extends StatelessWidget {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Start by adding a question draft. You can create several questions in one pass and assign each one to a single topic.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.6),
@@ -420,6 +421,7 @@ class _QuestionDraftCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final assignedTarget = topicTargets.cast<QuestionAuthoringTopicTarget?>().firstWhere(
           (element) => element?.topic.id == draft.topicId,
           orElse: () => topicTargets.isNotEmpty ? topicTargets.first : null,
@@ -428,7 +430,7 @@ class _QuestionDraftCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.border),
       ),
@@ -441,7 +443,7 @@ class _QuestionDraftCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: AppColors.primarySoft,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 alignment: Alignment.center,
@@ -497,24 +499,24 @@ class _QuestionDraftCard extends StatelessWidget {
                 child: DropdownButtonFormField<QuestionType>(
                   value: draft.type,
                   decoration: _fieldDecoration('Question type'),
-                  items: const [
-                    DropdownMenuItem(
+                  items: [
+                    const DropdownMenuItem(
                       value: QuestionType.multipleChoice,
                       child: Text('Multiple Choice'),
                     ),
-                    DropdownMenuItem(
+                    const DropdownMenuItem(
                       value: QuestionType.multiSelect,
                       child: Text('Multi Select'),
                     ),
-                    DropdownMenuItem(
+                    const DropdownMenuItem(
                       value: QuestionType.trueFalse,
                       child: Text('True / False'),
                     ),
-                    DropdownMenuItem(
+                    const DropdownMenuItem(
                       value: QuestionType.shortAnswer,
                       child: Text('Short Answer'),
                     ),
-                    DropdownMenuItem(
+                    const DropdownMenuItem(
                       value: QuestionType.essay,
                       child: Text('Essay'),
                     ),
@@ -530,10 +532,10 @@ class _QuestionDraftCard extends StatelessWidget {
                 child: DropdownButtonFormField<QuestionDifficulty>(
                   value: draft.difficulty,
                   decoration: _fieldDecoration('Difficulty'),
-                  items: const [
-                    DropdownMenuItem(value: QuestionDifficulty.easy, child: Text('Easy')),
-                    DropdownMenuItem(value: QuestionDifficulty.medium, child: Text('Medium')),
-                    DropdownMenuItem(value: QuestionDifficulty.hard, child: Text('Hard')),
+                  items: [
+                    const DropdownMenuItem(value: QuestionDifficulty.easy, child: Text('Easy')),
+                    const DropdownMenuItem(value: QuestionDifficulty.medium, child: Text('Medium')),
+                    const DropdownMenuItem(value: QuestionDifficulty.hard, child: Text('Hard')),
                   ],
                   onChanged: (value) {
                     if (value == null) return;
@@ -547,7 +549,7 @@ class _QuestionDraftCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               'Saving under: ${assignedTarget.module.title} → ${assignedTarget.material.displayTitle} → ${assignedTarget.topic.title}',
-              style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+              style: TextStyle(fontSize: 11.5, color: AppColors.textMuted),
             ),
           ],
           const SizedBox(height: 14),
@@ -570,7 +572,7 @@ class _QuestionDraftCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppColors.surfaceBg,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -581,7 +583,7 @@ class _QuestionDraftCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   ChoiceChip(
-                    selected: draft.correctBool == true,
+                    selected: draft.correctBool ?? false,
                     label: const Text('True'),
                     onSelected: (_) => onChanged(draft.copyWith(correctBool: true)),
                   ),
@@ -625,14 +627,14 @@ class _QuestionDraftCard extends StatelessWidget {
   InputDecoration _fieldDecoration(String label) => InputDecoration(
         labelText: label,
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
+        fillColor: AppColors.surfaceBg,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
       );
 }
@@ -645,10 +647,11 @@ class _OptionEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.surfaceBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
@@ -719,14 +722,14 @@ class _OptionEditor extends StatelessWidget {
                       decoration: InputDecoration(
                         hintText: 'Option ${index + 1}',
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: AppColors.cardBg,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.border),
+                          borderSide: BorderSide(color: AppColors.border),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.border),
+                          borderSide: BorderSide(color: AppColors.border),
                         ),
                       ),
                       onChanged: (value) {
@@ -768,7 +771,7 @@ class _OptionEditor extends StatelessWidget {
               ),
             );
           }),
-          const Text(
+          Text(
             'Choose one correct option for MCQ, or all correct options for multi-select.',
             style: TextStyle(fontSize: 11.5, color: AppColors.textMuted),
           ),

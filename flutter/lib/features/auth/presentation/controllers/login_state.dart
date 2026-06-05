@@ -25,14 +25,14 @@ class LoginState {
   // ── State transitions ─────────────────────────────────────────────────────
 
   LoginState toLoading() =>
-      LoginState(async: const AsyncValue.loading());
+      const LoginState(async: AsyncValue.loading());
 
   LoginState toSuccess() =>
-      const LoginState(async: AsyncValue.data(null));
+      const LoginState();
 
   LoginState toError(Object error, [StackTrace? stackTrace]) =>
       LoginState(async: AsyncValue.error(error, stackTrace ?? StackTrace.empty));
 
   LoginState clearError() =>
-      const LoginState(async: AsyncValue.data(null));
+      const LoginState();
 }

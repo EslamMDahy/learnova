@@ -197,6 +197,76 @@ class MyCoursesResponse {
 }
 
 
+class CourseUpdateRequest {
+  final String? title;
+  final String? courseCode;
+  final String? description;
+  final String? category;
+  final String? courseType;
+  final int? organizationId;
+  final bool? isPublic;
+  final String? visibilityLevel;
+  final bool? requiresEnrollmentApproval;
+  final String? status;
+
+  const CourseUpdateRequest({
+    this.title,
+    this.courseCode,
+    this.description,
+    this.category,
+    this.courseType,
+    this.organizationId,
+    this.isPublic,
+    this.visibilityLevel,
+    this.requiresEnrollmentApproval,
+    this.status,
+  });
+
+  bool get isEmpty => toJson().isEmpty;
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{};
+
+    final cleanTitle = title?.trim();
+    if (cleanTitle != null && cleanTitle.isNotEmpty) {
+      map['title'] = cleanTitle;
+    }
+
+    if (courseCode != null) {
+      final cleanCode = courseCode!.trim();
+      map['course_code'] = cleanCode.isEmpty ? null : cleanCode;
+    }
+
+    if (description != null) {
+      final cleanDescription = description!.trim();
+      map['description'] = cleanDescription.isEmpty ? null : cleanDescription;
+    }
+
+    if (category != null) {
+      final cleanCategory = category!.trim();
+      map['category'] = cleanCategory.isEmpty ? null : cleanCategory;
+    }
+
+    if (courseType != null) {
+      map['course_type'] = parseCourseAccessType(courseType).backendValue;
+    }
+    if (organizationId != null) map['organization_id'] = organizationId;
+    if (isPublic != null) map['is_open_for_enrollment'] = isPublic;
+    if (visibilityLevel != null) {
+      map['visibility_level'] = parseCourseVisibility(visibilityLevel).backendValue;
+    }
+    if (requiresEnrollmentApproval != null) {
+      map['requires_enrollment_approval'] = requiresEnrollmentApproval;
+    }
+    if (status != null) {
+      map['status'] = parseCourseLifecycleStatus(status).backendValue;
+    }
+
+    return map;
+  }
+}
+
+
 class CourseCreatedResponse {
   final int id;
   final String title;

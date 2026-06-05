@@ -26,6 +26,14 @@ final coursesRepositoryProvider = Provider<CoursesRepository>((ref) {
 ///   • Riverpod caches the result; subsequent watches are instant.
 ///   • The page gets a proper loading/error/data lifecycle for free.
 final selectedCourseByIdProvider =
-    FutureProvider.family<MyCourseItem, int>((ref, id) {
-  return ref.read(coursesRepositoryProvider).getCourseById(id);
+    FutureProvider.family<MyCourseItem, int>((ref, id) async {
+  final response = await ref.read(coursesRepositoryProvider).myCourses(
+        
+      );
+
+  for (final course in response.items) {
+    if (course.id == id) return course;
+  }
+
+  throw StateError('Course not found in your courses. Reopen it from Courses.');
 });

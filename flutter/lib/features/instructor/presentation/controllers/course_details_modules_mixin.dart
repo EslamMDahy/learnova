@@ -33,8 +33,10 @@ mixin _CourseDetailsModulesMixin on StateNotifier<CourseDetailsState> {
     }
   }
 
-  /// Loads modules then eagerly loads materials + topics for all modules so
-  /// Overview statistics are immediately available.
+  /// Explicit eager loader for flows that truly need the full content tree.
+  ///
+  /// Do not call this from route entry. Course tabs should lazy-load their own
+  /// data so opening a course does not trigger every tab endpoint at once.
   Future<void> loadModulesAndAllMaterials({bool force = false}) async {
     await loadModules(force: force);
     final modulesToLoad = state.modules

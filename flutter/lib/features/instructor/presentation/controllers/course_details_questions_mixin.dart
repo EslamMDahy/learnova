@@ -7,7 +7,7 @@ mixin _CourseDetailsQuestionsMixin on StateNotifier<CourseDetailsState> {
   int get courseId;
 // ── Question Bank (in-memory) ────────────────────────────────────────────
   Future<QuestionModel?> createQuestion(QuestionModel question) async {
-    state = state.copyWith(questionsLoading: true, questionsError: null);
+    state = state.copyWith(questionsLoading: true);
 
     try {
       final created = await ref.read(questionsApiProvider).createQuestionFromModel(

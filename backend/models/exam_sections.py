@@ -7,14 +7,13 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     Enum as SQLEnum,
-    Index,
-    CheckConstraint
+    Index
 )
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
 
 from app.db.base import Base
-from app.models.enums import ExamSectionDifficulty
+from app.models.enums import QuestionType
 
 
 class ExamSection(Base):
@@ -31,9 +30,9 @@ class ExamSection(Base):
         nullable=False
     )
 
-    title: Mapped[str | None] = mapped_column(
+    title: Mapped[str] = mapped_column(
         String(255),
-        nullable=True
+        nullable=False
     )
 
     description: Mapped[str | None] = mapped_column(
@@ -41,44 +40,29 @@ class ExamSection(Base):
         nullable=True
     )
 
+    question_type: Mapped[QuestionType] = mapped_column(
+        SQLEnum(
+            QuestionType,
+            name="question_type_enum"
+        ),
+        nullable=False
+    )
+
     order_index: Mapped[int] = mapped_column(
         Integer,
         default=0
     )
 
-    topic_id: Mapped[int | None] = mapped_column(
-        ForeignKey("topics.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True
-    )
-
-    module_id: Mapped[int | None] = mapped_column(
-        ForeignKey("modules.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True
-    )
-
-    material_id: Mapped[int | None] = mapped_column(
-        ForeignKey("materials.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True
-    )
-    difficulty: Mapped[ExamSectionDifficulty | None] = mapped_column(
-        SQLEnum(
-            ExamSectionDifficulty,
-            name="exam_section_difficulty_enum"
-        ),
-        nullable=True
-    )
-
     question_count: Mapped[int] = mapped_column(
         Integer,
-        nullable=False
+        nullable=False,
+        default=0
     )
 
     section_score: Mapped[float] = mapped_column(
         Float,
-        nullable=False
+        nullable=False,
+        default=0.0
     )
 
     time_limit_minutes: Mapped[int | None] = mapped_column(
@@ -91,23 +75,25 @@ class ExamSection(Base):
         default=True
     )
 
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False
+    )
+
     __table_args__ = (
-        CheckConstraint(
-            "(topic_id IS NOT NULL) OR (module_id IS NOT NULL) OR (material_id IS NOT NULL)",
-            name="ck_exam_sections_scope_required"
-        ),
-        # unique (exam_id, order_index)
+        # unique ordering inside exam
         Index(
             "uq_exam_sections_exam_order",
             "exam_id",
             "order_index",
             unique=True
-        ),
-        Index(
-            "ix_exam_sections_exam_scope",
-            "exam_id",
-            "topic_id",
-            "module_id",
-            "material_id"
         ),
     )

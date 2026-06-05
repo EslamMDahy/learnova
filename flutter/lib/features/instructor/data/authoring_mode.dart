@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 ///
 /// flutter run --dart-define=ENABLE_LOCAL_AUTHORING_FALLBACK=true
 const bool kEnableLocalAuthoringFallback =
-    bool.fromEnvironment('ENABLE_LOCAL_AUTHORING_FALLBACK', defaultValue: false);
+    bool.fromEnvironment('ENABLE_LOCAL_AUTHORING_FALLBACK');
 
 final enableLocalAuthoringFallbackProvider = Provider<bool>(
   (_) => kEnableLocalAuthoringFallback,

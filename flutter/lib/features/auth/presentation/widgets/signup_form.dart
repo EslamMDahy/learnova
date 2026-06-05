@@ -128,13 +128,14 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final state = ref.watch(signupControllerProvider);
 
     // shown error: local first then api
     final shownError = _localError ?? state.error;
 
     return Container(
-      color: Colors.white,
+      color: AppColors.cardBg,
       padding: EdgeInsets.symmetric(horizontal: widget.isMobile ? 24 : 56),
       child: Center(
         child: SingleChildScrollView(
@@ -163,9 +164,9 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
                     disabled: state.loading,
                     value: accountType,
                     onChanged: _onSwitchAccountType,
-                    options: const [
-                      AppSegmentOption(label: 'User', value: AccountType.user),
-                      AppSegmentOption(label: 'Owner', value: AccountType.owner),
+                    options: [
+                      const AppSegmentOption(label: 'User', value: AccountType.user),
+                      const AppSegmentOption(label: 'Owner', value: AccountType.owner),
                     ],
                   ),
 
@@ -176,10 +177,10 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
                       disabled: state.loading,
                       value: userKind,
                       onChanged: (k) => setState(() => userKind = k),
-                      options: const [
-                        AppSegmentOption(label: 'Student', value: UserKind.student),
-                        AppSegmentOption(label: 'Instructor', value: UserKind.instructor),
-                        AppSegmentOption(label: 'Assistant', value: UserKind.assistant),
+                      options: [
+                        const AppSegmentOption(label: 'Student', value: UserKind.student),
+                        const AppSegmentOption(label: 'Instructor', value: UserKind.instructor),
+                        const AppSegmentOption(label: 'Assistant', value: UserKind.assistant),
                       ],
                     ),
                     const SizedBox(height: 12),

@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-load_dotenv()  # ← لازم يكون أول حاجة قبل أي import تاني
+load_dotenv() 
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,7 +39,7 @@ app.include_router(modules_router)
 app.include_router(materials_router)
 app.include_router(topics_router)
 app.include_router(questions_router)
+app.include_router(exams_router)
 app.include_router(organizations_router)
 app.include_router(settings_router)
 app.include_router(ai_router)
-app.include_router(exams_router)

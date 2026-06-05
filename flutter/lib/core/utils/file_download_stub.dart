@@ -4,3 +4,7 @@
 void downloadTextFile({required String filename, required String content, String mimeType = 'text/plain'}) {
   // No-op on non-web (or you can show a toast/snackbar where used).
 }
+
+void downloadBytesFile({required String filename, required List<int> bytes, String mimeType = 'application/octet-stream'}) {
+  // No-op on non-web.
+}

@@ -23,9 +23,13 @@ extension OutcomeDifficultyX on OutcomeDifficulty {
   }
 
   /// The string the backend expects for the "level" field.
+  ///
+  /// The UI uses "Beginner" wording, while the backend enum stores the same
+  /// level as "foundational". Sending "beginner" violates the database enum
+  /// and causes a server-side 500.
   String get backendLevel {
     switch (this) {
-      case OutcomeDifficulty.beginner:     return 'beginner';
+      case OutcomeDifficulty.beginner:     return 'foundational';
       case OutcomeDifficulty.intermediate: return 'intermediate';
       case OutcomeDifficulty.advanced:     return 'advanced';
     }
@@ -33,9 +37,15 @@ extension OutcomeDifficultyX on OutcomeDifficulty {
 
   static OutcomeDifficulty fromString(String? s) {
     switch ((s ?? '').toLowerCase()) {
-      case 'intermediate': return OutcomeDifficulty.intermediate;
-      case 'advanced':     return OutcomeDifficulty.advanced;
-      default:             return OutcomeDifficulty.beginner;
+      case 'foundational':
+      case 'beginner':
+        return OutcomeDifficulty.beginner;
+      case 'intermediate':
+        return OutcomeDifficulty.intermediate;
+      case 'advanced':
+        return OutcomeDifficulty.advanced;
+      default:
+        return OutcomeDifficulty.beginner;
     }
   }
 }

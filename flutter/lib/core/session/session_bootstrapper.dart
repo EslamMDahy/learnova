@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../storage/token_storage.dart';
 import '../storage/user_storage.dart';
 import 'session_bootstrap_controller.dart';
+import 'package:learnova/core/theme/app_theme.dart';
 
 class SessionBootstrapper extends ConsumerStatefulWidget {
   final Widget child;
@@ -52,6 +53,7 @@ class _SessionBootstrapperState extends ConsumerState<SessionBootstrapper> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final async = ref.watch(sessionBootstrapControllerProvider);
 
     // Show splash while bootstrapping.
@@ -71,7 +73,7 @@ class _SessionBootstrapperState extends ConsumerState<SessionBootstrapper> {
         : null;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.cardBg,
       body: SafeArea(
         child: Stack(
           children: [
@@ -80,7 +82,7 @@ class _SessionBootstrapperState extends ConsumerState<SessionBootstrapper> {
                 width: 86,
                 height: 86,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF137FEC),
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: const Center(
@@ -110,11 +112,11 @@ class _SessionBootstrapperState extends ConsumerState<SessionBootstrapper> {
                         child: CircularProgressIndicator(strokeWidth: 2.5),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'Restoring session…',
                         style: TextStyle(
                           fontSize: 12.5,
-                          color: Color(0xFF6B7280),
+                          color: AppColors.textGray500,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -124,8 +126,8 @@ class _SessionBootstrapperState extends ConsumerState<SessionBootstrapper> {
                         child: Text(
                           errMsg,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFFDC2626),
+                          style: TextStyle(
+                            color: AppColors.dangerText,
                             fontSize: 13,
                             height: 1.3,
                             fontWeight: FontWeight.w600,

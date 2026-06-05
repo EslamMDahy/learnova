@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'design_tokens.dart';
 
 class BaseDashboardShell extends StatelessWidget {
   final Widget sidebar;
@@ -12,8 +13,8 @@ class BaseDashboardShell extends StatelessWidget {
   
   final EdgeInsets contentPadding;
 
-  final Color backgroundColor;
-  final Color dividerColor;
+  final Color? backgroundColor;
+  final Color? dividerColor;
 
   final bool enableResponsive;
   final double drawerBreakpoint;
@@ -32,8 +33,8 @@ class BaseDashboardShell extends StatelessWidget {
     this.contentMaxWidth = 1400,
     this.contentPadding =
         const EdgeInsets.symmetric(horizontal: 116, vertical: 32),
-    this.backgroundColor = const Color(0xFFF6F7F8),
-    this.dividerColor = const Color(0xFFEDF2F7),
+    this.backgroundColor,
+    this.dividerColor,
     this.enableResponsive = true,
     this.drawerBreakpoint = 1100,
     this.compactPaddingBreakpoint = 900,
@@ -44,6 +45,7 @@ class BaseDashboardShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final w = MediaQuery.sizeOf(context).width;
     final useDrawer = enableResponsive && w < drawerBreakpoint;
 
@@ -73,15 +75,18 @@ class BaseDashboardShell extends StatelessWidget {
           )
         : child;
 
+    final effectiveBackground = backgroundColor ?? AppColors.pageBg;
+    final effectiveDivider = dividerColor ?? AppColors.border;
+
     final content = Container(
-      color: backgroundColor,
+      color: effectiveBackground,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: dividerColor)),
+              color: AppColors.cardBg,
+              border: Border(bottom: BorderSide(color: effectiveDivider)),
             ),
             child: header,
           ),
@@ -91,7 +96,7 @@ class BaseDashboardShell extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: effectiveBackground,
       drawer: useDrawer ? Drawer(child: SafeArea(child: sidebar)) : null,
       body: useDrawer
           ? content

@@ -9,6 +9,7 @@ import '../../../../core/routing/routes.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../core/storage/user_storage.dart';
 import '../controllers/verify_email_sent_controller.dart';
+import 'package:learnova/core/theme/app_theme.dart';
 
 /// "Verify Your Email" screen.
 ///
@@ -119,11 +120,12 @@ class _VerifyEmailSentPageState extends ConsumerState<VerifyEmailSentPage>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final state = ref.watch(verifyEmailSentControllerProvider);
     final canResend = _hasEmail && _secondsLeft <= 0 && !state.loading;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: AppColors.pageBg,
       body: Stack(
         children: [
           // ── Header ────────────────────────────────────────────────────
@@ -194,20 +196,21 @@ class _VerifyEmailSentPageState extends ConsumerState<VerifyEmailSentPage>
 class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       height: 56,
-      color: Colors.white,
+      color: AppColors.cardBg,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
           Image.asset('assets/logo.webp', height: 32, cacheWidth: (32 * MediaQuery.of(context).devicePixelRatio).round()),
           const SizedBox(width: 10),
-          const Text(
+          Text(
             'Learnova',
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF111827),
+              color: AppColors.textTitle,
               letterSpacing: -0.3,
             ),
           ),
@@ -224,6 +227,7 @@ class _Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       height: 44,
       alignment: Alignment.center,
@@ -233,14 +237,14 @@ class _Footer extends StatelessWidget {
           Container(
             width: 1,
             height: 14,
-            color: const Color(0xFFD1D5DB),
+            color: AppColors.borderSoft,
             margin: const EdgeInsets.only(right: 12),
           ),
-          const Text(
+          Text(
             'Contact Support',
             style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF6B7280),
+              color: AppColors.textGray500,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -275,17 +279,18 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Headline (above card, matching error page layout)
-        const Text(
+        Text(
           'Check your inbox',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF111827),
+            color: AppColors.textTitle,
             height: 1.2,
           ),
         ),
@@ -297,9 +302,9 @@ class _Card extends StatelessWidget {
                 ? 'We\'ve sent a verification link to $email. Click the link to activate your account.'
                 : 'We\'ve sent a verification link to your email address. Please check your inbox.',
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
-              color: Color(0xFF6B7280),
+              color: AppColors.textGray500,
               height: 1.55,
             ),
           ),
@@ -330,11 +335,11 @@ class _Card extends StatelessWidget {
           height: 48,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF137FEC),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(10),),
             ),
             onPressed: state.checkingVerification ? null : onCheckVerified,
             child: state.checkingVerification
@@ -342,7 +347,7 @@ class _Card extends StatelessWidget {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2, color: Colors.white,),
                   )
                 : const Text(
                     'I\'ve Verified, Continue',
@@ -363,25 +368,25 @@ class _Card extends StatelessWidget {
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: canResend
-                        ? const Color(0xFF374151)
-                        : const Color(0xFF9CA3AF),
+                        ? AppColors.textGray
+                        : AppColors.textHint,
                     side: BorderSide(
                       color: canResend
-                          ? const Color(0xFFD1D5DB)
-                          : const Color(0xFFE5E7EB),
+                          ? AppColors.borderSoft
+                          : AppColors.borderGray,
                     ),
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.cardBg,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),),
                   ),
                   onPressed: (canResend && !state.loading) ? onResend : null,
                   icon: state.loading
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Color(0xFF6B7280)),
+                              color: AppColors.textGray500,),
                         )
                       : const Icon(Icons.refresh_rounded, size: 16),
                   label: Text(
@@ -389,7 +394,7 @@ class _Card extends StatelessWidget {
                         ? 'Resend in ${secondsLeft}s'
                         : 'Resend Email',
                     style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 14),
+                        fontWeight: FontWeight.w600, fontSize: 14,),
                   ),
                 ),
               ),
@@ -399,11 +404,11 @@ class _Card extends StatelessWidget {
               height: 48,
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFDC2626),
-                  side: const BorderSide(color: Color(0xFFFECACA)),
-                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.dangerText,
+                  side: BorderSide(color: AppColors.dangerBorder),
+                  backgroundColor: AppColors.cardBg,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                 ),
                 onPressed: state.loading ? null : onLogout,
@@ -431,23 +436,24 @@ class _TipRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.borderGray),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF6B7280)),
+          Icon(icon, size: 18, color: AppColors.textGray500),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF374151),
+                color: AppColors.textGray,
                 height: 1.4,
               ),
             ),
@@ -476,23 +482,24 @@ class _Banner extends StatelessWidget {
   });
 
   factory _Banner.error({required String message}) => _Banner._(
-        bgColor: const Color(0xFFFFF3F3),
-        borderColor: const Color(0xFFFECACA),
-        iconColor: const Color(0xFFDC2626),
+        bgColor: AppColors.dangerBg,
+        borderColor: AppColors.dangerBorder,
+        iconColor: AppColors.dangerText,
         icon: Icons.error_outline_rounded,
         message: message,
       );
 
   factory _Banner.success({required String message}) => _Banner._(
-        bgColor: const Color(0xFFF0FDF4),
-        borderColor: const Color(0xFFBBF7D0),
-        iconColor: const Color(0xFF16A34A),
+        bgColor: AppColors.successBg,
+        borderColor: AppColors.successDot,
+        iconColor: AppColors.successText,
         icon: Icons.check_circle_outline_rounded,
         message: message,
       );
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(

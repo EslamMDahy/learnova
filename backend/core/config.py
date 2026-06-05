@@ -54,10 +54,7 @@ class Settings:
             == "true"
         )
 
-        self.cookie_samesite: str = os.getenv(
-            "COOKIE_SAMESITE",
-            "none" if is_production else "lax",
-        ).strip().lower()
+        self.cookie_samesite: str = os.getenv("COOKIE_SAMESITE", "none" if is_production else "lax",).strip().lower()
 
         self.cookie_path: str = os.getenv("COOKIE_PATH", "/")
 

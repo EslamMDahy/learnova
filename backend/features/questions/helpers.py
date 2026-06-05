@@ -1,419 +1,239 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
+from types import SimpleNamespace
+import json
+
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+from sqlalchemy import text, bindparam
+from sqlalchemy.exc import SQLAlchemyError
+
+from .handlers import validate_and_normalize_question_payload
 
 
-def validate_and_normalize_question_payload(payload) -> dict[str, Any]:
-    question_type = (payload.type or "").strip().lower()
+def validate_and_prepare_ai_generated_questions(*, course_id: int, questions: list[dict[str, Any]], db: Session,):
+    # =========================
+    # 1) Validate input shape
+    # =========================
+    if not course_id or course_id <= 0:
+        raise HTTPException(status_code=422, detail="Invalid course_id")
 
-    if not question_type:
-        return {"ok": False, "status_code": 422, "detail": "type is required"}
+    if not isinstance(questions, list) or not questions:
+        raise HTTPException(status_code=422, detail="questions is required")
 
-    handlers = {
-        "multiple_choice": validate_and_normalize_multiple_choice,
-        "multi_select": validate_and_normalize_multi_select,
-        "true_false": validate_and_normalize_true_false,
-        "short_answer": validate_and_normalize_short_answer,
-        "essay": validate_and_normalize_essay,
-    }
+    topic_ids = []
+    seen_topic_ids = set()
 
-    handler = handlers.get(question_type)
-    if not handler:
-        return {
-            "ok": False,
-            "status_code": 422,
-            "detail": f"Unsupported question type: {question_type}"
-        }
+    for question_data in questions:
+        if not isinstance(question_data, dict):
+            raise HTTPException(status_code=422, detail="Each question must be an object")
 
-    return handler(payload)
+        topic_id = question_data.get("topic_id")
+        if not topic_id or int(topic_id) <= 0:
+            raise HTTPException(status_code=422, detail="Invalid topic_id")
 
+        topic_id = int(topic_id)
+        if topic_id not in seen_topic_ids:
+            seen_topic_ids.add(topic_id)
+            topic_ids.append(topic_id)
 
-def validate_and_normalize_multiple_choice(payload) -> dict[str, Any]:
-    question_text = (payload.question_text or "").strip()
-    if not question_text:
-        return {"ok": False, "status_code": 422, "detail": "question_text is required"}
+    # =========================
+    # 2) Validate topics belong to same course
+    # =========================
+    topic_query = text("""
+        SELECT
+            t.id,
+            mo.course_id
+        FROM topics t
+        JOIN materials m
+          ON m.id = t.material_id
+        JOIN modules mo
+          ON mo.id = m.module_id
+        WHERE t.id IN :topic_ids
+    """).bindparams(bindparam("topic_ids", expanding=True))
 
-    difficulty = (payload.difficulty or "").strip().lower()
-    if not difficulty:
-        return {"ok": False, "status_code": 422, "detail": "difficulty is required"}
+    topic_rows = db.execute(
+        topic_query,
+        {"topic_ids": topic_ids},
+    ).mappings().all()
 
-    options = payload.options
-    if not isinstance(options, list) or len(options) < 2:
-        return {
-            "ok": False,
-            "status_code": 422,
-            "detail": "multiple_choice questions must include at least 2 options"
-        }
+    if len(topic_rows) != len(topic_ids):
+        found_topic_ids = {int(row["id"]) for row in topic_rows}
+        missing_topic_ids = [topic_id for topic_id in topic_ids if topic_id not in found_topic_ids]
 
-    normalized_options = []
-    seen_ids = set()
+        raise HTTPException(
+            status_code=404,
+            detail=f"Topics not found: {missing_topic_ids}"
+        )
 
-    for option in options:
-        option_id = (option.id or "").strip()
-        option_text = (option.text or "").strip()
+    for topic_row in topic_rows:
+        if int(topic_row["course_id"]) != int(course_id):
+            raise HTTPException(status_code=400, detail="One or more topics do not belong to this course")
 
-        if not option_id:
-            return {
-                "ok": False,
-                "status_code": 422,
-                "detail": "Each option must include a non-empty id"
-            }
+    # =========================
+    # 3) Validate + normalize questions
+    # =========================
+    prepared_questions = []
 
-        if not option_text:
-            return {
-                "ok": False,
-                "status_code": 422,
-                "detail": "Each option must include non-empty text"
-            }
+    for question_data in questions:
+        options = question_data.get("options")
 
-        if option_id in seen_ids:
-            return {
-                "ok": False,
-                "status_code": 422,
-                "detail": "Option ids must be unique"
-            }
+        if isinstance(options, list):
+            options = [
+                SimpleNamespace(**option)
+                if isinstance(option, dict) else option
+                for option in options
+            ]
 
-        seen_ids.add(option_id)
-        normalized_options.append({
-            "id": option_id,
-            "text": option_text,
+        question_payload = SimpleNamespace(
+            topic_id=question_data.get("topic_id"),
+            question_text=question_data.get("question_text"),
+            explanation=question_data.get("explanation"),
+            options=options,
+            type=question_data.get("type"),
+            difficulty=question_data.get("difficulty"),
+            expected_answer=question_data.get("expected_answer"),
+            grading_rubric=question_data.get("grading_rubric"),
+        )
+
+        validation_result = validate_and_normalize_question_payload(question_payload)
+        if not validation_result["ok"]:
+            raise HTTPException(
+                status_code=validation_result["status_code"],
+                detail=validation_result["detail"]
+            )
+
+        normalized_data = validation_result["data"]
+        normalized_data["source"] = "ai_generated"
+        normalized_data["approval_status"] = "pending"
+
+        prepared_questions.append({
+            "topic_id": int(question_data["topic_id"]),
+            "data": normalized_data,
         })
 
-    expected_answer = (payload.expected_answer or "").strip()
-    if not expected_answer:
+    return prepared_questions
+
+
+
+def insert_ai_generated_questions(*, course_id: int, prepared_questions: list[dict[str, Any]], db: Session, created_by: Optional[int] = None,):
+    # =========================
+    # 1) Validate prepared questions
+    # =========================
+    if not course_id or course_id <= 0:
+        raise HTTPException(status_code=422, detail="Invalid course_id")
+
+    if not isinstance(prepared_questions, list) or not prepared_questions:
+        raise HTTPException(status_code=422, detail="prepared_questions is required")
+
+    inserted_question_ids = []
+
+    try:
+        # =========================
+        # 2) Insert questions
+        # =========================
+        for prepared_question in prepared_questions:
+            topic_id = prepared_question.get("topic_id")
+            normalized_data = prepared_question.get("data")
+
+            if not topic_id or int(topic_id) <= 0:
+                raise HTTPException(status_code=422, detail="Invalid topic_id")
+
+            if not isinstance(normalized_data, dict):
+                raise HTTPException(status_code=422, detail="Invalid normalized question data")
+
+            question_row = db.execute(
+                text("""
+                    INSERT INTO questions (
+                        course_id,
+                        topic_id,
+                        question_text,
+                        explanation,
+                        options,
+                        type,
+                        difficulty,
+                        source,
+                        approval_status,
+                        expected_answer,
+                        grading_rubric,
+                        max_score,
+                        auto_gradable,
+                        usage_count,
+                        success_rate,
+                        average_time_seconds,
+                        tags,
+                        created_by,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES (
+                        :course_id,
+                        :topic_id,
+                        :question_text,
+                        :explanation,
+                        CAST(:options AS JSONB),
+                        :type,
+                        :difficulty,
+                        :source,
+                        :approval_status,
+                        CAST(:expected_answer AS JSONB),
+                        CAST(:grading_rubric AS JSONB),
+                        :max_score,
+                        :auto_gradable,
+                        :usage_count,
+                        :success_rate,
+                        :average_time_seconds,
+                        CAST(:tags AS JSONB),
+                        :created_by,
+                        NOW(),
+                        NOW()
+                    )
+                    RETURNING id
+                """),
+                {
+                    "course_id": course_id,
+                    "topic_id": int(topic_id),
+                    "question_text": normalized_data["question_text"],
+                    "explanation": normalized_data["explanation"],
+                    "options": json.dumps(normalized_data["options"]),
+                    "type": normalized_data["type"],
+                    "difficulty": normalized_data["difficulty"],
+                    "source": normalized_data["source"],
+                    "approval_status": normalized_data["approval_status"],
+                    "expected_answer": json.dumps(normalized_data["expected_answer"]),
+                    "grading_rubric": (
+                        json.dumps(normalized_data["grading_rubric"])
+                        if normalized_data["grading_rubric"] is not None else None
+                    ),
+                    "max_score": normalized_data["max_score"],
+                    "auto_gradable": normalized_data["auto_gradable"],
+                    "usage_count": normalized_data["usage_count"],
+                    "success_rate": normalized_data["success_rate"],
+                    "average_time_seconds": normalized_data["average_time_seconds"],
+                    "tags": (
+                        json.dumps(normalized_data["tags"])
+                        if normalized_data["tags"] is not None else None
+                    ),
+                    "created_by": created_by,
+                },
+            ).mappings().first()
+
+            if not question_row:
+                raise HTTPException(status_code=503, detail="Failed to insert AI generated question")
+
+            inserted_question_ids.append(question_row["id"])
+
+        # =========================
+        # 3) Build result
+        # =========================
         return {
-            "ok": False,
-            "status_code": 422,
-            "detail": "expected_answer is required for multiple_choice questions"
+            "inserted_count": len(inserted_question_ids),
+            "question_ids": inserted_question_ids,
         }
 
-    if expected_answer not in seen_ids:
-        return {
-            "ok": False,
-            "status_code": 422,
-            "detail": "expected_answer must match one of the option ids"
-        }
+    except HTTPException:
+        raise
 
-    explanation = payload.explanation
-    if isinstance(explanation, str):
-        explanation = explanation.strip() or None
-
-    return {
-        "ok": True,
-        "data": {
-            "question_text": question_text,
-            "type": question_type_from_payload(payload),
-            "difficulty": difficulty,
-            "explanation": explanation,
-            "options": normalized_options,
-            "expected_answer": expected_answer,
-            "grading_rubric": None,
-            "max_score": 1,
-            "auto_gradable": True,
-            "source": "manual",
-            "approval_status": "approved",
-            "usage_count": 0,
-            "success_rate": None,
-            "average_time_seconds": None,
-            "tags": None,
-        }
-    }
-
-
-
-def validate_and_normalize_multi_select(payload) -> dict[str, Any]:
-    question_text = (payload.question_text or "").strip()
-    if not question_text:
-        return {"ok": False, "status_code": 422, "detail": "question_text is required"}
-
-    difficulty = (payload.difficulty or "").strip().lower()
-    if not difficulty:
-        return {"ok": False, "status_code": 422, "detail": "difficulty is required"}
-
-    options = payload.options
-    if not isinstance(options, list) or len(options) < 2:
-        return {
-            "ok": False,
-            "status_code": 422,
-            "detail": "multi_select questions must include at least 2 options"
-        }
-
-    normalized_options = []
-    seen_ids = set()
-
-    for option in options:
-        option_id = (option.id or "").strip()
-        option_text = (option.text or "").strip()
-
-        if not option_id:
-            return {
-                "ok": False,
-                "status_code": 422,
-                "detail": "Each option must include a non-empty id"
-            }
-
-        if not option_text:
-            return {
-                "ok": False,
-                "status_code": 422,
-                "detail": "Each option must include non-empty text"
-            }
-
-        if option_id in seen_ids:
-            return {
-                "ok": False,
-                "status_code": 422,
-                "detail": "Option ids must be unique"
-            }
-
-        seen_ids.add(option_id)
-        normalized_options.append({
-            "id": option_id,
-            "text": option_text,
-        })
-
-    expected_answer = payload.expected_answer
-    if not isinstance(expected_answer, list) or not expected_answer:
-        return {
-            "ok": False,
-            "status_code": 422,
-            "detail": "expected_answer is required for multi_select questions and must be a non-empty list"
-        }
-
-    normalized_expected_answer = []
-    seen_answer_ids = set()
-
-    for answer_id in expected_answer:
-        if not isinstance(answer_id, str):
-            return {
-                "ok": False,
-                "status_code": 422,
-                "detail": "Each expected_answer item must be a string"
-            }
-
-        answer_id = answer_id.strip()
-        if not answer_id:
-            return {
-                "ok": False,
-                "status_code": 422,
-                "detail": "Each expected_answer item must be non-empty"
-            }
-
-        if answer_id not in seen_ids:
-            return {
-                "ok": False,
-                "status_code": 422,
-                "detail": "Each expected_answer item must match one of the option ids"
-            }
-
-        if answer_id in seen_answer_ids:
-            return {
-                "ok": False,
-                "status_code": 422,
-                "detail": "expected_answer must not contain duplicates"
-            }
-
-        seen_answer_ids.add(answer_id)
-        normalized_expected_answer.append(answer_id)
-
-    explanation = payload.explanation
-    if isinstance(explanation, str):
-        explanation = explanation.strip() or None
-
-    return {
-        "ok": True,
-        "data": {
-            "question_text": question_text,
-            "type": question_type_from_payload(payload),
-            "difficulty": difficulty,
-            "explanation": explanation,
-            "options": normalized_options,
-            "expected_answer": normalized_expected_answer,
-            "grading_rubric": None,
-            "max_score": 1,
-            "auto_gradable": True,
-            "source": "manual",
-            "approval_status": "approved",
-            "usage_count": 0,
-            "success_rate": None,
-            "average_time_seconds": None,
-            "tags": None,
-        }
-    }
-
-
-
-def validate_and_normalize_true_false(payload) -> dict[str, Any]:
-    question_text = (payload.question_text or "").strip()
-    if not question_text:
-        return {"ok": False, "status_code": 422, "detail": "question_text is required"}
-
-    difficulty = (payload.difficulty or "").strip().lower()
-    if not difficulty:
-        return {"ok": False, "status_code": 422, "detail": "difficulty is required"}
-
-    expected_answer = payload.expected_answer
-    if not isinstance(expected_answer, str):
-        return {
-            "ok": False,
-            "status_code": 422,
-            "detail": "expected_answer is required for true_false questions and must be a string"
-        }
-
-    expected_answer = expected_answer.strip().lower()
-    if expected_answer not in {"true", "false"}:
-        return {
-            "ok": False,
-            "status_code": 422,
-            "detail": "expected_answer for true_false must be either 'true' or 'false'"
-        }
-
-    explanation = payload.explanation
-    if isinstance(explanation, str):
-        explanation = explanation.strip() or None
-
-    normalized_options = [
-        {"id": "true", "text": "True"},
-        {"id": "false", "text": "False"},
-    ]
-
-    return {
-        "ok": True,
-        "data": {
-            "question_text": question_text,
-            "type": question_type_from_payload(payload),
-            "difficulty": difficulty,
-            "explanation": explanation,
-            "options": normalized_options,
-            "expected_answer": expected_answer,
-            "grading_rubric": None,
-            "max_score": 1,
-            "auto_gradable": True,
-            "source": "manual",
-            "approval_status": "approved",
-            "usage_count": 0,
-            "success_rate": None,
-            "average_time_seconds": None,
-            "tags": None,
-        }
-    }
-
-
-
-def validate_and_normalize_short_answer(payload) -> dict[str, Any]:
-    question_text = (payload.question_text or "").strip()
-    if not question_text:
-        return {"ok": False, "status_code": 422, "detail": "question_text is required"}
-
-    difficulty = (payload.difficulty or "").strip().lower()
-    if not difficulty:
-        return {"ok": False, "status_code": 422, "detail": "difficulty is required"}
-
-    expected_answer = payload.expected_answer
-    if not isinstance(expected_answer, str):
-        return {
-            "ok": False,
-            "status_code": 422,
-            "detail": "expected_answer is required for short_answer questions and must be a string"
-        }
-
-    expected_answer = expected_answer.strip()
-    if not expected_answer:
-        return {
-            "ok": False,
-            "status_code": 422,
-            "detail": "expected_answer is required for short_answer questions"
-        }
-
-    explanation = payload.explanation
-    if isinstance(explanation, str):
-        explanation = explanation.strip() or None
-
-    grading_rubric = getattr(payload, "grading_rubric", None)
-    if grading_rubric is not None and not isinstance(grading_rubric, dict):
-        return {
-            "ok": False,
-            "status_code": 422,
-            "detail": "grading_rubric must be an object when provided"
-        }
-
-    return {
-        "ok": True,
-        "data": {
-            "question_text": question_text,
-            "type": question_type_from_payload(payload),
-            "difficulty": difficulty,
-            "explanation": explanation,
-            "options": None,
-            "expected_answer": expected_answer,
-            "grading_rubric": grading_rubric,
-            "max_score": 1,
-            "auto_gradable": False,
-            "source": "manual",
-            "approval_status": "approved",
-            "usage_count": 0,
-            "success_rate": None,
-            "average_time_seconds": None,
-            "tags": None,
-        }
-    }
-
-
-
-def validate_and_normalize_essay(payload) -> dict[str, Any]:
-    question_text = (payload.question_text or "").strip()
-    if not question_text:
-        return {"ok": False, "status_code": 422, "detail": "question_text is required"}
-
-    difficulty = (payload.difficulty or "").strip().lower()
-    if not difficulty:
-        return {"ok": False, "status_code": 422, "detail": "difficulty is required"}
-
-    expected_answer = payload.expected_answer
-    if expected_answer is not None:
-        if not isinstance(expected_answer, str):
-            return {
-                "ok": False,
-                "status_code": 422,
-                "detail": "expected_answer must be a string when provided for essay questions"
-            }
-
-        expected_answer = expected_answer.strip() or None
-
-    explanation = payload.explanation
-    if isinstance(explanation, str):
-        explanation = explanation.strip() or None
-
-    grading_rubric = getattr(payload, "grading_rubric", None)
-    if grading_rubric is not None and not isinstance(grading_rubric, dict):
-        return {
-            "ok": False,
-            "status_code": 422,
-            "detail": "grading_rubric must be an object when provided"
-        }
-
-    return {
-        "ok": True,
-        "data": {
-            "question_text": question_text,
-            "type": question_type_from_payload(payload),
-            "difficulty": difficulty,
-            "explanation": explanation,
-            "options": None,
-            "expected_answer": expected_answer,
-            "grading_rubric": grading_rubric,
-            "max_score": 1,
-            "auto_gradable": False,
-            "source": "manual",
-            "approval_status": "approved",
-            "usage_count": 0,
-            "success_rate": None,
-            "average_time_seconds": None,
-            "tags": None,
-        }
-    }
-
-
-
-def question_type_from_payload(payload) -> str:
-    return (payload.type or "").strip().lower()
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error") from e

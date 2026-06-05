@@ -50,6 +50,7 @@ class _TopicManageDialogState extends State<TopicManageDialog> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
@@ -57,10 +58,10 @@ class _TopicManageDialogState extends State<TopicManageDialog> {
         width: 520,
         constraints: const BoxConstraints(maxWidth: 520),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardBg,
           borderRadius: BorderRadius.circular(22),
-          boxShadow: const [
-            BoxShadow(
+          boxShadow: [
+            const BoxShadow(
               color: Color(0x220F172A),
               blurRadius: 28,
               offset: Offset(0, 16),
@@ -79,15 +80,15 @@ class _TopicManageDialogState extends State<TopicManageDialog> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF137FEC), Color(0xFF8B5CF6)],
+                      gradient: LinearGradient(
+                        colors: [AppColors.primary, AppColors.purpleText],
                       ),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(Icons.tune_rounded, color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -99,7 +100,7 @@ class _TopicManageDialogState extends State<TopicManageDialog> {
                             color: AppColors.textTitle,
                           ),
                         ),
-                        SizedBox(height: 3),
+                        const SizedBox(height: 3),
                         Text(
                           'Edit the essentials only: name, readiness, outcomes, and instructor notes.',
                           style: TextStyle(
@@ -198,13 +199,13 @@ class _TopicManageDialogState extends State<TopicManageDialog> {
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: AppColors.surfaceBg,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: widget.outcomes.isEmpty
-                          ? const Padding(
-                              padding: EdgeInsets.all(16),
+                          ? Padding(
+                              padding: const EdgeInsets.all(16),
                               child: Text(
                                 'No course outcomes yet. Add them from the Outcomes tab first.',
                                 style: TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
@@ -263,13 +264,13 @@ class _TopicManageDialogState extends State<TopicManageDialog> {
                           )
                         : const Icon(Icons.delete_outline_rounded, size: 18),
                     label: const Text('Delete'),
-                    style: TextButton.styleFrom(foregroundColor: const Color(0xFFDC2626)),
+                    style: TextButton.styleFrom(foregroundColor: AppColors.dangerText),
                   ),
                   const Spacer(),
                   OutlinedButton(
                     onPressed: _saving || _deleting ? null : () => Navigator.of(context).pop(false),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      side: BorderSide(color: AppColors.border),
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -304,17 +305,17 @@ class _TopicManageDialogState extends State<TopicManageDialog> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.textHint),
+      hintStyle: TextStyle(color: AppColors.textHint),
       filled: true,
-      fillColor: const Color(0xFFF8FAFC),
+      fillColor: AppColors.surfaceBg,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -362,9 +363,10 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w700,
         color: AppColors.textMuted,
@@ -386,6 +388,7 @@ class _OutcomeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
       onTap: onChanged == null ? null : () => onChanged!(!selected),
       child: Padding(
@@ -395,7 +398,7 @@ class _OutcomeTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: AppColors.primarySoft,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
@@ -414,7 +417,7 @@ class _OutcomeTile extends StatelessWidget {
                 children: [
                   Text(
                     outcome.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textTitle,
@@ -427,7 +430,7 @@ class _OutcomeTile extends StatelessWidget {
                         outcome.description!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                        style: TextStyle(fontSize: 12, color: AppColors.textMuted),
                       ),
                     ),
                 ],
@@ -460,6 +463,7 @@ class _ChoiceGroup<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Wrap(
       spacing: 8,
       runSpacing: 8,

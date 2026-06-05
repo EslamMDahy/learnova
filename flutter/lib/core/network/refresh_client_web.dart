@@ -15,6 +15,7 @@ class _XhrRefreshClient implements RefreshClient {
       ..open('POST', url)
       ..setRequestHeader('Content-Type', 'application/json')
       ..setRequestHeader('Accept', 'application/json')
+      ..setRequestHeader('ngrok-skip-browser-warning', 'true')
       ..withCredentials = true; // sends HttpOnly cookie cross-origin
 
     xhr.onLoad.listen((_) {

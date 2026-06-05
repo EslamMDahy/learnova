@@ -9,6 +9,7 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       padding: padding,
       decoration: BoxDecoration(

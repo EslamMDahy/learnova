@@ -34,9 +34,13 @@ class CourseDetailsController extends StateNotifier<CourseDetailsState>
   final int _courseId;
   CancelToken? _cancel;
 
+  @override
   Ref get ref => _ref;
+  @override
   int get courseId => _courseId;
+  @override
   CancelToken? get cancelToken => _cancel;
+  @override
   set cancelToken(CancelToken? value) => _cancel = value;
 
   @override

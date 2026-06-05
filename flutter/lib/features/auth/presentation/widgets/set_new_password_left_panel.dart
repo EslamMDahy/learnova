@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:learnova/shared/widgets/design_tokens.dart';
 
 class SetNewPasswordLeftPanel extends StatelessWidget {
   const SetNewPasswordLeftPanel({super.key});
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final dpr = MediaQuery.of(context).devicePixelRatio;
     final w = MediaQuery.sizeOf(context).width;
     final bgCacheWidth = (w * dpr).clamp(800.0, 2000.0).round();
@@ -50,7 +52,7 @@ class SetNewPasswordLeftPanel extends StatelessWidget {
             const SizedBox(height: 40),
 
             /// Title
-            const Text(
+            Text(
               'Reset your password and\nsecure you account easily.',
               style: TextStyle(
                 color: Colors.white,
@@ -60,8 +62,8 @@ class SetNewPasswordLeftPanel extends StatelessWidget {
                 shadows: [
                   Shadow(
                     blurRadius: 10,
-                    color: Colors.black54,
-                    offset: Offset(0, 4),
+                    color: AppColors.textMuted,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -70,7 +72,7 @@ class SetNewPasswordLeftPanel extends StatelessWidget {
             const SizedBox(height: 20),
 
             /// Subtitle
-            const Text(
+            Text(
               'Create a strong new password\nto keep your learning journey safe.',
               style: TextStyle(
                 color: Colors.white70,
@@ -79,8 +81,8 @@ class SetNewPasswordLeftPanel extends StatelessWidget {
                 shadows: [
                   Shadow(
                     blurRadius: 8,
-                    color: Colors.black45,
-                    offset: Offset(0, 3),
+                    color: AppColors.textHint,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),

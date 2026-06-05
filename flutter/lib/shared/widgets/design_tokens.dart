@@ -4,4 +4,4 @@
 /// This file re-exports them so existing imports keep working unchanged.
 library;
 export '../../core/theme/app_theme.dart'
-    show AppColors, AppSpacing, AppTheme, AppTextStyles, AppText;
+    show AppColors, AppSpacing, AppTheme, AppThemeRuntime, AppTextStyles, AppText;

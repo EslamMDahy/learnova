@@ -29,7 +29,7 @@ class QuestionDraftItem {
 
   factory QuestionDraftItem.empty(int topicId) {
     return QuestionDraftItem(
-      id: 'draft-${topicId}-${DateTime.now().microsecondsSinceEpoch}',
+      id: 'draft-$topicId-${DateTime.now().microsecondsSinceEpoch}',
       topicId: topicId,
       type: QuestionType.multipleChoice,
       difficulty: QuestionDifficulty.medium,
@@ -37,7 +37,6 @@ class QuestionDraftItem {
       options: const ['', '', '', ''],
       correctOptionIndex: 0,
       correctBool: null,
-      correctOptionIndexes: const [],
       explanation: '',
       expectedAnswer: '',
     );
@@ -112,7 +111,7 @@ class QuestionDraftItem {
         }
       } else {
         final validIndexes = correctOptionIndexes.where((index) =>
-            index >= 0 && index < options.length && options[index].trim().isNotEmpty);
+            index >= 0 && index < options.length && options[index].trim().isNotEmpty,);
         if (validIndexes.isEmpty) return 'Choose at least one correct answer option.';
       }
     }

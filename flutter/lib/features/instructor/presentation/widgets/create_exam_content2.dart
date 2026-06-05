@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:learnova/core/theme/app_theme.dart';
 
 class CreateExamContent2 extends StatefulWidget {
   const CreateExamContent2({super.key});
@@ -16,6 +17,7 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,12 +32,12 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
               const SizedBox(height: 24),
               _buildFiltersBar(),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'AVAILABLE QUESTIONS',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF64748B),
+                  color: AppColors.textMuted,
                   letterSpacing: 1.1,
                 ),
               ),
@@ -58,26 +60,26 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.surfaceBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: AppColors.cardBg,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.auto_awesome,
-              color: Color(0xFF3B82F6),
+              color: AppColors.primary,
               size: 20,
             ),
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -86,13 +88,13 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: Color(0xFF1E293B),
+                    color: AppColors.textGray,
                   ),
                 ),
                 Text(
                   'Let our AI analyze the course material and suggest relevant questions for this quiz.',
                   style: TextStyle(
-                    color: Color(0xFF617589),
+                    color: AppColors.textMuted,
                     fontSize: 13,
                   ),
                 ),
@@ -102,8 +104,8 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
           OutlinedButton(
             onPressed: () {},
             style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.white,
-              side: const BorderSide(color: Color(0xFFE2E8F0)),
+              backgroundColor: AppColors.cardBg,
+              side: BorderSide(color: AppColors.border),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -112,7 +114,7 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
             child: const Text(
               'Generate Questions',
               style: TextStyle(
-                color: Color(0xFF3B82F6),
+                color: AppColors.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -136,15 +138,15 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
                 color: Colors.grey,
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: AppColors.cardBg,
               contentPadding: const EdgeInsets.symmetric(),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                borderSide: BorderSide(color: AppColors.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                borderSide: BorderSide(color: AppColors.border),
               ),
             ),
           ),
@@ -163,15 +165,15 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
           Text(
             label,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B)),
+            style: TextStyle(fontSize: 13, color: AppColors.textGray),
           ),
           const Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.grey),
         ],
@@ -235,10 +237,10 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: selected ? const Color(0xFF3B82F6) : const Color(0xFFE2E8F0),
+          color: selected ? AppColors.primary : AppColors.border,
           width: selected ? 2 : 1,
         ),
       ),
@@ -259,7 +261,7 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
                   }
                 });
               },
-              activeColor: const Color(0xFF3B82F6),
+              activeColor: AppColors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),
@@ -272,10 +274,10 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
-                    color: Color(0xFF1E293B),
+                    color: AppColors.textGray,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -316,26 +318,26 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Quiz Summary',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18,
-              color: Color(0xFF1E293B),
+              color: AppColors.textGray,
             ),
           ),
           const SizedBox(height: 24),
           _summaryRow('Total Questions', '15'),
-          const Divider(height: 32, color: Color(0xFFF1F5F9)),
+          Divider(height: 32, color: AppColors.headerBg),
           _summaryRow('Total Points', '100'),
-          const Divider(height: 32, color: Color(0xFFF1F5F9)),
+          Divider(height: 32, color: AppColors.headerBg),
           _summaryRow('Difficulty', 'Medium', color: Colors.orange),
           const SizedBox(height: 24),
           _buildInfoBox(),
@@ -350,7 +352,7 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
           _summaryButton(
             Icons.add,
             'Add New Question',
-            const Color(0xFF3B82F6),
+            AppColors.primary,
             Colors.white,
             isPrimary: true,
           ),
@@ -363,20 +365,20 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F9FF),
+        color: AppColors.infoBg,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, size: 18, color: Color(0xFF0EA5E9)),
-          SizedBox(width: 10),
+          const Icon(Icons.info_outline, size: 18, color: AppColors.primary),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               'This quiz is currently saved as a draft. Publishing will make it visible to enrolled students immediately or on the scheduled date.',
               style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF617589),
+                color: AppColors.textMuted,
                 height: 1.4,
               ),
             ),
@@ -390,11 +392,11 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
   Widget _metaItem(IconData icon, String label) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF94A3B8)),
+        Icon(icon, size: 14, color: AppColors.textHint),
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+          style: TextStyle(color: AppColors.textMuted, fontSize: 12),
         ),
       ],
     );
@@ -406,14 +408,14 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
       children: [
         Text(
           label,
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
+          style: TextStyle(color: AppColors.textMuted, fontSize: 14),
         ),
         Text(
           value,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            color: color ?? const Color(0xFF1E293B),
+            color: color ?? AppColors.textGray,
           ),
         ),
       ],
@@ -448,13 +450,13 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.chevron_left, color: Color(0xFF94A3B8)),
+        Icon(Icons.chevron_left, color: AppColors.textHint),
         const SizedBox(width: 8),
         _pageNode('1', true),
         _pageNode('2', false),
         _pageNode('3', false),
         const SizedBox(width: 8),
-        const Icon(Icons.chevron_right, color: Color(0xFF94A3B8)),
+        Icon(Icons.chevron_right, color: AppColors.textHint),
       ],
     );
   }
@@ -465,14 +467,14 @@ class _CreateExamContent2State extends State<CreateExamContent2> {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: active ? const Color(0xFF3B82F6) : Colors.transparent,
+        color: active ? AppColors.primary : Colors.transparent,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Center(
         child: Text(
           n,
           style: TextStyle(
-            color: active ? Colors.white : const Color(0xFF64748B),
+            color: active ? Colors.white : AppColors.textMuted,
             fontWeight: FontWeight.bold,
           ),
         ),

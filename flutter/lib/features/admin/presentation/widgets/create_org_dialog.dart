@@ -90,6 +90,7 @@ class _CreateOrgDialogState extends State<CreateOrgDialog> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return LayoutBuilder(
       builder: (context, c) {
         final w = c.maxWidth;
@@ -141,7 +142,7 @@ class _CreateOrgDialogState extends State<CreateOrgDialog> {
                               label: 'Organization Type',
                               child: AppDropdown48(
                                 value: _orgType,
-                                items: const [
+                                items: [
                                   'Select type...',
                                   'University',
                                   'School',
@@ -202,7 +203,7 @@ class _CreateOrgDialogState extends State<CreateOrgDialog> {
                           ),
 
                           const SizedBox(height: 22),
-                          const Divider(height: 1, color: Color(0xFFEEF2F4)),
+                          Divider(height: 1, color: AppColors.divider),
                           const SizedBox(height: 18),
 
                           const AppSubHeaderText(title: 'Primary Administrator'),
@@ -290,7 +291,7 @@ class _CreateOrgDialogState extends State<CreateOrgDialog> {
 
                     const SizedBox(height: 22),
 
-                    const Center(
+                    Center(
                       child: Text(
                         '© 2024 Learnova Academic Platform. All rights reserved.',
                         textAlign: TextAlign.center,

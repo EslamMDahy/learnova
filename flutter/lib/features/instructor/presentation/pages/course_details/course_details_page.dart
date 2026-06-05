@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/storage/key_value_store_factory.dart';
 import '../../../../../core/network/error_mapper.dart';
+import '../../../../../core/routing/routes.dart';
 import '../../../data/courses_models.dart';
 import '../../../data/courses_providers.dart';
 import '../../controllers/course_details_controller.dart';
 import '../../widgets/course_tabs/overview_tab.dart';
 import '../../widgets/course_tabs/materials_tab.dart';
 import '../../widgets/course_tabs/outcomes_tab.dart';
-import '../../widgets/course_outcomes_panel.dart';
 import '../../widgets/course_tabs/question_bank_tab.dart';
+import '../../widgets/course_tabs/exam_templates_tab.dart';
 import '../../widgets/course_tabs/students_tab.dart';
+import '../../controllers/selected_course_provider.dart';
+import '../../course_route_identity.dart';
+
+enum CourseDetailsTab { overview, materials, outcomes, questionBank, templates, students }
 
 class CourseDetailsPage extends ConsumerStatefulWidget {
   final String courseSlug;
@@ -25,87 +30,177 @@ class CourseDetailsPage extends ConsumerStatefulWidget {
   /// [cachedCourse] is null (e.g. after a browser refresh).
   final int? cachedCourseId;
 
+  /// Route-backed active tab. Each tab has its own URL and lazy load boundary.
+  final CourseDetailsTab initialTab;
+
   const CourseDetailsPage({
     super.key,
     required this.courseSlug,
     this.cachedCourse,
     this.cachedCourseId,
+    this.initialTab = CourseDetailsTab.overview,
   });
 
   @override
   ConsumerState<CourseDetailsPage> createState() => _CourseDetailsPageState();
 }
 
-class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  late final List<Widget>? _pages;
-  late final _session = createSessionStore();
+class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage> {
   int _currentIndex = 0;
+  int? _activeCourseId;
+  final Set<int> _visitedTabIndexes = <int>{};
+  final Set<String> _loadedTabKeys = <String>{};
 
-  List<Widget> _buildPages(MyCourseItem course) => [
-        CourseOverviewTab(
-            key: const PageStorageKey('course-overview-tab'), course: course),
-        CourseMaterialsTab(
-            key: const PageStorageKey('course-materials-tab'), course: course),
-        CourseOutcomesTab(
-            key: const PageStorageKey('course-outcomes-tab'), course: course),
-        CourseQuestionBankTab(
-            key: const PageStorageKey('course-question-bank-tab'),
-            course: course),
-        CourseStudentsTab(
-            key: const PageStorageKey('course-students-tab'), course: course),
-      ];
+  void _syncVisitedTabs(MyCourseItem? course) {
+    final int? courseId = course?.id ?? widget.cachedCourseId;
+    if (_activeCourseId != courseId) {
+      _activeCourseId = courseId;
+      _visitedTabIndexes
+        ..clear()
+        ..add(widget.initialTab.index);
+      return;
+    }
+    _visitedTabIndexes.add(widget.initialTab.index);
+  }
 
-  String get _tabKey =>
-      'course:${widget.cachedCourse?.id ?? widget.cachedCourseId ?? widget.courseSlug}:active_tab';
+  Widget _buildPageForTab(MyCourseItem course, CourseDetailsTab tab) {
+    switch (tab) {
+      case CourseDetailsTab.overview:
+        return CourseOverviewTab(
+          key: PageStorageKey('course-${course.id}-overview-tab'),
+          course: course,
+        );
+      case CourseDetailsTab.materials:
+        return CourseMaterialsTab(
+          key: PageStorageKey('course-${course.id}-materials-tab'),
+          course: course,
+        );
+      case CourseDetailsTab.outcomes:
+        return CourseOutcomesTab(
+          key: PageStorageKey('course-${course.id}-outcomes-tab'),
+          course: course,
+        );
+      case CourseDetailsTab.questionBank:
+        return CourseQuestionBankTab(
+          key: PageStorageKey('course-${course.id}-question-bank-tab'),
+          course: course,
+        );
+      case CourseDetailsTab.templates:
+        return CourseExamTemplatesTab(
+          key: PageStorageKey('course-${course.id}-exam-templates-tab'),
+          course: course,
+        );
+      case CourseDetailsTab.students:
+        return CourseStudentsTab(
+          key: PageStorageKey('course-${course.id}-students-tab'),
+          course: course,
+        );
+    }
+  }
 
-  static const _tabs = [
+  List<Widget> _buildVisitedTabPages(MyCourseItem course) {
+    return CourseDetailsTab.values.map((CourseDetailsTab tab) {
+      if (!_visitedTabIndexes.contains(tab.index)) {
+        return const SizedBox.shrink();
+      }
+      return _buildPageForTab(course, tab);
+    }).toList();
+  }
+
+  static const _privateTabs = [
     _TabDef(icon: Icons.dashboard_outlined, label: 'Overview'),
     _TabDef(icon: Icons.folder_open_outlined, label: 'Materials'),
     _TabDef(icon: Icons.flag_outlined, label: 'Outcomes'),
     _TabDef(icon: Icons.quiz_outlined, label: 'Question Bank'),
+    _TabDef(icon: Icons.description_outlined, label: 'Templates'),
     _TabDef(icon: Icons.people_outline_rounded, label: 'Students'),
+  ];
+
+  static const _publicTabs = [
+    _TabDef(icon: Icons.dashboard_outlined, label: 'Overview'),
+    _TabDef(icon: Icons.folder_open_outlined, label: 'Materials'),
+    _TabDef(icon: Icons.flag_outlined, label: 'Outcomes'),
+    _TabDef(icon: Icons.quiz_outlined, label: 'Question Bank'),
+    _TabDef(icon: Icons.description_outlined, label: 'Templates'),
   ];
 
   @override
   void initState() {
     super.initState();
-    final storedIndex = int.tryParse(_session.getString(_tabKey) ?? '');
-    _currentIndex = storedIndex != null &&
-            storedIndex >= 0 &&
-            storedIndex < _tabs.length
-        ? storedIndex
-        : 0;
-    _tabController = TabController(
-        length: _tabs.length, vsync: this, initialIndex: _currentIndex);
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        setState(() => _currentIndex = _tabController.index);
-        _session.setString(_tabKey, _currentIndex.toString());
-      }
-    });
-
-    if (widget.cachedCourse != null) {
-      _loadCourseData(widget.cachedCourse!);
-    }
-  }
-
-  void _loadCourseData(MyCourseItem course) {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      await ref
-          .read(courseDetailsControllerProvider(course.id).notifier)
-          .loadModulesAndAllMaterials();
-      if (!mounted) return;
-      await ensureCourseLearningOutcomesLoaded(ref, course.id);
-    });
+    _currentIndex = widget.initialTab.index;
+    _syncVisitedTabs(widget.cachedCourse);
+    final course = widget.cachedCourse;
+    if (course != null) _loadActiveTabData(course);
   }
 
   @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  void didUpdateWidget(covariant CourseDetailsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTab != widget.initialTab) {
+      _currentIndex = widget.initialTab.index;
+    }
+    if (oldWidget.cachedCourseId != widget.cachedCourseId ||
+        oldWidget.cachedCourse?.id != widget.cachedCourse?.id) {
+      _activeCourseId = null;
+      _loadedTabKeys.clear();
+    }
+    _syncVisitedTabs(widget.cachedCourse);
+
+    final course = widget.cachedCourse;
+    if (course != null &&
+        (oldWidget.initialTab != widget.initialTab ||
+            oldWidget.cachedCourse?.id != course.id)) {
+      _loadActiveTabData(course);
+    }
+  }
+
+  void _loadActiveTabData(MyCourseItem course) {
+    final tab = widget.initialTab;
+    final key = '${course.id}:${tab.name}';
+    if (!_loadedTabKeys.add(key)) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final notifier = ref.read(courseDetailsControllerProvider(course.id).notifier);
+
+      switch (tab) {
+        case CourseDetailsTab.overview:
+          // Overview only needs the course structure. Do not preload materials,
+          // topics, questions, outcomes, or invitations from here.
+          await notifier.loadModules();
+          break;
+        case CourseDetailsTab.materials:
+          // Materials tab starts with modules; each module/material branch loads
+          // its own materials/topics only when opened by the user.
+          await notifier.loadModules();
+          break;
+        case CourseDetailsTab.outcomes:
+        case CourseDetailsTab.questionBank:
+        case CourseDetailsTab.templates:
+        case CourseDetailsTab.students:
+          // These tabs own their loading in their own widgets.
+          break;
+      }
+    });
+  }
+
+  String _routeForTab(MyCourseItem course, int index) {
+    final slug = buildCourseRouteSlug(course);
+    final tab = CourseDetailsTab.values[index];
+    switch (tab) {
+      case CourseDetailsTab.overview:
+        return Routes.courseDetails(slug);
+      case CourseDetailsTab.materials:
+        return Routes.courseMaterials(slug);
+      case CourseDetailsTab.outcomes:
+        return Routes.courseOutcomes(slug);
+      case CourseDetailsTab.questionBank:
+        return Routes.courseQuestionBank(slug);
+      case CourseDetailsTab.templates:
+        return Routes.courseTemplates(slug);
+      case CourseDetailsTab.students:
+        return Routes.courseStudents(slug);
+    }
   }
 
   @override
@@ -120,12 +215,7 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
       return asyncCourse.when(
         loading: () => _buildLoadingShell(),
         error: (e, _) => _buildErrorShell(mapApiFailure(e).message),
-        data: (course) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _loadCourseData(course);
-          });
-          return _buildContent(course);
-        },
+        data: (course) => _buildContent(course),
       );
     }
 
@@ -140,8 +230,8 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
     return Column(children: [
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.cardBg,
           border: Border(bottom: BorderSide(color: AppColors.border)),
         ),
         child: const Center(
@@ -165,7 +255,7 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
       ),
-    ]);
+    ],);
   }
 
   // ── Error shell ─────────────────────────────────────────────────────────────
@@ -174,8 +264,8 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
     return Column(children: [
       Container(
         height: 52,
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.cardBg,
           border: Border(bottom: BorderSide(color: AppColors.border)),
         ),
       ),
@@ -186,8 +276,8 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline,
-                    color: AppColors.dangerText, size: 40),
+                Icon(Icons.error_outline,
+                    color: AppColors.dangerText, size: 40,),
                 const SizedBox(height: 12),
                 Text(
                   'Could not load course',
@@ -204,29 +294,32 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
           ),
         ),
       ),
-    ]);
+    ],);
   }
 
   // ── Main content ────────────────────────────────────────────────────────────
 
   Widget _buildContent(MyCourseItem course) {
-    final pages = _buildPages(course);
+    _syncVisitedTabs(course);
+    _loadActiveTabData(course);
+    final visibleTabs = course.isPrivate ? _privateTabs : _publicTabs;
     return Column(children: [
       // ── Tab header — centered, does NOT stretch to full width ─────────────
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.cardBg,
           border: Border(bottom: BorderSide(color: AppColors.border)),
         ),
-        child: Center(
+        child: SizedBox(
+          width: double.infinity,
           child: _PillTabBar(
-            tabs: _tabs,
+            tabs: visibleTabs,
             currentIndex: _currentIndex,
             onTap: (i) {
-              setState(() => _currentIndex = i);
-              _session.setString(_tabKey, i.toString());
-              _tabController.animateTo(i);
+              if (i == _currentIndex) return;
+              SelectedCourseCache.set(course);
+              context.go(_routeForTab(course, i));
             },
           ),
         ),
@@ -234,10 +327,10 @@ class _CourseDetailsPageState extends ConsumerState<CourseDetailsPage>
       Expanded(
         child: IndexedStack(
           index: _currentIndex,
-          children: pages,
+          children: _buildVisitedTabPages(course),
         ),
       ),
-    ]);
+    ],);
   }
 }
 
@@ -257,26 +350,43 @@ class _PillTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IntrinsicWidth(
-      child: Container(
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          color: AppColors.pageBg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(tabs.length, (i) {
-            return _PillTab(
-              icon: tabs[i].icon,
-              label: tabs[i].label,
-              selected: i == currentIndex,
-              onTap: () => onTap(i),
-            );
-          }),
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 680;
+        final ultraCompact = constraints.maxWidth < 440;
+        final bar = Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: AppColors.pageBg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(tabs.length, (i) {
+              return _PillTab(
+                icon: tabs[i].icon,
+                label: tabs[i].label,
+                compact: compact,
+                showLabel: !ultraCompact || i == currentIndex,
+                selected: i == currentIndex,
+                onTap: () => onTap(i),
+              );
+            }),
+          ),
+        );
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+            child: Align(
+              child: bar,
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -287,12 +397,16 @@ class _PillTabBar extends StatelessWidget {
 class _PillTab extends StatefulWidget {
   final IconData icon;
   final String label;
+  final bool compact;
+  final bool showLabel;
   final bool selected;
   final VoidCallback onTap;
 
   const _PillTab({
     required this.icon,
     required this.label,
+    this.compact = false,
+    this.showLabel = true,
     required this.selected,
     required this.onTap,
   });
@@ -315,12 +429,12 @@ class _PillTabState extends State<_PillTab> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          padding: EdgeInsets.symmetric(horizontal: widget.compact ? 10 : 14, vertical: widget.compact ? 7 : 7),
           decoration: BoxDecoration(
             color: widget.selected
-                ? Colors.white
+                ? AppColors.cardBg
                 : _hovered
-                    ? Colors.white.withOpacity(0.5)
+                    ? AppColors.cardBg.withOpacity(0.62)
                     : Colors.transparent,
             borderRadius: BorderRadius.circular(7),
             boxShadow: widget.selected
@@ -344,20 +458,26 @@ class _PillTabState extends State<_PillTab> {
                     ? AppColors.primary
                     : AppColors.textMuted,
               ),
-              const SizedBox(width: 6),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontFamily: 'Inter',
-                  fontWeight: widget.selected
-                      ? FontWeight.w700
-                      : FontWeight.w500,
-                  color: widget.selected
-                      ? AppColors.textTitle
-                      : AppColors.textMuted,
+              if (widget.showLabel) ...[
+                SizedBox(width: widget.compact ? 5 : 6),
+                Text(
+                  widget.compact && widget.label == 'Question Bank'
+                      ? 'Questions'
+                      : widget.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: widget.compact ? 12 : 13,
+                    fontFamily: 'Inter',
+                    fontWeight: widget.selected
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                    color: widget.selected
+                        ? AppColors.textTitle
+                        : AppColors.textMuted,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

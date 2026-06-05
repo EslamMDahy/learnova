@@ -158,7 +158,7 @@ class SettingsApi {
       Endpoints.getPreferences,
       cancelToken: cancelToken,
     );
-    return UserPreferences.fromJson((res.data ?? {}).cast<String, dynamic>());
+    return UserPreferences.fromJson(_extractPreferences(res.data));
   }
 
   Future<UserPreferences> updatePreferences(
@@ -170,7 +170,14 @@ class SettingsApi {
       data: prefs.toJson(),
       cancelToken: cancelToken,
     );
-    return UserPreferences.fromJson((res.data ?? {}).cast<String, dynamic>());
+    return UserPreferences.fromJson(_extractPreferences(res.data));
+  }
+
+  Map<String, dynamic> _extractPreferences(Map<String, dynamic>? raw) {
+    final root = (raw ?? {}).cast<String, dynamic>();
+    final data = root['preferences'] ?? root['data'] ?? root['user_preferences'] ?? root;
+    if (data is Map) return data.cast<String, dynamic>();
+    return root;
   }
 
   String _msg(Map<String, dynamic>? data) {

@@ -53,13 +53,13 @@ Future<PickedBrowserFile> _readFile(html.File file) async {
     final result = reader.result;
     final bytes = result is Uint8List
         ? result
-        : Uint8List.view((result as ByteBuffer));
+        : Uint8List.view(result as ByteBuffer);
     completer.complete(PickedBrowserFile(
       name: file.name,
       mimeType: file.type,
       sizeBytes: bytes.length,
       bytes: bytes,
-    ));
+    ),);
   });
 
   reader.readAsArrayBuffer(file);

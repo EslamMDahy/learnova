@@ -22,17 +22,42 @@ class UserPreferences {
     required this.showOnlineStatus,
   });
 
-  factory UserPreferences.defaults() => UserPreferences(
+  factory UserPreferences.defaults({String themeMode = 'light'}) => UserPreferences(
         emailNotifications: true,
         assignmentAlerts: true,
         courseUpdates: true,
         announcementNotifications: true,
         gradingNotifications: true,
         deadlineReminders: true,
-        themeMode: 'light',
+        themeMode: themeMode,
         profileVisibility: 'private',
         showOnlineStatus: true,
       );
+
+  UserPreferences copyWith({
+    bool? emailNotifications,
+    bool? assignmentAlerts,
+    bool? courseUpdates,
+    bool? announcementNotifications,
+    bool? gradingNotifications,
+    bool? deadlineReminders,
+    String? themeMode,
+    String? profileVisibility,
+    bool? showOnlineStatus,
+  }) {
+    return UserPreferences(
+      emailNotifications: emailNotifications ?? this.emailNotifications,
+      assignmentAlerts: assignmentAlerts ?? this.assignmentAlerts,
+      courseUpdates: courseUpdates ?? this.courseUpdates,
+      announcementNotifications:
+          announcementNotifications ?? this.announcementNotifications,
+      gradingNotifications: gradingNotifications ?? this.gradingNotifications,
+      deadlineReminders: deadlineReminders ?? this.deadlineReminders,
+      themeMode: themeMode ?? this.themeMode,
+      profileVisibility: profileVisibility ?? this.profileVisibility,
+      showOnlineStatus: showOnlineStatus ?? this.showOnlineStatus,
+    );
+  }
 
   static bool _toBool(dynamic v, {required bool fallback}) {
     if (v == null) return fallback;

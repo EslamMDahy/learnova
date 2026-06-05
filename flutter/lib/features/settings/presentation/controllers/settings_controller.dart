@@ -6,6 +6,7 @@ import '../../../../core/error/app_failure.dart';
 import '../../../../core/log/app_logger.dart';
 import '../../../../core/network/error_mapper.dart';
 import '../../../../core/storage/token_storage.dart';
+import '../../../../core/theme/theme_preference_storage.dart';
 import '../../../../core/storage/user_storage.dart';
 import '../../data/dto/user_preferences.dart';
 import '../../data/dto/user_profile.dart';
@@ -23,7 +24,14 @@ final settingsControllerProvider =
 );
 
 class SettingsController extends StateNotifier<SettingsState> {
-  SettingsController(this.ref) : super(const SettingsState());
+  SettingsController(this.ref)
+      : super(
+          SettingsState(
+            preferences: UserPreferences.defaults(
+              themeMode: ThemePreferenceStorage.readThemeMode(),
+            ),
+          ),
+        );
 
   final Ref ref;
 
@@ -37,6 +45,17 @@ class SettingsController extends StateNotifier<SettingsState> {
     if (state.error != null || state.success != null) {
       state = state.copyWith();
     }
+  }
+
+  void applyLocalThemeMode(String value) {
+    final normalized = ThemePreferenceStorage.normalize(value);
+    ThemePreferenceStorage.saveThemeMode(normalized);
+
+    final prefs = state.preferences ??
+        UserPreferences.defaults(themeMode: normalized);
+    state = state.copyWith(
+      preferences: prefs.copyWith(themeMode: normalized),
+    );
   }
 
   void _resetLoadCancel() {
@@ -131,9 +150,10 @@ Future<void> load() async {
 
     final profileJson = profile.toJson();
     final mergedUser = <String, dynamic>{...existingUser};
-    profileJson.forEach((k, v) {
-      if (v != null) mergedUser[k] = v;
-    });
+    for (final key in const ['id', 'full_name', 'email', 'system_role']) {
+      final value = profileJson[key];
+      if (value != null) mergedUser[key] = value;
+    }
 
     UserStorage.saveMe(
       {
@@ -149,8 +169,15 @@ Future<void> load() async {
     UserPreferences prefs;
     try {
       prefs = await _repo.getPreferences(cancelToken: _loadCancel);
+      prefs = prefs.copyWith(
+        themeMode: ThemePreferenceStorage.normalize(prefs.themeMode),
+      );
+      ThemePreferenceStorage.saveThemeMode(prefs.themeMode);
     } catch (e, st) {
-      prefs = state.preferences ?? UserPreferences.defaults();
+      prefs = state.preferences ??
+          UserPreferences.defaults(
+            themeMode: ThemePreferenceStorage.readThemeMode(),
+          );
       _reportSoftWarning(
         'Preferences could not be loaded. Showing defaults for now.',
         error: e,
@@ -381,8 +408,8 @@ Future<void> load() async {
         universityEmail: updatedProfile.universityEmail ?? old?.universityEmail,
         languagePreference: updatedProfile.languagePreference,
         systemRole: updatedProfile.systemRole,
-        isEmailVerified: updatedProfile.isEmailVerified,
-        accountStatus: updatedProfile.accountStatus,
+        isEmailVerified: old?.isEmailVerified ?? updatedProfile.isEmailVerified,
+        accountStatus: old?.accountStatus ?? updatedProfile.accountStatus,
         createdAt: updatedProfile.createdAt ?? old?.createdAt,
         lastLoginAt: updatedProfile.lastLoginAt ?? old?.lastLoginAt,
       );
@@ -398,7 +425,13 @@ Future<void> load() async {
       );
 
       // preferences
-      final currentPrefs = state.preferences ?? UserPreferences.defaults();
+      final currentPrefs = state.preferences ??
+          UserPreferences.defaults(
+            themeMode: ThemePreferenceStorage.readThemeMode(),
+          );
+      if (themeMode != null) {
+        applyLocalThemeMode(themeMode);
+      }
       final nextPrefs = UserPreferences(
         emailNotifications: emailNotifications ?? currentPrefs.emailNotifications,
         assignmentAlerts: assignmentAlerts,
@@ -422,8 +455,15 @@ Future<void> load() async {
           nextPrefs,
           cancelToken: _saveCancel,
         );
+        savedPrefs = savedPrefs.copyWith(
+          themeMode: ThemePreferenceStorage.normalize(savedPrefs.themeMode),
+        );
+        ThemePreferenceStorage.saveThemeMode(savedPrefs.themeMode);
       } catch (e, st) {
-        savedPrefs = nextPrefs;
+        savedPrefs = nextPrefs.copyWith(
+          themeMode: ThemePreferenceStorage.normalize(nextPrefs.themeMode),
+        );
+        ThemePreferenceStorage.saveThemeMode(savedPrefs.themeMode);
         preferencesSyncFailed = true;
         _reportSoftWarning(
           'Profile was saved, but preference changes could not be synced.',

@@ -17,18 +17,18 @@ import '../../data/mock_services.dart';
 
 // ── Colors ────────────────────────────────────────────────────────────────────
 class _C {
-  static const blue       = Color(0xFF137FEC);
-  static const blueSoft   = Color(0xFFEFF6FF);
-  static const blueBdr    = Color(0xFFBFDBFE);
-  static const purple     = Color(0xFF7C3AED);
-  static const purpleSoft = Color(0xFFF5F3FF);
-  static const purpleBdr  = Color(0xFFDDD6FE);
-  static const green      = Color(0xFF16A34A);
-  static const greenSoft  = Color(0xFFF0FDF4);
-  static const amber      = Color(0xFFD97706);
-  static const amberSoft  = Color(0xFFFFFBEB);
-  static const red        = Color(0xFFDC2626);
-  static const redSoft    = Color(0xFFFEF2F2);
+  static Color get blue => AppColors.primary;
+  static Color get blueSoft => AppColors.primarySoft;
+  static Color get blueBdr => AppColors.badgeBlueBorder;
+  static Color get purple => AppColors.purpleText;
+  static Color get purpleSoft => AppColors.purpleBg;
+  static Color get purpleBdr => AppColors.purpleBorder;
+  static Color get green => AppColors.successText;
+  static Color get greenSoft => AppColors.successBg;
+  static Color get amber => AppColors.warningText;
+  static Color get amberSoft => AppColors.warningSoftBg;
+  static Color get red => AppColors.dangerText;
+  static Color get redSoft => AppColors.dangerBg;
 }
 
 // ── Providers ─────────────────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ class _TopicManagementPanelState extends ConsumerState<TopicManagementPanel> {
     if (mounted) {
       AppToast.success(context,
           title: 'AI Topics Generated',
-          message: '${created.length} topics extracted from materials.');
+          message: '${created.length} topics extracted from materials.',);
     }
   }
 
@@ -158,7 +158,7 @@ class _TopicManagementPanelState extends ConsumerState<TopicManagementPanel> {
     if (mounted) {
       AppToast.success(context,
           title: 'Topic added',
-          message: '"${topic.title}" created manually.');
+          message: '"${topic.title}" created manually.',);
     }
   }
 
@@ -176,7 +176,7 @@ class _TopicManagementPanelState extends ConsumerState<TopicManagementPanel> {
         );
     if (mounted) {
       AppToast.success(context,
-          title: 'Topic updated', message: '"${updated.title}" saved.');
+          title: 'Topic updated', message: '"${updated.title}" saved.',);
     }
   }
 
@@ -191,7 +191,7 @@ class _TopicManagementPanelState extends ConsumerState<TopicManagementPanel> {
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete', style: TextStyle(color: Color(0xFFDC2626)))),
+              child: Text('Delete', style: TextStyle(color: AppColors.dangerText)),),
         ],
       ),
     );
@@ -208,6 +208,7 @@ class _TopicManagementPanelState extends ConsumerState<TopicManagementPanel> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final topics   = ref.watch(_topicsProvider(widget.moduleId));
     final loading  = ref.watch(_topicsLoadingProvider(widget.moduleId));
     final aiGen    = ref.watch(_aiGeneratingProvider(widget.moduleId));
@@ -221,25 +222,25 @@ class _TopicManagementPanelState extends ConsumerState<TopicManagementPanel> {
         // ── Header ───────────────────────────────────────────────────────────
         Container(
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: AppColors.cardBg,
             border: Border(bottom: BorderSide(color: AppColors.border)),
           ),
           child: Row(children: [
             Container(
               width: 36, height: 36,
               decoration: BoxDecoration(color: _C.blueSoft, borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.topic_outlined, size: 18, color: _C.blue),
+              child: Icon(Icons.topic_outlined, size: 18, color: _C.blue),
             ),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(widget.moduleTitle,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textTitle),),
               Text('${topics.length} topic${topics.length == 1 ? "" : "s"}'
                   '${aiCount > 0 ? " · $aiCount AI" : ""}'
                   '${manualCount > 0 ? " · $manualCount Manual" : ""}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-            ])),
+                  style: TextStyle(fontSize: 12, color: AppColors.textMuted),),
+            ],),),
             // AI Generate button
             _AiGenerateButton(loading: aiGen, onTap: _generateWithAi),
             const SizedBox(width: 8),
@@ -254,20 +255,20 @@ class _TopicManagementPanelState extends ConsumerState<TopicManagementPanel> {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               ),
             ),
-          ]),
+          ],),
         ),
 
         // ── Legend row ────────────────────────────────────────────────────────
         Container(
-          color: Colors.white,
+          color: AppColors.cardBg,
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
-          child: const Wrap(spacing: 14, runSpacing: 6, children: [
+          child: Wrap(spacing: 14, runSpacing: 6, children: [
             _BadgeLegend(label: 'AI Generated', bg: _C.blueSoft, fg: _C.blue),
             _BadgeLegend(label: 'Added Manually', bg: _C.purpleSoft, fg: _C.purple),
             _DiffDot(label: 'Beginner', color: _C.green),
             _DiffDot(label: 'Intermediate', color: _C.amber),
             _DiffDot(label: 'Advanced', color: _C.red),
-          ]),
+          ],),
         ),
         Container(height: 1, color: AppColors.border),
 
@@ -291,7 +292,7 @@ class _TopicManagementPanelState extends ConsumerState<TopicManagementPanel> {
                           ),
                         ),
         ),
-      ]),
+      ],),
     );
   }
 }
@@ -313,6 +314,7 @@ class _AiGenerateButtonState extends State<_AiGenerateButton> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return MouseRegion(
       cursor: widget.loading ? MouseCursor.defer : SystemMouseCursors.click,
       onEnter: (_) => setState(() => _h = true),
@@ -323,24 +325,24 @@ class _AiGenerateButtonState extends State<_AiGenerateButton> {
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
-            color: _h && !widget.loading ? _C.blueSoft : Colors.white,
+            color: _h && !widget.loading ? _C.blueSoft : AppColors.cardBg,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: _h && !widget.loading ? _C.blue : AppColors.border),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             if (widget.loading)
-              const SizedBox(
+              SizedBox(
                 width: 14, height: 14,
                 child: CircularProgressIndicator(strokeWidth: 2, color: _C.blue),
               )
             else
-              const Icon(Icons.auto_awesome_rounded, size: 15, color: _C.blue),
+              Icon(Icons.auto_awesome_rounded, size: 15, color: _C.blue),
             const SizedBox(width: 7),
             Text(
               widget.loading ? 'Generating…' : 'Generate with AI',
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _C.blue),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _C.blue),
             ),
-          ]),
+          ],),
         ),
       ),
     );
@@ -365,12 +367,13 @@ class _TopicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final lo = outcomes.where((o) => o.id.toString() == topic.linkedOutcomeId).firstOrNull;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
@@ -379,13 +382,13 @@ class _TopicCard extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(topic.title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textTitle)),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textTitle),),
           const SizedBox(height: 6),
           Wrap(spacing: 6, runSpacing: 4, children: [
             _DifficultyChip(difficulty: topic.difficulty),
             if (lo != null) _LoChip(code: lo.code, description: lo.title, difficulty: lo.difficulty),
-          ]),
-        ])),
+          ],),
+        ],),),
         const SizedBox(width: 8),
         IconButton(
           icon: const Icon(Icons.edit_outlined, size: 17),
@@ -396,12 +399,12 @@ class _TopicCard extends StatelessWidget {
         ),
         IconButton(
           icon: const Icon(Icons.delete_outline, size: 17),
-          color: const Color(0xFFDC2626),
+          color: AppColors.dangerText,
           tooltip: 'Delete',
           onPressed: onDelete,
           visualDensity: VisualDensity.compact,
         ),
-      ]),
+      ],),
     );
   }
 }
@@ -457,21 +460,22 @@ class _TopicEditDialogState extends State<_TopicEditDialog> {
       Navigator.pop(context, widget.existing!.copyWith(
         title: title, source: _source, difficulty: _difficulty,
         linkedOutcomeId: _linkedOutcomeId?.toString(), updatedAt: DateTime.now(),
-      ));
+      ),);
     } else {
       Navigator.pop(context, TopicCreateRequest(
         title: title, source: _source,
         difficulty: _difficulty, linkedOutcomeId: _linkedOutcomeId?.toString(),
-      ));
+      ),);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final isEdit = widget.existing != null;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.cardBg,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 500),
@@ -494,11 +498,11 @@ class _TopicEditDialogState extends State<_TopicEditDialog> {
               const SizedBox(width: 12),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(isEdit ? 'Edit Topic' : 'Add Topic Manually',
-                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textTitle),),
                 Text(isEdit ? 'Update topic details.' : 'Add a topic the AI might have missed.',
-                    style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-              ]),
-            ]),
+                    style: TextStyle(fontSize: 12, color: AppColors.textMuted),),
+              ],),
+            ],),
             const SizedBox(height: 22),
 
             // Topic Name
@@ -514,7 +518,7 @@ class _TopicEditDialogState extends State<_TopicEditDialog> {
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(9)),
                 focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(9),
-                    borderSide: const BorderSide(color: _C.blue, width: 1.5)),
+                    borderSide: BorderSide(color: _C.blue, width: 1.5),),
                 isDense: true,
               ),
             ),
@@ -528,14 +532,14 @@ class _TopicEditDialogState extends State<_TopicEditDialog> {
                 label: 'AI Generated', icon: Icons.auto_awesome,
                 selected: _source == TopicSource.ai, selectedColor: _C.blue,
                 onTap: () => setState(() => _source = TopicSource.ai),
-              )),
+              ),),
               const SizedBox(width: 10),
               Expanded(child: _RadioChip(
                 label: 'Manual', icon: Icons.edit_note_rounded,
                 selected: _source == TopicSource.manual, selectedColor: _C.purple,
                 onTap: () => setState(() => _source = TopicSource.manual),
-              )),
-            ]),
+              ),),
+            ],),
             const SizedBox(height: 18),
 
             // Difficulty
@@ -546,28 +550,28 @@ class _TopicEditDialogState extends State<_TopicEditDialog> {
                 label: 'Beginner', color: _C.green,
                 selected: _difficulty == TopicDifficulty.beginner,
                 onTap: () => setState(() => _difficulty = TopicDifficulty.beginner),
-              )),
+              ),),
               const SizedBox(width: 8),
               Expanded(child: _DifficultyBtn(
                 label: 'Intermediate', color: _C.amber,
                 selected: _difficulty == TopicDifficulty.intermediate,
                 onTap: () => setState(() => _difficulty = TopicDifficulty.intermediate),
-              )),
+              ),),
               const SizedBox(width: 8),
               Expanded(child: _DifficultyBtn(
                 label: 'Advanced', color: _C.red,
                 selected: _difficulty == TopicDifficulty.advanced,
                 onTap: () => setState(() => _difficulty = TopicDifficulty.advanced),
-              )),
-            ]),
+              ),),
+            ],),
 
             // Learning Outcome link
             if (widget.outcomes.isNotEmpty) ...[
               const SizedBox(height: 18),
               const _FieldLabel('Link to Learning Outcome'),
               const SizedBox(height: 4),
-              const Text('Connect this topic to a course learning outcome.',
-                  style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+              Text('Connect this topic to a course learning outcome.',
+                  style: TextStyle(fontSize: 12, color: AppColors.textMuted),),
               const SizedBox(height: 8),
               DropdownButtonFormField<int?>(
                 value: _linkedOutcomeId,
@@ -577,21 +581,21 @@ class _TopicEditDialogState extends State<_TopicEditDialog> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(9)),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(9),
-                      borderSide: const BorderSide(color: _C.blue, width: 1.5)),
+                      borderSide: BorderSide(color: _C.blue, width: 1.5),),
                   isDense: true,
                 ),
                 items: [
-                  const DropdownMenuItem<int?>(
-                      child: Text('— None —', style: TextStyle(color: AppColors.textMuted))),
+                  DropdownMenuItem<int?>(
+                      child: Text('— None —', style: TextStyle(color: AppColors.textMuted)),),
                   ...widget.outcomes.map((o) => DropdownMenuItem<int?>(
                     value: o.id,
                     child: Row(children: [
                       _DiffDotInline(o.difficulty),
                       const SizedBox(width: 8),
                       Expanded(child: Text('${o.code} – ${o.title}',
-                          overflow: TextOverflow.ellipsis)),
-                    ]),
-                  )),
+                          overflow: TextOverflow.ellipsis,),),
+                    ],),
+                  ),),
                 ],
                 onChanged: (v) => setState(() => _linkedOutcomeId = v),
               ),
@@ -611,8 +615,8 @@ class _TopicEditDialogState extends State<_TopicEditDialog> {
                 style: FilledButton.styleFrom(backgroundColor: _C.blue),
                 child: Text(isEdit ? 'Save Changes' : 'Add Topic'),
               ),
-            ]),
-          ]),
+            ],),
+          ],),
         ),
       ),
     );
@@ -633,13 +637,13 @@ class _EmptyState extends StatelessWidget {
       Container(
         width: 64, height: 64,
         decoration: BoxDecoration(color: _C.blueSoft, borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.topic_outlined, size: 30, color: _C.blue),
+        child: Icon(Icons.topic_outlined, size: 30, color: _C.blue),
       ),
       const SizedBox(height: 16),
-      const Text('No topics yet',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
+      Text('No topics yet',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textTitle),),
       const SizedBox(height: 6),
-      const Text(
+      Text(
         'Generate topics automatically from materials,\nor add them manually.',
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
@@ -659,11 +663,11 @@ class _EmptyState extends StatelessWidget {
           label: const Text('Add Manually'),
           style: OutlinedButton.styleFrom(
             foregroundColor: _C.purple,
-            side: const BorderSide(color: _C.purple),
+            side: BorderSide(color: _C.purple),
           ),
         ),
-      ]),
-    ]),
+      ],),
+    ],),
   );
 }
 
@@ -675,24 +679,24 @@ class _AiLoadingState extends StatelessWidget {
       Container(
         width: 64, height: 64,
         decoration: BoxDecoration(color: _C.blueSoft, borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.auto_awesome_rounded, size: 30, color: _C.blue),
+        child: Icon(Icons.auto_awesome_rounded, size: 30, color: _C.blue),
       ),
       const SizedBox(height: 16),
-      const Text('AI is analyzing materials…',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
+      Text('AI is analyzing materials…',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textTitle),),
       const SizedBox(height: 8),
-      const Text('Extracting topics from course materials.',
-          style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
+      Text('Extracting topics from course materials.',
+          style: TextStyle(fontSize: 13, color: AppColors.textMuted),),
       const SizedBox(height: 20),
-      const SizedBox(
+      SizedBox(
         width: 180,
         child: LinearProgressIndicator(
-          backgroundColor: Color(0xFFDBEAFE),
+          backgroundColor: AppColors.badgeBlueBg,
           color: _C.blue,
           minHeight: 4,
         ),
       ),
-    ]),
+    ],),
   );
 }
 
@@ -706,6 +710,7 @@ class _SourceBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final isAi = source == TopicSource.ai;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -716,12 +721,12 @@ class _SourceBadge extends StatelessWidget {
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(isAi ? Icons.auto_awesome : Icons.edit_note_rounded,
-            size: 12, color: isAi ? _C.blue : _C.purple),
+            size: 12, color: isAi ? _C.blue : _C.purple,),
         const SizedBox(width: 4),
         Text(isAi ? 'AI' : 'Manual',
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                color: isAi ? _C.blue : _C.purple)),
-      ]),
+                color: isAi ? _C.blue : _C.purple,),),
+      ],),
     );
   }
 }
@@ -732,6 +737,7 @@ class _DifficultyChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     late Color color, bg;
     switch (difficulty) {
       case TopicDifficulty.beginner:     color = _C.green; bg = _C.greenSoft; break;
@@ -742,7 +748,7 @@ class _DifficultyChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
       child: Text(difficulty.label,
-          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: color)),
+          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: color),),
     );
   }
 }
@@ -754,6 +760,7 @@ class _LoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     // Color matches LO difficulty
     Color dotColor;
     switch (difficulty) {
@@ -766,15 +773,15 @@ class _LoChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0F9FF),
+          color: AppColors.infoBg,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFBAE6FD)),
+          border: Border.all(color: AppColors.infoBorder),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Container(width: 6, height: 6, decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle)),
           const SizedBox(width: 5),
-          Text(code, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF0369A1))),
-        ]),
+          Text(code, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.infoText)),
+        ],),
       ),
     );
   }
@@ -786,6 +793,7 @@ class _DiffDotInline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     Color c;
     switch (difficulty) {
       case OutcomeDifficulty.beginner:     c = _C.green; break;
@@ -803,8 +811,8 @@ class _BadgeLegend extends StatelessWidget {
   Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
     Container(width: 8, height: 8, decoration: BoxDecoration(color: fg, shape: BoxShape.circle)),
     const SizedBox(width: 4),
-    Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
-  ]);
+    Text(label, style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+  ],);
 }
 
 class _DiffDot extends StatelessWidget {
@@ -814,8 +822,8 @@ class _DiffDot extends StatelessWidget {
   Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
     Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
     const SizedBox(width: 4),
-    Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
-  ]);
+    Text(label, style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+  ],);
 }
 
 class _FieldLabel extends StatelessWidget {
@@ -823,16 +831,16 @@ class _FieldLabel extends StatelessWidget {
   const _FieldLabel(this.text, {this.required = false});
   @override
   Widget build(BuildContext context) => Row(children: [
-    Text(text, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
-    if (required) const Text(' *', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFFEF4444))),
-  ]);
+    Text(text, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
+    if (required) const Text(' *', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.errorDot)),
+  ],);
 }
 
 class _RadioChip extends StatelessWidget {
   final String label; final IconData icon; final bool selected;
   final Color selectedColor; final VoidCallback onTap;
   const _RadioChip({required this.label, required this.icon, required this.selected,
-      required this.selectedColor, required this.onTap});
+      required this.selectedColor, required this.onTap,});
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
@@ -848,8 +856,8 @@ class _RadioChip extends StatelessWidget {
         Icon(icon, size: 15, color: selected ? selectedColor : AppColors.textMuted),
         const SizedBox(width: 6),
         Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600,
-            color: selected ? selectedColor : AppColors.textMuted)),
-      ]),
+            color: selected ? selectedColor : AppColors.textMuted,),),
+      ],),
     ),
   );
 }
@@ -865,13 +873,13 @@ class _DifficultyBtn extends StatelessWidget {
         duration: const Duration(milliseconds: 120),
         padding: const EdgeInsets.symmetric(vertical: 9),
         decoration: BoxDecoration(
-          color: selected ? color.withOpacity(0.08) : Colors.white,
+          color: selected ? color.withOpacity(0.08) : AppColors.cardBg,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: selected ? color : AppColors.border, width: selected ? 1.5 : 1),
         ),
         alignment: Alignment.center,
         child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
-            color: selected ? color : AppColors.textMuted)),
+            color: selected ? color : AppColors.textMuted,),),
       ),
     ),
   );

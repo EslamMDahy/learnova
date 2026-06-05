@@ -20,6 +20,7 @@ class AppSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -58,6 +59,7 @@ class AppToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Row(
       children: [
         Expanded(
@@ -78,7 +80,7 @@ class AppToggleRow extends StatelessWidget {
           onChanged: onChanged,
           activeColor: Colors.white,
           activeTrackColor: AppColors.primary,
-          inactiveThumbColor: Colors.white,
+          inactiveThumbColor: AppColors.cardBg,
           inactiveTrackColor: AppColors.borderSoft,
         ),
       ],
@@ -96,11 +98,12 @@ class AppNotifIconButton extends StatelessWidget {
     this.onTap,
   });
 
-  static const Color _muted = Color(0xFF617589);
-  static const Color _danger = Color(0xFFEF4444);
+  static Color get _muted => AppColors.textMuted;
+  static Color get _danger => AppColors.errorDot;
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SizedBox(
       width: 24.01,
       height: 27.99,
@@ -117,7 +120,7 @@ class AppNotifIconButton extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            const Align(
+            Align(
               child: Icon(
                 Icons.notifications_none_outlined,
                 color: _muted,
@@ -134,7 +137,7 @@ class AppNotifIconButton extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: _danger,
                     borderRadius: BorderRadius.circular(9999),
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(color: AppColors.cardBg, width: 2),
                   ),
                 ),
               ),
@@ -184,17 +187,18 @@ class AppSidebar extends StatelessWidget {
   });
 
   static const double _w              = 260;
-  static const Color  _rightBorder    = Color(0xFFE8ECF0); // subtle right separator
-  static const Color  _sectionLabel   = Color(0xFFB0BAC8);
-  static const Color  _divider        = Color(0xFFEDF0F3);
+  static Color get _rightBorder => AppColors.sidebarBorder; // subtle right separator
+  static Color get _sectionLabel => AppColors.sidebarLabel;
+  static Color get _divider => AppColors.divider;
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SizedBox(
       width: _w,
       child: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.cardBg,
           border: Border(
             right: BorderSide(color: _rightBorder),
           ),
@@ -223,8 +227,8 @@ class AppSidebar extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(6, 20, 6, 4),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(6, 20, 6, 4),
                         child: Text(
                           'NAVIGATION',
                           style: TextStyle(
@@ -263,7 +267,7 @@ class AppSidebar extends StatelessWidget {
               // ── Bottom items ──────────────────────────────────────────
               Container(
                 padding: const EdgeInsets.fromLTRB(10, 10, 10, 14),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   border: Border(top: BorderSide(color: _divider)),
                 ),
                 child: Column(
@@ -305,13 +309,14 @@ class _AppSidebarBrandHeader extends StatelessWidget {
     required this.logoAssetPath,
   });
 
-  static const Color _text       = Color(0xFF111827);
-  static const Color _muted      = Color(0xFF6B7280);
-  static const Color _logoBg     = Color.fromARGB(255, 255, 255, 255);
-  static const Color _logoBorder = Color.fromARGB(255, 255, 255, 255);
+  static Color get _text => AppColors.textTitle;
+  static Color get _muted => AppColors.textGray500;
+  static Color get _logoBg => AppColors.cardBg;
+  static Color get _logoBorder => AppColors.border;
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
@@ -331,13 +336,13 @@ class _AppSidebarBrandHeader extends StatelessWidget {
                 padding: const EdgeInsets.all(5),
                 child: logoAssetPath == null
                     ? const Icon(Icons.auto_awesome, size: 18,
-                        color: Color(0xFF137FEC))
+                        color: AppColors.primary,)
                     : Image.asset(
                         logoAssetPath!,
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => const Icon(
                           Icons.auto_awesome, size: 18,
-                          color: Color(0xFF137FEC),
+                          color: AppColors.primary,
                         ),
                       ),
               ),
@@ -352,7 +357,7 @@ class _AppSidebarBrandHeader extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                       color: _text,
@@ -364,7 +369,7 @@ class _AppSidebarBrandHeader extends StatelessWidget {
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.3,
@@ -406,16 +411,17 @@ class _AppSidebarNavLinkState extends State<_AppSidebarNavLink> {
   bool _hovered = false;
   bool _focused = false;
 
-  static const Color _primary    = Color(0xFF137FEC);
-  static const Color _selectedBg = Color(0xFFEBF4FE);
-  static const Color _hoverBg    = Colors.transparent;
-  static const Color _idleFg     = Color(0xFF64748B);
-  static const Color _selectedFg = Color(0xFF137FEC);
-  static const Color _hoverFg    = Color(0xFF1E293B);
-  static const Color _barColor   = Color(0xFF137FEC);
+  static Color get _primary => AppColors.primary;
+  static Color get _selectedBg => AppColors.sidebarSelectedBg;
+  static Color get _hoverBg => AppColors.sidebarHoverBg;
+  static Color get _idleFg => AppColors.textMuted;
+  static Color get _selectedFg => AppColors.primary;
+  static Color get _hoverFg => AppColors.textGray;
+  static Color get _barColor => AppColors.primary;
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final sel = widget.selectedIndex == widget.index;
 
     final bg = sel ? _selectedBg : _hovered ? _hoverBg : Colors.transparent;
@@ -508,6 +514,7 @@ class AppFormHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return AppDialogTitleBlock(title: title, subtitle: subtitle);
   }
 }
@@ -521,6 +528,7 @@ class AppErrorBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -564,10 +572,11 @@ class AppSegmentedControl<T> extends StatelessWidget {
     this.disabled = false,
   });
 
-  static const _bg = Color(0xFFE5E7EB);
+  static Color get _bg => AppColors.borderGray;
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
@@ -605,23 +614,24 @@ class _SegmentChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: kIsWeb ? Duration.zero : const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
+          color: selected ? AppColors.cardBg : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           boxShadow: selected
-              ? const [
+              ? [
                   BoxShadow(
                     color: AppColors.shadowThin,
                     blurRadius: 6,
-                    offset: Offset(0, 2),
+                    offset: const Offset(0, 2),
                   ),
                 ]
-              : const [],
+              : [],
         ),
         child: Center(
           child: Text(
@@ -629,7 +639,7 @@ class _SegmentChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 13.5,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              color: selected ? AppColors.title : const Color(0xFF6B7280),
+              color: selected ? AppColors.title : AppColors.textGray500,
               height: 20 / 14,
             ),
           ),
@@ -665,6 +675,7 @@ class AppLabeledIconField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final radius = BorderRadius.circular(10);
 
     return Column(
@@ -678,7 +689,7 @@ class AppLabeledIconField extends StatelessWidget {
           obscureText: obscureText,
           onChanged: onChanged,
           validator: validator,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.title,
             fontSize: 15,
             height: 1.4,
@@ -693,7 +704,7 @@ class AppLabeledIconField extends StatelessWidget {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             enabledBorder: OutlineInputBorder(
               borderRadius: radius,
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              borderSide: BorderSide(color: AppColors.borderGray),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: radius,
@@ -701,11 +712,11 @@ class AppLabeledIconField extends StatelessWidget {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: radius,
-              borderSide: const BorderSide(color: Color(0xFFE53935)),
+              borderSide: BorderSide(color: AppColors.dangerText),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: radius,
-              borderSide: const BorderSide(color: Color(0xFFE53935), width: 1.5),
+              borderSide: BorderSide(color: AppColors.dangerText, width: 1.5),
             ),
             errorStyle: const TextStyle(fontSize: 12, height: 1.2),
           ),
@@ -724,21 +735,22 @@ class AppPasswordStrengthHints extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     Widget chip(String text, bool ok) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: ok ? const Color(0xFFEAF7EE) : const Color(0xFFF3F4F6),
+          color: ok ? AppColors.successBg : AppColors.divider,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: ok ? const Color(0xFFBEE6C7) : const Color(0xFFE5E7EB),
+            color: ok ? AppColors.greenBorder : AppColors.borderGray,
           ),
         ),
         child: Text(
           text,
           style: TextStyle(
             fontSize: 12,
-            color: ok ? const Color(0xFF1E7A36) : const Color(0xFF6B7280),
+            color: ok ? AppColors.successText : AppColors.textGray500,
             fontWeight: ok ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
@@ -775,10 +787,11 @@ class AppInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final isSuccess = type == AppInfoType.success;
 
     final bg = isSuccess ? AppColors.successBg : AppColors.dangerBg;
-    final border = isSuccess ? const Color(0xFFBEE6C7) : AppColors.dangerBorder;
+    final border = isSuccess ? AppColors.greenBorder : AppColors.dangerBorder;
     final icon =
         isSuccess ? Icons.check_circle_rounded : Icons.error_rounded;
     final iconColor = isSuccess ? AppColors.successText : AppColors.dangerTitle;
@@ -841,6 +854,7 @@ class AppAuthHeaderIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -921,6 +935,7 @@ class AppPrimaryLoadingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final bg = backgroundColor ?? AppColors.primary;
     final fg = foregroundColor ?? Colors.white;
 
@@ -982,18 +997,19 @@ class AppBackLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
       onTap: onTap,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.black54),
+          Icon(Icons.arrow_back_ios_new, size: 16, color: AppColors.textMuted),
           if (showLabel && (label ?? '').isNotEmpty) ...[
             const SizedBox(width: 6),
             Text(
               label!,
-              style: const TextStyle(
-                color: Colors.black54,
+              style: TextStyle(
+                color: AppColors.textMuted,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -1021,6 +1037,7 @@ class AppBackLinkLabeled extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return AppBackLink(label: label, onTap: onTap, showLabel: true);
   }
 }
@@ -1042,8 +1059,9 @@ class AppAuthShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
-      color: Colors.white,
+      color: AppColors.pageBg,
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 56),
       child: Center(
         child: SingleChildScrollView(
@@ -1062,21 +1080,22 @@ class AppAuthOrDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    Theme.of(context);
+    return Row(
       children: [
-        Expanded(child: Divider()),
+        const Expanded(child: Divider()),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             'OR CONTINUE WITH',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.black54,
+              color: AppColors.textMuted,
               letterSpacing: 1,
             ),
           ),
         ),
-        Expanded(child: Divider()),
+        const Expanded(child: Divider()),
       ],
     );
   }
@@ -1098,12 +1117,13 @@ class AppSocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SizedBox(
       width: double.infinity,
       height: 48,
       child: OutlinedButton(
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Colors.black26),
+          side: BorderSide(color: AppColors.borderSoft),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         onPressed: disabled ? null : onTap,
@@ -1114,7 +1134,7 @@ class AppSocialButton extends StatelessWidget {
             const SizedBox(width: 7),
             Text(
               label,
-              style: const TextStyle(color: Colors.black87, fontSize: 15),
+              style: TextStyle(color: AppColors.textTitle, fontSize: 15),
             ),
           ],
         ),
@@ -1137,6 +1157,7 @@ class AppSuccessBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.92, end: 1),
       duration: kIsWeb ? Duration.zero : const Duration(milliseconds: 220),
@@ -1150,15 +1171,15 @@ class AppSuccessBanner extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.successBg,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFBEE6C7)),
+          border: Border.all(color: AppColors.greenBorder),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 2),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
               child: Icon(Icons.check_circle,
-                  color: Color(0xFF1E7A36), size: 20),
+                  color: AppColors.successText, size: 20,),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -1167,8 +1188,8 @@ class AppSuccessBanner extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Color(0xFF145A29),
+                    style: TextStyle(
+                      color: AppColors.successText,
                       fontWeight: FontWeight.w800,
                       fontSize: 13,
                     ),
@@ -1176,8 +1197,8 @@ class AppSuccessBanner extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     message,
-                    style: const TextStyle(
-                      color: Color(0xFF1E7A36),
+                    style: TextStyle(
+                      color: AppColors.successText,
                       fontSize: 13,
                       height: 1.25,
                     ),
@@ -1189,10 +1210,10 @@ class AppSuccessBanner extends StatelessWidget {
             InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
               borderRadius: BorderRadius.circular(8),
               onTap: onClose,
-              child: const Padding(
-                padding: EdgeInsets.all(4),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
                 child:
-                    Icon(Icons.close, size: 16, color: Color(0xFF1E7A36)),
+                    Icon(Icons.close, size: 16, color: AppColors.successText),
               ),
             ),
           ],
@@ -1218,6 +1239,7 @@ class AppRememberForgotRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Row(
       children: [
         Checkbox(
@@ -1226,9 +1248,9 @@ class AppRememberForgotRow extends StatelessWidget {
           checkColor: Colors.white,
           onChanged: disabled ? null : onChanged,
         ),
-        const Text(
+        Text(
           'Remember me',
-          style: TextStyle(color: Colors.black, fontSize: 14),
+          style: TextStyle(color: AppColors.textTitle, fontSize: 14),
         ),
         const Spacer(),
         TextButton(
@@ -1259,6 +1281,7 @@ class AppOutlinedLoadingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SizedBox(
       width: double.infinity,
       height: height,
@@ -1290,6 +1313,7 @@ class AppTextLoadingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return TextButton(
       onPressed: loading ? null : onPressed,
       child: loading
@@ -1319,6 +1343,7 @@ class AppDialogShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Dialog(
       backgroundColor: AppColors.headerBg, // close to figma bg
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1346,6 +1371,7 @@ class AppDialogTitleBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1369,13 +1395,14 @@ class AppCardHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Row(
       children: [
         Icon(icon, color: AppColors.primary),
         const SizedBox(width: 10),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
             height: 25 / 20,
@@ -1394,9 +1421,10 @@ class AppSubHeaderText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w800,
         color: AppColors.title,
@@ -1419,6 +1447,7 @@ class AppLabeledField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1454,6 +1483,7 @@ class AppTextField48 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SizedBox(
       height: 48,
       child: TextField(
@@ -1464,7 +1494,7 @@ class AppTextField48 extends StatelessWidget {
         onChanged: onChanged,
         textInputAction: textInputAction,
         onSubmitted: onSubmitted,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: AppColors.title,
@@ -1472,17 +1502,17 @@ class AppTextField48 extends StatelessWidget {
         decoration: InputDecoration(
           counterText: '',
           hintText: hint,
-          hintStyle: const TextStyle(
+          hintStyle: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w400,
             color: AppColors.muted,
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.cardBg,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.borderSoft),
+            borderSide: BorderSide(color: AppColors.borderSoft),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
@@ -1507,6 +1537,7 @@ class AppInfoInlineBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
@@ -1515,20 +1546,20 @@ class AppInfoInlineBox extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.primarySoft,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFD5E7FF)),
+          border: Border.all(color: AppColors.infoBorder),
         ),
-        child: const Row(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.info_outline, color: AppColors.primary, size: 18),
-            SizedBox(width: 10),
+            const Icon(Icons.info_outline, color: AppColors.primary, size: 18),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Need help? Chat with our support team or learn more about how organizations work.',
                 style: TextStyle(
                   fontSize: 13,
                   height: 20 / 13,
-                  color: Color(0xFF33506B),
+                  color: AppColors.infoText,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -1554,10 +1585,11 @@ class AppLogoUrlUploader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.borderSoft),
       ),
@@ -1571,15 +1603,15 @@ class AppLogoUrlUploader extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: AppColors.borderSoft),
             ),
-            child: const Icon(Icons.image_outlined, color: AppColors.muted),
+            child: Icon(Icons.image_outlined, color: AppColors.muted),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
               controller: controller,
               onChanged: onChanged,
-              style: const TextStyle(fontSize: 14, color: AppColors.title),
-              decoration: const InputDecoration(
+              style: TextStyle(fontSize: 14, color: AppColors.title),
+              decoration: InputDecoration(
                 hintText: 'Paste logo URL (optional)',
                 hintStyle: TextStyle(fontSize: 14, color: AppColors.muted),
                 border: InputBorder.none,
@@ -1642,6 +1674,7 @@ class AppEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
@@ -1701,12 +1734,13 @@ class FigmaUmPageHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 30,
             fontWeight: FontWeight.w800,
@@ -1718,7 +1752,7 @@ class FigmaUmPageHeader extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           subtitle,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 16,
             fontWeight: FontWeight.w400,
@@ -1745,6 +1779,7 @@ class FigmaUmSquareIconBtn40 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Tooltip(
       message: tooltip,
       child: InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), 
@@ -1793,17 +1828,18 @@ const FigmaUmFiltersBar({
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final roleDrop = FigmaUmDropdown40(
       width: isNarrow ? 150 : 140,
       value: selectedRole,
-      items: const ['All Roles', 'owner', 'teacher', 'student', 'assistant'],
+      items: ['All Roles', 'owner', 'teacher', 'student', 'assistant'],
       onChanged: onRoleChanged,
     );
 
     final statusDrop = FigmaUmDropdown40(
       width: isNarrow ? 150 : 140,
       value: selectedStatus,
-      items: const ['All Status', 'pending', 'accepted', 'suspended', 'declined'],
+      items: ['All Status', 'pending', 'accepted', 'suspended', 'declined'],
       onChanged: onStatusChanged,
     );
 
@@ -1832,7 +1868,7 @@ const FigmaUmFiltersBar({
         border: Border.all(color: AppColors.cBorder),
         boxShadow: [
           const BoxShadow(
-              color: Color(0x0D000000), blurRadius: 2, offset: Offset(0, 1)),
+              color: Color(0x0D000000), blurRadius: 2, offset: Offset(0, 1),),
         ],
       ),
       child: isNarrow
@@ -1887,6 +1923,7 @@ class FigmaUmTableHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       height: 49,
       color: AppColors.cSurface,
@@ -1901,19 +1938,19 @@ class FigmaUmTableHeader extends StatelessWidget {
 
           if (!isNarrow)
             FigmaUmHeaderCellFlex(
-                flex: 3, text: 'DEPARTMENT', leftPad: cellLeftPad),
+                flex: 3, text: 'DEPARTMENT', leftPad: cellLeftPad,),
           if (!isNarrow)
             FigmaUmHeaderCellFlex(
-                flex: 2, text: 'JOINED DATE', leftPad: cellLeftPad),
+                flex: 2, text: 'JOINED DATE', leftPad: cellLeftPad,),
 
           FigmaUmHeaderCellFlex(flex: 2, text: 'STATUS', leftPad: cellLeftPad),
 
           SizedBox(
             width: actionsColWidth,
-            child: const Align(
+            child: Align(
               alignment: Alignment.centerRight,
               child: Padding(
-                padding: EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.only(right: 8),
                 child: Text(
                   'ACTIONS',
                   style: TextStyle(
@@ -1947,6 +1984,7 @@ class FigmaUmHeaderCellFlex extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Expanded(
       flex: flex,
       child: Padding(
@@ -1954,7 +1992,7 @@ class FigmaUmHeaderCellFlex extends StatelessWidget {
         child: Text(
           text,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 12,
             fontWeight: FontWeight.w500,
@@ -1976,14 +2014,15 @@ class FigmaUmEmptyTableState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Row(
       children: [
-        const Icon(Icons.inbox_outlined, color: AppColors.cGray500),
+        Icon(Icons.inbox_outlined, color: AppColors.cGray500),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
             message,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -2011,10 +2050,11 @@ class FigmaUmTableFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       height: 71,
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.cSurface,
         border: Border(top: BorderSide(color: AppColors.cBorder)),
       ),
@@ -2024,7 +2064,7 @@ class FigmaUmTableFooter extends StatelessWidget {
             child: Text(
               showingText,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
@@ -2081,6 +2121,7 @@ class FigmaUmPageBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Opacity(
       opacity: enabled ? 1 : 0.5,
       child: SizedBox(
@@ -2089,7 +2130,7 @@ class FigmaUmPageBtn extends StatelessWidget {
         child: OutlinedButton(
           onPressed: enabled ? onTap : null,
           style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Color(0xFFD1D5DB)),
+            side: BorderSide(color: AppColors.borderSoft),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             backgroundColor: AppColors.cBg,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -2102,7 +2143,7 @@ class FigmaUmPageBtn extends StatelessWidget {
                       child: Text(
                         label,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -2121,7 +2162,7 @@ class FigmaUmPageBtn extends StatelessWidget {
                       child: Text(
                         label,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -2150,6 +2191,7 @@ class JrHScroll extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: child,
@@ -2163,14 +2205,15 @@ class JrHeaderTxt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Text(
       text,
       overflow: TextOverflow.ellipsis,
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'Inter',
         fontSize: 12,
         fontWeight: FontWeight.w500,
-        color: Color(0xFF6B7280),
+        color: AppColors.textGray500,
       ),
     );
   }
@@ -2183,6 +2226,7 @@ class JrEmptyTableState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return const FigmaUmEmptyTableState(
       message: 'No pending join requests right now.',
     );
@@ -2195,6 +2239,7 @@ class JrRefreshIconBtnFigma extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SizedBox(
       height: 40,
       width: 40,
@@ -2202,11 +2247,11 @@ class JrRefreshIconBtnFigma extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           padding: EdgeInsets.zero,
-          side: const BorderSide(color: Color(0xFFE5E7EB)),
-          backgroundColor: const Color(0xFFF9FAFB),
+          side: BorderSide(color: AppColors.borderGray),
+          backgroundColor: AppColors.surfaceBg,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        child: const Icon(Icons.refresh, size: 18, color: Color(0xFF6B7280)),
+        child: Icon(Icons.refresh, size: 18, color: AppColors.textGray500),
       ),
     );
   }

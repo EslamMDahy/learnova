@@ -24,6 +24,7 @@ class _UpgradePlansContentState extends State<UpgradePlansContent> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return LayoutBuilder(
       builder: (context, c) {
         final isNarrow = c.maxWidth < 1100;
@@ -41,23 +42,23 @@ class _UpgradePlansContentState extends State<UpgradePlansContent> {
               constraints: const BoxConstraints(maxWidth: 1200),
               child: Column(
                 children: [
-                  const Text(
+                  Text(
                     'Ready to scale your institution?',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 34,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF0F172A),
+                      color: AppColors.textTitle,
                       height: 1.1,
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
+                  Text(
                     'Choose a plan that fits your needs. Get savings with a yearly subscription.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14.5,
-                      color: Color(0xFF64748B),
+                      color: AppColors.textMuted,
                       fontWeight: FontWeight.w600,
                       height: 1.35,
                     ),
@@ -221,20 +222,20 @@ class _UpgradePlansContentState extends State<UpgradePlansContent> {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: AppColors.surfaceBg,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: AppColors.border),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.lock_outline,
-                            size: 18, color: Color(0xFF64748B)),
-                        SizedBox(width: 10),
+                            size: 18, color: AppColors.textMuted,),
+                        const SizedBox(width: 10),
                         Text(
                           'Secure payments · Cancel anytime · Invoice available',
                           style: TextStyle(
-                            color: Color(0xFF64748B),
+                            color: AppColors.textMuted,
                             fontWeight: FontWeight.w700,
                           ),
                         ),

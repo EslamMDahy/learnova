@@ -15,11 +15,13 @@ from app.core.ai_service_integration.ai_request_tracking import (
     mark_ai_request_failed,
 )
 
-from .handlers import handle_content_structure_generation
+from .handlers import (handle_content_structure_generation,
+                       handle_question_generation)
 
 
 _HANDLER_REGISTRY = {
     "content_structure_generation": handle_content_structure_generation,
+    "question_generation": handle_question_generation,
 }
 
 

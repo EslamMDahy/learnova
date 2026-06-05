@@ -78,10 +78,11 @@ class _SetNewPasswordFormState extends ConsumerState<SetNewPasswordForm> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final state = ref.watch(resetPasswordControllerProvider);
 
     return Container(
-      color: Colors.white,
+      color: AppColors.cardBg,
       padding: EdgeInsets.symmetric(horizontal: widget.isMobile ? 24 : 56),
       child: Center(
         child: SingleChildScrollView(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/routing/routes.dart';
 import '../../core/storage/token_storage.dart';
 import '../../core/storage/user_storage.dart';
+import 'package:learnova/core/theme/app_theme.dart';
 
 /// Global fallback error screen — design-accurate implementation.
 ///
@@ -90,10 +91,11 @@ class _ErrorPageState extends State<ErrorPage>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final v = _variant;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: AppColors.pageBg,
       body: Stack(
         children: [
           // ── Top nav bar ───────────────────────────────────────────────
@@ -139,20 +141,21 @@ class _ErrorPageState extends State<ErrorPage>
 class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       height: 56,
-      color: Colors.white,
+      color: AppColors.cardBg,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
           Image.asset('assets/logo.webp', height: 32, cacheWidth: (32 * MediaQuery.of(context).devicePixelRatio).round()),
           const SizedBox(width: 10),
-          const Text(
+          Text(
             'Learnova',
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF111827),
+              color: AppColors.textTitle,
               letterSpacing: -0.3,
             ),
           ),
@@ -169,6 +172,7 @@ class _Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       height: 44,
       alignment: Alignment.center,
@@ -178,14 +182,14 @@ class _Footer extends StatelessWidget {
           Container(
             width: 1,
             height: 14,
-            color: const Color(0xFFD1D5DB),
+            color: AppColors.borderSoft,
             margin: const EdgeInsets.only(right: 12),
           ),
-          const Text(
+          Text(
             'Contact Support',
             style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF6B7280),
+              color: AppColors.textGray500,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -214,6 +218,7 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Stack(
@@ -239,10 +244,10 @@ class _Body extends StatelessWidget {
               Text(
                 variant.headline,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
+                  color: AppColors.textTitle,
                   height: 1.2,
                 ),
               ),
@@ -252,9 +257,9 @@ class _Body extends StatelessWidget {
                 child: Text(
                   message?.isNotEmpty ?? false ? message! : variant.subtitle,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
-                    color: Color(0xFF6B7280),
+                    color: AppColors.textGray500,
                     height: 1.55,
                   ),
                 ),
@@ -265,9 +270,9 @@ class _Body extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Error ID: $errorId',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF9CA3AF),
+                    color: AppColors.textHint,
                     fontFamily: 'monospace',
                   ),
                 ),
@@ -305,6 +310,7 @@ class _Buttons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Wrap(
       spacing: 12,
       runSpacing: 12,
@@ -315,7 +321,7 @@ class _Buttons extends StatelessWidget {
           height: 48,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF137FEC),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -336,13 +342,13 @@ class _Buttons extends StatelessWidget {
           height: 48,
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF374151),
-              side: const BorderSide(color: Color(0xFFD1D5DB)),
+              foregroundColor: AppColors.textGray,
+              side: BorderSide(color: AppColors.borderSoft),
               padding: const EdgeInsets.symmetric(horizontal: 24),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.cardBg,
             ),
             onPressed: onRefresh,
             icon: const Icon(Icons.refresh_rounded, size: 18),

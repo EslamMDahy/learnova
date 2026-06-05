@@ -43,7 +43,7 @@ class _InstructorCourseRoutePageState extends ConsumerState<InstructorCourseRout
     // Load my courses once when entering the page
     Future.microtask(() => ref
         .read(instructorCoursesControllerProvider.notifier)
-        .load(force: true));
+        .load(force: true),);
   }
 
   Future<void> _openCreateCourse() async {
@@ -90,13 +90,13 @@ class _InstructorCourseRoutePageState extends ConsumerState<InstructorCourseRout
   Widget build(BuildContext context) {
     final state = ref.watch(instructorCoursesControllerProvider);
 
+    final controller = ref.read(instructorCoursesControllerProvider.notifier);
+
     return InstructorCourseContent(
       loading: state.loading,
       errorText: state.error,
       courses: state.items,
-      onRefresh: () => ref
-          .read(instructorCoursesControllerProvider.notifier)
-          .load(force: true),
+      onRefresh: () => controller.load(force: true),
       onCreateNewCourse: _openCreateCourse,
     );
   }

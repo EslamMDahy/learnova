@@ -26,6 +26,7 @@ class AppDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final child = SizedBox(
       width: width,
       height: height,
@@ -41,11 +42,20 @@ class AppDropdown extends StatelessWidget {
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                  size: 22, color: AppColors.cGray500),
+              dropdownColor: AppColors.cardBg,
+              focusColor: AppColors.surfaceBg,
+              style: AppText.input.copyWith(fontWeight: FontWeight.w600),
+              icon: Icon(Icons.keyboard_arrow_down_rounded,
+                  size: 22, color: AppColors.cGray500,),
               onChanged: enabled ? (v) => onChanged(v!) : null,
               items: items
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .map((e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(
+                          e,
+                          style: AppText.input.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ),)
                   .toList(),
             ),
           ),
@@ -73,6 +83,7 @@ class AppDropdown48 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return AppDropdown(
       height: 48,
       value: value,
@@ -99,6 +110,7 @@ class AppDropdown56 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return AppDropdown(
       height: 56,
       value: value,
@@ -129,6 +141,7 @@ class AppDropdownSmall extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return AppDropdown(
       value: value,
       items: items,
@@ -156,13 +169,14 @@ class AppProfileMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return PopupMenuButton<String>(
       tooltip: '',
       elevation: 12,
-      color: Colors.white,
+      color: AppColors.cardBg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+        side: BorderSide(color: AppColors.border),
       ),
       onSelected: (v) {
         if (v == 'logout') onLogout();
@@ -175,13 +189,13 @@ class AppProfileMenu extends StatelessWidget {
             children: [
               Text(name,
                   style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 13)),
+                      fontWeight: FontWeight.w700, fontSize: 13,),),
               const SizedBox(height: 2),
               Text(email,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.w500,
                       fontSize: 12,
-                      color: Color(0xFF6B7280))),
+                      color: AppColors.textGray500,),),
             ],
           ),
         ),
@@ -197,7 +211,7 @@ class AppProfileMenu extends StatelessWidget {
           const SizedBox(width: 8),
           Text(name,
               style:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),),
           const SizedBox(width: 4),
           const Icon(Icons.expand_more_rounded, size: 18),
         ],
@@ -233,13 +247,13 @@ class _FigmaUmDropdown40State extends State<FigmaUmDropdown40> {
   OverlayEntry? _overlay;
   final _key = GlobalKey();
 
-  static const _text = Color(0xFF374151);
-  static const _muted = Color(0xFF6B7280);
-  static const _border = Color(0xFFE2E8F0);
-  static const _bgIdle = Color(0xFFF9FAFB);
-  static const _bgHover = Color(0xFFEFF6FF);
-  static const _bgOpen = Color(0xFFEFF6FF);
-  static const _blue = Color(0xFF137FEC);
+  static Color get _text => AppColors.textGray;
+  static Color get _muted => AppColors.textGray500;
+  static Color get _border => AppColors.border;
+  static Color get _bgIdle => AppColors.surfaceBg;
+  static Color get _bgHover => AppColors.primarySoft;
+  static Color get _bgOpen => AppColors.primarySoft;
+  static Color get _blue => AppColors.primary;
 
   bool get _isOpen => _overlay != null;
 
@@ -287,6 +301,7 @@ class _FigmaUmDropdown40State extends State<FigmaUmDropdown40> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final bg = _isOpen ? _bgOpen : _hover ? _bgHover : _bgIdle;
     final borderColor = _isOpen ? _blue : _border;
     final borderWidth = _isOpen ? 1.5 : 1.0;
@@ -313,7 +328,7 @@ class _FigmaUmDropdown40State extends State<FigmaUmDropdown40> {
                 child: Text(
                   widget.value,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
@@ -325,7 +340,7 @@ class _FigmaUmDropdown40State extends State<FigmaUmDropdown40> {
                 turns: _isOpen ? 0.5 : 0.0,
                 duration: const Duration(milliseconds: 150),
                 child: Icon(Icons.keyboard_arrow_down_rounded,
-                    size: 18, color: _isOpen ? _blue : _muted),
+                    size: 18, color: _isOpen ? _blue : _muted,),
               ),
             ],
           ),
@@ -368,7 +383,7 @@ class _FigmaDropdownMenuState extends State<_FigmaDropdownMenu>
   void initState() {
     super.initState();
     _ac = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 160))
+        vsync: this, duration: const Duration(milliseconds: 160),)
       ..forward();
     _fade = CurvedAnimation(parent: _ac, curve: Curves.easeOut);
     _slide = Tween<Offset>(begin: const Offset(0, -0.05), end: Offset.zero)
@@ -383,6 +398,7 @@ class _FigmaDropdownMenuState extends State<_FigmaDropdownMenu>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     const itemH = 40.0;
     const vPad = 6.0;
     final menuW = widget.anchorSize.width.clamp(150.0, 280.0);
@@ -410,9 +426,9 @@ class _FigmaDropdownMenuState extends State<_FigmaDropdownMenu>
               color: Colors.transparent,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.cardBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppColors.border),
                   boxShadow: [
                     const BoxShadow(
                       color: Color(0x14000000),
@@ -442,7 +458,7 @@ class _FigmaDropdownMenuState extends State<_FigmaDropdownMenu>
           ),
         ),
       ),
-    ]);
+    ],);
   }
 }
 
@@ -466,10 +482,11 @@ class _FigmaDropdownItemState extends State<_FigmaDropdownItem> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final bg = _hover
-        ? const Color(0xFFEFF6FF)
+        ? AppColors.primarySoft
         : widget.selected
-            ? const Color(0xFFF3F4F6)
+            ? AppColors.divider
             : Colors.transparent;
 
     return MouseRegion(
@@ -497,8 +514,8 @@ class _FigmaDropdownItemState extends State<_FigmaDropdownItem> {
                 fontSize: 13,
                 fontWeight: widget.selected ? FontWeight.w700 : FontWeight.w600,
                 color: widget.selected
-                    ? const Color(0xFF111827)
-                    : const Color(0xFF374151),
+                    ? AppColors.textTitle
+                    : AppColors.textGray,
               ),
             ),
           ),
@@ -531,18 +548,19 @@ class AppProfileDropdown extends StatelessWidget {
     this.onSettings,
   });
 
-  static const Color _mute = Color(0xFF6B7280);
-  static const Color _border = Color(0xFFE2E8F0);
+  static Color get _mute => AppColors.textGray500;
+  static Color get _border => AppColors.border;
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return PopupMenuButton<AppProfileMenuAction>(
       tooltip: '',
       elevation: 12,
-      color: Colors.white,
+      color: AppColors.cardBg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: _border),
+        side: BorderSide(color: _border),
       ),
       onSelected: (action) {
         switch (action) {
@@ -565,11 +583,11 @@ class AppProfileDropdown extends StatelessWidget {
             children: [
               Text(name,
                   style: const TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 13)),
+                      fontWeight: FontWeight.w800, fontSize: 13,),),
               const SizedBox(height: 2),
               Text(subtitle,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 12, color: _mute)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 12, color: _mute,),),
             ],
           ),
         ),
@@ -610,7 +628,7 @@ class AppProfileDropdown extends StatelessWidget {
         height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
+          color: AppColors.surfaceBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _border),
         ),
@@ -624,9 +642,9 @@ class AppProfileDropdown extends StatelessWidget {
             const SizedBox(width: 8),
             Text(name,
                 style: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 12)),
+                    fontWeight: FontWeight.w700, fontSize: 12,),),
             const SizedBox(width: 6),
-            const Icon(Icons.expand_more_rounded, size: 18, color: _mute),
+            Icon(Icons.expand_more_rounded, size: 18, color: _mute),
           ],
         ),
       ),
@@ -663,14 +681,14 @@ class _AppModernDropdownState<T> extends State<AppModernDropdown<T>> {
   OverlayEntry? _overlay;
   final _key = GlobalKey();
 
-  static const _text      = Color(0xFF374151);
-  static const _muted     = Color(0xFF6B7280);
-  static const _border    = Color(0xFFE2E8F0);
-  static const _bgIdle    = Color(0xFFF9FAFB);
-  static const _bgHover   = Color(0xFFEFF6FF);
-  static const _bgOpen    = Color(0xFFEFF6FF);
-  static const _blue      = Color(0xFF137FEC);
-  static const _labelColor = Color(0xFF374151);
+  static Color get _text => AppColors.textGray;
+  static Color get _muted => AppColors.textGray500;
+  static Color get _border => AppColors.border;
+  static Color get _bgIdle => AppColors.surfaceBg;
+  static Color get _bgHover => AppColors.primarySoft;
+  static Color get _bgOpen => AppColors.primarySoft;
+  static Color get _blue => AppColors.primary;
+  static Color get _labelColor => AppColors.textGray;
 
   bool get _isOpen => _overlay != null;
 
@@ -729,6 +747,7 @@ class _AppModernDropdownState<T> extends State<AppModernDropdown<T>> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final bg = _isOpen ? _bgOpen : _hover ? _bgHover : _bgIdle;
     final borderColor = _isOpen ? _blue : _border;
     final borderWidth = _isOpen ? 1.5 : 1.0;
@@ -738,7 +757,7 @@ class _AppModernDropdownState<T> extends State<AppModernDropdown<T>> {
       children: [
         Text(
           widget.label,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 12,
             color: _labelColor,
@@ -768,7 +787,7 @@ class _AppModernDropdownState<T> extends State<AppModernDropdown<T>> {
                     child: Text(
                       _displayLabel,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
@@ -828,7 +847,7 @@ class _ModernDropdownMenuState<T> extends State<_ModernDropdownMenu<T>>
   void initState() {
     super.initState();
     _ac = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 160))
+        vsync: this, duration: const Duration(milliseconds: 160),)
       ..forward();
     _fade = CurvedAnimation(parent: _ac, curve: Curves.easeOut);
     _slide = Tween<Offset>(begin: const Offset(0, -0.05), end: Offset.zero)
@@ -849,6 +868,7 @@ class _ModernDropdownMenuState<T> extends State<_ModernDropdownMenu<T>>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     const itemH = 40.0;
     const vPad = 6.0;
     final menuW =
@@ -888,9 +908,9 @@ class _ModernDropdownMenuState<T> extends State<_ModernDropdownMenu<T>>
               color: Colors.transparent,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.cardBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppColors.border),
                   boxShadow: [
                     const BoxShadow(
                       color: Color(0x14000000),
@@ -921,7 +941,7 @@ class _ModernDropdownMenuState<T> extends State<_ModernDropdownMenu<T>>
           ),
         ),
       ),
-    ]);
+    ],);
   }
 }
 
@@ -945,10 +965,11 @@ class _ModernDropdownItemState extends State<_ModernDropdownItem> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final bg = _hover
-        ? const Color(0xFFEFF6FF)
+        ? AppColors.primarySoft
         : widget.selected
-            ? const Color(0xFFF3F4F6)
+            ? AppColors.divider
             : Colors.transparent;
 
     return MouseRegion(
@@ -979,14 +1000,14 @@ class _ModernDropdownItemState extends State<_ModernDropdownItem> {
                         ? FontWeight.w700
                         : FontWeight.w600,
                     color: widget.selected
-                        ? const Color(0xFF111827)
-                        : const Color(0xFF374151),
+                        ? AppColors.textTitle
+                        : AppColors.textGray,
                   ),
                 ),
               ),
               if (widget.selected)
                 const Icon(Icons.check_rounded,
-                    size: 16, color: Color(0xFF137FEC)),
+                    size: 16, color: AppColors.primary,),
             ],
           ),
         ),
@@ -1100,8 +1121,8 @@ class _FigmaUmActionMenuOverlayState<T>
   late final Animation<double> _fade;
   late final Animation<Offset> _slide;
 
-  static const _border = Color(0xFFE2E8F0);
-  static const _divider = Color(0xFFE5E7EB);
+  static Color get _border => AppColors.border;
+  static Color get _divider => AppColors.divider;
 
   @override
   void initState() {
@@ -1123,6 +1144,7 @@ class _FigmaUmActionMenuOverlayState<T>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     const itemH = 40.0;
     const vPad = 6.0;
 
@@ -1168,7 +1190,7 @@ class _FigmaUmActionMenuOverlayState<T>
               color: Colors.transparent,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.cardBg,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _border),
                   boxShadow: [
@@ -1205,7 +1227,7 @@ class _FigmaUmActionMenuOverlayState<T>
           ),
         ),
       ),
-    ]);
+    ],);
   }
 }
 
@@ -1231,12 +1253,13 @@ class _FigmaUmActionMenuItem extends StatefulWidget {
 class _FigmaUmActionMenuItemState extends State<_FigmaUmActionMenuItem> {
   bool _hover = false;
 
-  static const _text = Color(0xFF374151);
-  static const _muted = Color(0xFF9CA3AF);
-  static const _hoverBg = Color(0xFFEFF6FF);
+  static Color get _text => AppColors.textGray;
+  static Color get _muted => AppColors.textHint;
+  static Color get _hoverBg => AppColors.primarySoft;
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final fg = widget.enabled ? _text : _muted;
 
     return MouseRegion(

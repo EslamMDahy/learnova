@@ -80,6 +80,7 @@ class _AppLabeledTextFieldState extends State<AppLabeledTextField> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final hasError = widget.errorText != null;
     final borderColor = hasError
         ? AppColors.dangerBorder
@@ -100,7 +101,7 @@ class _AppLabeledTextFieldState extends State<AppLabeledTextField> {
               ? BoxConstraints(minHeight: widget.height)
               : null,
           decoration: BoxDecoration(
-            color: widget.enabled ? Colors.white : AppColors.pageBg,
+            color: widget.enabled ? AppColors.fieldBg : AppColors.fieldDisabledBg,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: borderColor, width: borderWidth),
           ),
@@ -127,7 +128,7 @@ class _AppLabeledTextFieldState extends State<AppLabeledTextField> {
             decoration: InputDecoration(
               hintText: widget.hint,
               hintStyle: AppText.hint.copyWith(
-                  height: widget.expands ? 20 / 14 : null),
+                  height: widget.expands ? 20 / 14 : null,),
               suffixIcon: widget.suffix,
               isCollapsed: true,
               contentPadding: EdgeInsets.zero,
@@ -144,7 +145,7 @@ class _AppLabeledTextFieldState extends State<AppLabeledTextField> {
         if (hasError) ...[
           AppSpacing.gap4,
           Text(widget.errorText!,
-              style: AppText.mutedSmall.copyWith(color: AppColors.dangerText)),
+              style: AppText.mutedSmall.copyWith(color: AppColors.dangerText),),
         ] else if (widget.helper != null) ...[
           AppSpacing.gap6,
           Text(widget.helper!, style: AppText.mutedSmall),
@@ -175,12 +176,13 @@ class FigmaUmSearch40 extends StatelessWidget {
     this.hint = 'Search by name, ID, or email...',
   });
 
-  static const Color _text   = Color(0xFF111418);
-  static const Color _muted  = Color(0xFF617589);
-  static const Color _bg     = Color(0xFFF0F2F4);
+  static Color get _text => AppColors.textTitle;
+  static Color get _muted => AppColors.textMuted;
+  static Color get _bg => AppColors.headerBg;
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Theme(
       data: Theme.of(context).copyWith(
         inputDecorationTheme: const InputDecorationTheme(
@@ -198,7 +200,7 @@ class FigmaUmSearch40 extends StatelessWidget {
           height: 40,
           child: Row(children: [
             const SizedBox(width: 14),
-            const Icon(Icons.search, size: 18, color: _muted),
+            Icon(Icons.search, size: 18, color: _muted),
             const SizedBox(width: 10),
             Expanded(
               child: TextField(
@@ -219,7 +221,7 @@ class FigmaUmSearch40 extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       height: 19 / 14,
@@ -230,7 +232,7 @@ class FigmaUmSearch40 extends StatelessWidget {
                 ),
               ),
             ),
-          ]),
+          ],),
         ),
       ),
     );
@@ -255,6 +257,7 @@ class AppReadOnlyInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -263,7 +266,7 @@ class AppReadOnlyInput extends StatelessWidget {
         Container(
           height: 44,
           decoration: BoxDecoration(
-            color: AppColors.pageBg,
+            color: AppColors.fieldDisabledBg,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: AppColors.borderSoft),
           ),
@@ -275,15 +278,15 @@ class AppReadOnlyInput extends StatelessWidget {
               child: Text(
                 value,
                 style: AppText.input.copyWith(
-                    fontWeight: FontWeight.w500, color: AppColors.muted),
+                    fontWeight: FontWeight.w500, color: AppColors.muted,),
               ),
             ),
             if (rightTag != null) ...[
               Text(rightTag!.toUpperCase(), style: AppText.mutedSmall.copyWith(
-                  fontWeight: FontWeight.w700, letterSpacing: 0.3)),
+                  fontWeight: FontWeight.w700, letterSpacing: 0.3,),),
               const SizedBox(width: 14),
             ],
-          ]),
+          ],),
         ),
       ],
     );

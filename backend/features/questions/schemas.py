@@ -149,3 +149,29 @@ class QuestionUpdateRequest(BaseModel):
     tags: Optional[list] = None
 
     model_config = ConfigDict(extra="forbid")
+
+
+class QuestionGenerationConfig(BaseModel):
+    type: str = Field(..., min_length=1)
+    difficulty: str = Field(..., min_length=1)
+    count: int = Field(..., gt=0)
+
+    model_config = ConfigDict(extra="forbid")
+
+class QuestionGenerationTopicRequest(BaseModel):
+    topic_id: int = Field(..., gt=0)
+    question_configs: List[QuestionGenerationConfig] = Field(..., min_length=1)
+
+    model_config = ConfigDict(extra="forbid")
+
+class QuestionGenerationRequest(BaseModel):
+    topics: List[QuestionGenerationTopicRequest] = Field(..., min_length=1)
+
+    model_config = ConfigDict(extra="forbid")
+
+class QuestionGenerationResponse(BaseModel):
+    status: str
+    ai_processing_started: bool
+    message: Optional[str] = None
+
+    model_config = ConfigDict(extra="forbid")

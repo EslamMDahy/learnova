@@ -26,24 +26,19 @@ class CoursesApi {
     throw const FormatException('Invalid response from /courses/my');
   }
 
-  /// GET /courses/{id}
+  /// Resolve one course from GET /courses/my.
   ///
-  /// Used to reload a single course after a browser refresh, so the
-  /// details page is never dependent on the in-memory cache.
+  /// The uploaded backend does not expose GET /courses/{id}; using /courses/my
+  /// prevents course-detail refreshes from hitting a guaranteed 404.
   Future<MyCourseItem> getCourseById(
     int id, {
     CancelToken? cancelToken,
   }) async {
-    final res = await _client.get<Map<String, dynamic>>(
-      '/courses/$id',
-      cancelToken: cancelToken,
-    );
-    final data = res.data;
-    if (data is Map<String, dynamic>) {
-      AppLogger.log('GET /courses/$id -> $data', level: LogLevel.debug);
-      return MyCourseItem.fromJson(data);
+    final response = await myCourses(cancelToken: cancelToken);
+    for (final course in response.items) {
+      if (course.id == id) return course;
     }
-    throw FormatException('Invalid response from GET /courses/$id');
+    throw StateError('Course not found in your courses. Reopen it from My Courses.');
   }
 
   /// POST /courses
@@ -69,9 +64,14 @@ class CoursesApi {
     throw const FormatException('Invalid response from POST /courses');
   }
 
+
+
+  /// Course update/archive/delete endpoints are not exposed by the backend
+  /// currently uploaded for this project. Do not call guessed routes here.
+
   /// POST /courses/{courseId}/invitations/upload
   ///
-  /// Backend expects multipart file upload.
+  /// Backend expects multipart .xlsx file upload with form field name `file`.
   Future<Map<String, dynamic>> uploadInvitationsFile({
     required String courseId,
     required Uint8List bytes,

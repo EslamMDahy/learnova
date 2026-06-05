@@ -23,10 +23,18 @@ import '../../features/admin/presentation/pages/admin_route_pages.dart';
 import '../../features/instructor/presentation/pages/instructor_shell.dart';
 import '../../features/instructor/presentation/pages/instructor_route_pages.dart';
 import '../../features/instructor/presentation/pages/course_details/course_details_page.dart';
+import '../../features/instructor/presentation/pages/exam_correction_page.dart';
 import '../../features/instructor/presentation/widgets/Quizzes/quiz_screen.dart';
 import '../../features/instructor/presentation/controllers/selected_course_provider.dart';
 import '../../features/instructor/presentation/course_route_identity.dart';
 import '../../features/instructor/data/courses_providers.dart';
+import '../../features/student/presentation/pages/student_shell.dart';
+import '../../features/student/presentation/pages/dashboard/student_dashboard_page.dart';
+import '../../features/student/presentation/pages/courses/student_courses_page.dart';
+import '../../features/student/presentation/pages/courses/student_course_details_page.dart';
+import '../../features/student/presentation/pages/question_bank/student_question_bank_page.dart';
+import '../../features/student/presentation/pages/quiz_history/student_quiz_history_page.dart';
+import '../../features/student/presentation/pages/recommendations/student_recommendations_page.dart';
 import '../../shared/pages/error_page.dart';
 import '../../shared/widgets/empty_state_page.dart';
 
@@ -44,6 +52,41 @@ final _routerRefreshListenableProvider = Provider<ValueNotifier<int>>((ref) {
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refresh = ref.watch(_routerRefreshListenableProvider);
   final initialSession = SessionSnapshot.fromStorage();
+
+  Page<void> courseDetailsPage(
+    GoRouterState state,
+    CourseDetailsTab tab,
+  ) {
+    final slug = state.pathParameters['courseSlug']!;
+    final routeCourseId = parseCourseIdFromSlug(slug);
+
+    // Prefer the URL as the source of truth on refresh/deep links.
+    final cached = SelectedCourseCache.value;
+    if (cached != null && slugMatchesCourse(slug, cached)) {
+      return NoTransitionPage(
+        key: ValueKey<String>('course-details-$slug'),
+        child: CourseDetailsPage(
+          courseSlug: slug,
+          cachedCourse: cached,
+          cachedCourseId: routeCourseId ?? cached.id,
+          initialTab: tab,
+        ),
+      );
+    }
+
+    // Fall back to persisted selection only when the URL itself
+    // does not carry a parseable course id.
+    final courseId = routeCourseId ?? SelectedCourseCache.cachedCourseId;
+    return NoTransitionPage(
+      key: ValueKey<String>('course-details-$slug'),
+      child: CourseDetailsPage(
+        courseSlug: slug,
+        cachedCourse: null,
+        cachedCourseId: courseId,
+        initialTab: tab,
+      ),
+    );
+  }
 
   final router = GoRouter(
     navigatorKey: rootNavigatorKey,
@@ -77,7 +120,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           if (!s.hasMe) return Routes.home;
           if (s.isOwner) return Routes.adminUsers;
           if (s.isInstructor) return Routes.instructorDashboard;
-          return Routes.home;
+          return Routes.studentDashboard;
         }
 
         // ── Unauthenticated → protected route ───────────────────────────────
@@ -93,7 +136,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           if (!s.hasMe) return Routes.home;
           if (s.isOwner) return Routes.adminUsers;
           if (s.isInstructor) return Routes.instructorDashboard;
-          return Routes.home;
+          return Routes.studentDashboard;
+        }
+
+        // ── Legacy /home → role-based dashboard ─────────────────────────────
+        if (path == Routes.home && s.hasMe) {
+          if (s.isOwner) return Routes.adminUsers;
+          if (s.isInstructor) return Routes.instructorDashboard;
+          return Routes.studentDashboard;
         }
 
         // ── /settings → role-based settings ────────────────────────────────
@@ -101,7 +151,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           if (!s.hasMe) return null;
           if (s.isOwner) return Routes.adminSettings;
           if (s.isInstructor) return Routes.instructorSettings;
-          return null;
+          return Routes.studentSettings;
         }
 
         // ── Role guards ──────────────────────────────────────────────────────
@@ -114,9 +164,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         if (path.startsWith(Routes.instructor)) {
           if (!s.hasMe) return null;
           if (!s.isInstructor) {
-            return s.isOwner ? Routes.adminUsers : Routes.home;
+            return s.isOwner ? Routes.adminUsers : Routes.studentDashboard;
           }
           if (path == Routes.instructor) return Routes.instructorDashboard;
+        }
+
+        if (path.startsWith(Routes.student)) {
+          if (!s.hasMe) return null;
+          if (s.isOwner) return Routes.adminUsers;
+          if (s.isInstructor) return Routes.instructorDashboard;
+          if (path == Routes.student) return Routes.studentDashboard;
         }
 
         return null;
@@ -256,33 +313,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.instructorCourseDetails,
             name: RouteNames.instructorCourseDetails,
-            pageBuilder: (context, state) {
-              final slug = state.pathParameters['courseSlug']!;
-              final routeCourseId = parseCourseIdFromSlug(slug);
-
-              // Prefer the URL as the source of truth on refresh/deep links.
-              final cached = SelectedCourseCache.value;
-              if (cached != null && slugMatchesCourse(slug, cached)) {
-                return NoTransitionPage(
-                  child: CourseDetailsPage(
-                    courseSlug: slug,
-                    cachedCourse: cached,
-                    cachedCourseId: routeCourseId ?? cached.id,
-                  ),
-                );
-              }
-
-              // Fall back to persisted selection only when the URL itself
-              // does not carry a parseable course id.
-              final courseId = routeCourseId ?? SelectedCourseCache.cachedCourseId;
-              return NoTransitionPage(
-                child: CourseDetailsPage(
-                  courseSlug: slug,
-                  cachedCourse: null,
-                  cachedCourseId: courseId,
-                ),
-              );
-            },
+            pageBuilder: (_, state) =>
+                courseDetailsPage(state, CourseDetailsTab.overview),
+          ),
+          GoRoute(
+            path: Routes.instructorCourseMaterials,
+            name: RouteNames.instructorCourseMaterials,
+            pageBuilder: (_, state) =>
+                courseDetailsPage(state, CourseDetailsTab.materials),
+          ),
+          GoRoute(
+            path: Routes.instructorCourseOutcomes,
+            name: RouteNames.instructorCourseOutcomes,
+            pageBuilder: (_, state) =>
+                courseDetailsPage(state, CourseDetailsTab.outcomes),
+          ),
+          GoRoute(
+            path: Routes.instructorCourseQuestionBank,
+            name: RouteNames.instructorCourseQuestionBank,
+            pageBuilder: (_, state) =>
+                courseDetailsPage(state, CourseDetailsTab.questionBank),
+          ),
+          GoRoute(
+            path: Routes.instructorCourseTemplates,
+            name: RouteNames.instructorCourseTemplates,
+            pageBuilder: (_, state) =>
+                courseDetailsPage(state, CourseDetailsTab.templates),
+          ),
+          GoRoute(
+            path: Routes.instructorCourseStudents,
+            name: RouteNames.instructorCourseStudents,
+            pageBuilder: (_, state) =>
+                courseDetailsPage(state, CourseDetailsTab.students),
           ),
           GoRoute(
             path: Routes.instructorNotifications,
@@ -311,6 +373,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: Routes.instructorExamCorrection,
+            name: RouteNames.instructorExamCorrection,
+            pageBuilder: (_, __) => const NoTransitionPage(
+              child: ExamCorrectionPage(),
+            ),
+          ),
+          GoRoute(
             path: Routes.instructorQuizzes,
             name: RouteNames.instructorQuizzes,
             pageBuilder: (_, __) => const NoTransitionPage(
@@ -326,6 +395,72 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 title: 'Help & Support',
                 description:
                     'Browse guides, FAQs and contact the support team. Coming soon.',
+              ),
+            ),
+          ),
+        ],
+      ),
+
+      // ── Student shell ─────────────────────────────────────────────────────
+      ShellRoute(
+        builder: (_, __, child) => StudentShell(child: child),
+        routes: [
+          GoRoute(
+            path: Routes.studentDashboard,
+            name: RouteNames.studentDashboard,
+            pageBuilder: (_, __) =>
+                const NoTransitionPage(child: StudentDashboardPage()),
+          ),
+          GoRoute(
+            path: Routes.studentCourses,
+            name: RouteNames.studentCourses,
+            pageBuilder: (_, __) =>
+                const NoTransitionPage(child: StudentCoursesPage()),
+          ),
+          GoRoute(
+            path: Routes.studentCourseDetails,
+            name: RouteNames.studentCourseDetails,
+            pageBuilder: (_, __) =>
+                const NoTransitionPage(child: StudentCourseDetailsPage()),
+          ),
+          GoRoute(
+            path: Routes.studentQuestionBank,
+            name: RouteNames.studentQuestionBank,
+            pageBuilder: (_, __) =>
+                const NoTransitionPage(child: StudentQuestionBankPage()),
+          ),
+          GoRoute(
+            path: Routes.studentQuizHistory,
+            name: RouteNames.studentQuizHistory,
+            pageBuilder: (_, __) =>
+                const NoTransitionPage(child: StudentQuizHistoryPage()),
+          ),
+          GoRoute(
+            path: Routes.studentRecommendations,
+            name: RouteNames.studentRecommendations,
+            pageBuilder: (_, __) =>
+                const NoTransitionPage(child: StudentRecommendationsPage()),
+          ),
+          GoRoute(
+            path: Routes.studentNotifications,
+            name: RouteNames.studentNotifications,
+            pageBuilder: (_, __) =>
+                const NoTransitionPage(child: NotificationsPage()),
+          ),
+          GoRoute(
+            path: Routes.studentSettings,
+            name: RouteNames.studentSettings,
+            pageBuilder: (_, __) =>
+                const NoTransitionPage(child: SettingsPage()),
+          ),
+          GoRoute(
+            path: Routes.studentHelp,
+            name: RouteNames.studentHelp,
+            pageBuilder: (_, __) => const NoTransitionPage(
+              child: EmptyStatePage(
+                icon: Icons.help_outline_rounded,
+                title: 'Help & Support',
+                description: 'Browse guides, FAQs and contact support. Coming soon.',
               ),
             ),
           ),
@@ -349,6 +484,7 @@ String _initialLocationSafe(SessionSnapshot session) {
     if (!session.hasAccessToken) return Routes.landing;
     if (session.hasMe && session.isOwner) return Routes.adminUsers;
     if (session.hasMe && session.isInstructor) return Routes.instructorDashboard;
+    if (session.hasMe) return Routes.studentDashboard;
     return Routes.home;
   } catch (_) {
     _clearSessionSafe();
@@ -395,10 +531,21 @@ class RouteNames {
   static const settings  = 'settings';
   static const error     = 'error';
 
+  static const studentDashboard = 'studentDashboard';
+  static const studentCourses = 'studentCourses';
+  static const studentCourseDetails = 'studentCourseDetails';
+  static const studentQuestionBank = 'studentQuestionBank';
+  static const studentQuizHistory = 'studentQuizHistory';
+  static const studentRecommendations = 'studentRecommendations';
+  static const studentSettings = 'studentSettings';
+  static const studentHelp = 'studentHelp';
+  static const studentNotifications = 'studentNotifications';
+
   static const instructorDashboard   = 'instructorDashboard';
   static const instructorCourses     = 'instructorCourses';
   static const instructorCourseDetails = 'instructorCourseDetails';
   static const instructorQuestionBank  = 'instructorQuestionBank';
+  static const instructorExamCorrection = 'instructorExamCorrection';
   static const instructorQuizzes       = 'instructorQuizzes';
   static const instructorSettings      = 'instructorSettings';
   static const instructorHelp          = 'instructorHelp';
@@ -413,8 +560,10 @@ class RouteNames {
 
   // compat
   static const instructorCourseMaterials    = 'instructorCourseMaterials';
+  static const instructorCourseOutcomes     = 'instructorCourseOutcomes';
   static const instructorCourseStudents     = 'instructorCourseStudents';
   static const instructorCourseAnalytics    = 'instructorCourseAnalytics';
   static const instructorCourseQuestionBank = 'instructorCourseQuestionBank';
+  static const instructorCourseTemplates    = 'instructorCourseTemplates';
   static const instructorCourseQuizzes      = 'instructorCourseQuizzes';
 }

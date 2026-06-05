@@ -7,8 +7,9 @@ class _StepPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = active ? AppColors.primarySoft : const Color(0xFFF3F4F6);
-    final border = active ? AppColors.primary : const Color(0xFFE5E7EB);
+    Theme.of(context);
+    final bg = active ? AppColors.primarySoft : AppColors.headerBg;
+    final border = active ? AppColors.primary : AppColors.borderGray;
     final fg = active ? AppColors.primary : AppColors.muted;
     final weight = active ? FontWeight.w700 : FontWeight.w600;
 
@@ -52,17 +53,18 @@ class _ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       width: double.infinity,
       height: 375,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.borderSoft),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             blurRadius: 2,
-            offset: Offset(0, 1),
+            offset: const Offset(0, 1),
             color: AppColors.shadowSoft,
           ),
         ],
@@ -88,9 +90,9 @@ class _ProfileCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AppColors.borderSoft,
                           borderRadius: BorderRadius.circular(9999),
-                          border: Border.all(color: Colors.white, width: 4),
-                          boxShadow: const [
-                            BoxShadow(
+                          border: Border.all(color: AppColors.cardBg, width: 4),
+                          boxShadow: [
+                            const BoxShadow(
                               blurRadius: 6,
                               offset: Offset(0, 4),
                               color: Color(0x1A000000),
@@ -104,13 +106,13 @@ class _ProfileCard extends StatelessWidget {
                                   avatarUrl!,
                                   key: ValueKey(avatarUrl),
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Icon(
+                                  errorBuilder: (_, __, ___) => Icon(
                                     Icons.person,
                                     size: 54,
                                     color: AppColors.muted,
                                   ),
                                 )
-                              : const Icon(Icons.person, size: 54, color: AppColors.muted),
+                              : Icon(Icons.person, size: 54, color: AppColors.muted),
                         ),
                       ),
                       if (uploadingAvatar)
@@ -136,9 +138,9 @@ class _ProfileCard extends StatelessWidget {
                             width: 30,
                             height: 30,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF137FEC),
+                              color: AppColors.primary,
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
+                              border: Border.all(color: AppColors.cardBg, width: 2),
                             ),
                             child: const Icon(Icons.camera_alt, size: 15, color: Colors.white),
                           ),
@@ -149,7 +151,7 @@ class _ProfileCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 20,
                     height: 28 / 20,
@@ -159,7 +161,7 @@ class _ProfileCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w400,
                     fontSize: 14,
                     height: 20 / 14,
@@ -173,11 +175,11 @@ class _ProfileCard extends StatelessWidget {
                     color: AppColors.successBg,
                     borderRadius: BorderRadius.circular(9999),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _Dot(color: AppColors.successDot),
-                      SizedBox(width: 6),
+                      const _Dot(color: AppColors.successDot),
+                      const SizedBox(width: 6),
                       Text(
                         'Active Status',
                         style: TextStyle(
@@ -199,8 +201,8 @@ class _ProfileCard extends StatelessWidget {
             bottom: 24,
             child: Container(
               padding: const EdgeInsets.only(top: 24),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFFF0F2F4))),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.headerBg)),
               ),
               child: Column(
                 children: [
@@ -223,6 +225,7 @@ class _Dot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       width: 6,
       height: 6,
@@ -238,13 +241,14 @@ class _TwoColRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Row(
       children: [
         Expanded(
           child: Text(
             left,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w400,
               fontSize: 14,
               color: AppColors.muted,
@@ -256,7 +260,7 @@ class _TwoColRow extends StatelessWidget {
           child: Text(
             right,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w500,
               fontSize: 14,
               color: AppColors.title,
@@ -280,17 +284,18 @@ class _NavCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       width: double.infinity,
       height: 226,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.borderSoft),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             blurRadius: 2,
-            offset: Offset(0, 1),
+            offset: const Offset(0, 1),
             color: AppColors.shadowSoft,
           ),
         ],
@@ -342,6 +347,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final bg = selected ? AppColors.primarySoft : Colors.transparent;
     final color = selected ? AppColors.primary : AppColors.muted;
     final weight = selected ? FontWeight.w700 : FontWeight.w500;
@@ -383,7 +389,7 @@ class _SettingsSkeleton extends StatelessWidget {
       height: h,
       width: w,
       decoration: BoxDecoration(
-        color: const Color(0xFFE5E7EB),
+        color: AppColors.borderGray,
         borderRadius: BorderRadius.circular(10),
       ),
     );
@@ -395,13 +401,13 @@ class _SettingsSkeleton extends StatelessWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.borderSoft),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
               blurRadius: 2,
-              offset: Offset(0, 1),
+              offset: const Offset(0, 1),
               color: AppColors.shadowSoft,
             ),
           ],
@@ -429,6 +435,7 @@ class _SettingsSkeleton extends StatelessWidget {
   }
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

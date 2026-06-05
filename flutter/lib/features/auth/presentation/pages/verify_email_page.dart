@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/routes.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../controllers/verify_email_controller.dart';
+import 'package:learnova/core/theme/app_theme.dart';
 
 /// Email verification result page.
 ///
@@ -95,10 +96,11 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final state = ref.watch(verifyEmailControllerProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: AppColors.pageBg,
       body: Stack(
         children: [
           // ── Header ──────────────────────────────────────────────────
@@ -138,7 +140,7 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage>
                                   ? Icons.verified_user_rounded
                                   : Icons.error_outline_rounded,
                           size: 260,
-                          color: Colors.black,
+                          color: AppColors.textTitle,
                         ),
                       ),
 
@@ -170,20 +172,21 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage>
 class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       height: 56,
-      color: Colors.white,
+      color: AppColors.cardBg,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
           Image.asset('assets/logo.webp', height: 32, cacheWidth: (32 * MediaQuery.of(context).devicePixelRatio).round()),
           const SizedBox(width: 10),
-          const Text(
+          Text(
             'Learnova',
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF111827),
+              color: AppColors.textTitle,
               letterSpacing: -0.3,
             ),
           ),
@@ -200,6 +203,7 @@ class _Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       height: 44,
       alignment: Alignment.center,
@@ -209,14 +213,14 @@ class _Footer extends StatelessWidget {
           Container(
             width: 1,
             height: 14,
-            color: const Color(0xFFD1D5DB),
+            color: AppColors.borderSoft,
             margin: const EdgeInsets.only(right: 12),
           ),
-          const Text(
+          Text(
             'Contact Support',
             style: TextStyle(
               fontSize: 13,
-              color: Color(0xFF6B7280),
+              color: AppColors.textGray500,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -247,6 +251,7 @@ class _Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     if (loading) return _LoadingState();
     if (success) return _SuccessState(redirectSecs: redirectSecs, onGoLogin: onGoLogin);
     return _FailureState(
@@ -262,26 +267,27 @@ class _Content extends StatelessWidget {
 class _LoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    Theme.of(context);
+    return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CircularProgressIndicator(
-          color: Color(0xFF137FEC),
+        const CircularProgressIndicator(
+          color: AppColors.primary,
           strokeWidth: 3,
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: 24),
         Text(
           'Verifying your email...',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF111827),
+            color: AppColors.textTitle,
           ),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         Text(
           'Please wait a moment.',
-          style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
+          style: TextStyle(fontSize: 15, color: AppColors.textGray500),
         ),
       ],
     );
@@ -298,6 +304,7 @@ class _SuccessState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -306,33 +313,33 @@ class _SuccessState extends StatelessWidget {
           width: 72,
           height: 72,
           decoration: BoxDecoration(
-            color: const Color(0xFFF0FDF4),
+            color: AppColors.successBg,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFBBF7D0), width: 1.5),
+            border: Border.all(color: AppColors.successDot, width: 1.5),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.check_circle_outline_rounded,
             size: 38,
-            color: Color(0xFF16A34A),
+            color: AppColors.successText,
           ),
         ),
         const SizedBox(height: 24),
-        const Text(
+        Text(
           'Email verified!',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF111827),
+            color: AppColors.textTitle,
           ),
         ),
         const SizedBox(height: 12),
         Text(
           'Your email has been confirmed successfully.\nYou\'ll be redirected to login in ${redirectSecs}s.',
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
-            color: Color(0xFF6B7280),
+            color: AppColors.textGray500,
             height: 1.55,
           ),
         ),
@@ -341,12 +348,12 @@ class _SuccessState extends StatelessWidget {
           height: 48,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF137FEC),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 32),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(10),),
             ),
             onPressed: onGoLogin,
             child: const Text(
@@ -375,6 +382,7 @@ class _FailureState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -383,24 +391,24 @@ class _FailureState extends StatelessWidget {
           width: 72,
           height: 72,
           decoration: BoxDecoration(
-            color: const Color(0xFFFFF3F3),
+            color: AppColors.dangerBg,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFFECACA), width: 1.5),
+            border: Border.all(color: AppColors.dangerBorder, width: 1.5),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.error_outline_rounded,
             size: 38,
-            color: Color(0xFFDC2626),
+            color: AppColors.dangerText,
           ),
         ),
         const SizedBox(height: 24),
-        const Text(
+        Text(
           'Verification failed',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF111827),
+            color: AppColors.textTitle,
           ),
         ),
         const SizedBox(height: 12),
@@ -409,9 +417,9 @@ class _FailureState extends StatelessWidget {
           child: Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
-              color: Color(0xFF6B7280),
+              color: AppColors.textGray500,
               height: 1.55,
             ),
           ),
@@ -426,12 +434,12 @@ class _FailureState extends StatelessWidget {
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF137FEC),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),),
                 ),
                 onPressed: onGoLogin,
                 child: const Text(
@@ -444,12 +452,12 @@ class _FailureState extends StatelessWidget {
               height: 48,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF374151),
-                  side: const BorderSide(color: Color(0xFFD1D5DB)),
+                  foregroundColor: AppColors.textGray,
+                  side: BorderSide(color: AppColors.borderSoft),
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppColors.cardBg,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),),
                 ),
                 onPressed: onGoSignup,
                 child: const Text(

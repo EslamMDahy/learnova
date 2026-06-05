@@ -178,7 +178,7 @@ void _onNavSelect(int i) {
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     return '${months[d.month - 1]}, ${d.year}';
   }
@@ -202,9 +202,8 @@ void _onNavSelect(int i) {
 
   String? _validatePhone(String? v) {
     final s = (v ?? '').trim();
-    if (s.isEmpty) return 'Phone number is required';
+    if (s.isEmpty) return null;
 
-    
     final ok = RegExp(r'^[0-9+\-\s()]{7,20}$').hasMatch(s);
     if (!ok) return 'Enter a valid phone number';
     return null;
@@ -266,11 +265,11 @@ void _onNavSelect(int i) {
 
     final first = firstName.text.trim();
     final last = lastName.text.trim();
-    if (first.isEmpty || last.isEmpty) {
+    if ('$first $last'.trim().isEmpty) {
       _toast(
         context,
         title: 'Validation',
-        message: 'First name and last name are required.',
+        message: 'Name is required.',
         type: AppToastType.warning,
         icon: Icons.warning_amber_rounded,
       );
@@ -285,17 +284,32 @@ void _onNavSelect(int i) {
   // Avatar Upload
   // =========================
   Future<void> _pickAndUploadAvatar() async {
-    final picked = await pickSingleImageFile();
+    final picked = await pickSingleImageFile(
+      accept: ['image/png', 'image/jpeg'],
+    );
     if (picked == null || picked.bytes.isEmpty) return;
 
     final bytes = picked.bytes;
-    final mime = picked.mimeType?.toLowerCase() ?? '';
-    final isImage = mime.startsWith('image/');
-    if (!isImage) {
+    var contentType = (picked.mimeType ?? '').trim().toLowerCase();
+    final fileName = (picked.name ?? '').trim().toLowerCase();
+
+    if (contentType.isEmpty) {
+      if (fileName.endsWith('.png')) {
+        contentType = 'image/png';
+      } else if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+        contentType = 'image/jpeg';
+      }
+    }
+    if (contentType == 'image/jpg') contentType = 'image/jpeg';
+
+    final isAllowedImage =
+        contentType == 'image/png' || contentType == 'image/jpeg';
+    if (!isAllowedImage) {
       _toast(
         context,
         title: 'Invalid file',
-        message: 'Please choose a valid image file.',
+        message: 'Please choose a PNG or JPG image.',
+        type: AppToastType.warning,
         icon: Icons.warning_amber_rounded,
       );
       return;
@@ -306,6 +320,7 @@ void _onNavSelect(int i) {
         context,
         title: 'Image too large',
         message: 'Maximum avatar size is 5 MB.',
+        type: AppToastType.warning,
         icon: Icons.warning_amber_rounded,
       );
       return;
@@ -313,7 +328,7 @@ void _onNavSelect(int i) {
 
     final ok = await ref.read(settingsControllerProvider.notifier).uploadAvatar(
           bytes: bytes,
-          contentType: mime.isEmpty ? 'image/png' : mime,
+          contentType: contentType,
         );
 
     if (!mounted) return;
@@ -405,6 +420,7 @@ Future<bool> _confirmDiscardDialog(BuildContext context) async {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final st = ref.watch(settingsControllerProvider);
     final isFirstLoad = st.profile == null || st.preferences == null;
     if (st.loading && isFirstLoad) {
@@ -455,12 +471,12 @@ Future<bool> _confirmDiscardDialog(BuildContext context) async {
 
       if (err != null && err.trim().isNotEmpty) {
         _toast(context,
-            title: 'Error', message: err, icon: Icons.error_outline_rounded);
+            title: 'Error', message: err, icon: Icons.error_outline_rounded,);
       } else if (ok != null && ok.trim().isNotEmpty) {
         _toast(context,
             title: 'Done',
             message: ok,
-            icon: Icons.check_circle_outline_rounded);
+            icon: Icons.check_circle_outline_rounded,);
 
         
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -510,12 +526,12 @@ return PopScope(
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Account Settings', style: AppText.h1),
-                          SizedBox(height: 6),
+                          const SizedBox(height: 6),
                           Text(
                             'Manage your personal information, security credentials, and system preferences.',
                             style: AppText.subtitle,
@@ -547,7 +563,7 @@ return PopScope(
                                 icon: Icons.info_outline_rounded,
                               );
                             },
-                            backgroundColor: Colors.white,
+                            backgroundColor: AppColors.cardBg,
                             foregroundColor: AppColors.title,
                             borderColor: AppColors.borderSoft,
                           ),

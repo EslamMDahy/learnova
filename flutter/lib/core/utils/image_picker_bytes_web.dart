@@ -23,8 +23,8 @@ Future<PickedBrowserFile?> pickSingleImageFile({
     ..accept = accept.join(',')
     ..multiple = false;
 
-  input.onChange.first.then((_) {
-    final file = input.files?.isNotEmpty == true ? input.files!.first : null;
+  await input.onChange.first.then((_) {
+    final file = input.files?.isNotEmpty ?? false ? input.files!.first : null;
     if (file == null) {
       if (!completer.isCompleted) completer.complete(null);
       return;

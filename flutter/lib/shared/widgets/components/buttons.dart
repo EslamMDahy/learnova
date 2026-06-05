@@ -29,6 +29,7 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final h = height ??
         (variant == AppButtonVariant.danger
             ? 42
@@ -42,10 +43,10 @@ class AppButton extends StatelessWidget {
     Color bg = AppColors.primary;
     Color? border;
     Color fg = Colors.white;
-    List<BoxShadow> shadow = const [
+    List<BoxShadow> shadow = [
       BoxShadow(
         blurRadius: 2,
-        offset: Offset(0, 1),
+        offset: const Offset(0, 1),
         color: AppColors.shadowBlue,
       ),
     ];
@@ -54,46 +55,46 @@ class AppButton extends StatelessWidget {
       case AppButtonVariant.primary:
         bg = AppColors.primary;
         fg = Colors.white;
-        shadow = const [
+        shadow = [
           BoxShadow(
             blurRadius: 2,
-            offset: Offset(0, 1),
+            offset: const Offset(0, 1),
             color: AppColors.shadowBlue,
           ),
         ];
         break;
 
       case AppButtonVariant.soft:
-        bg = Colors.white;
+        bg = AppColors.cardBg;
         border = AppColors.borderSoft;
         fg = AppColors.title;
-        shadow = const [
+        shadow = [
           BoxShadow(
             blurRadius: 2,
-            offset: Offset(0, 1),
+            offset: const Offset(0, 1),
             color: AppColors.shadowThin,
           ),
         ];
         break;
 
       case AppButtonVariant.primarySoft:
-        bg = Colors.white;
+        bg = AppColors.cardBg;
         border = AppColors.border;
         fg = AppColors.title;
-        shadow = const [
+        shadow = [
           BoxShadow(
             blurRadius: 2,
-            offset: Offset(0, 1),
+            offset: const Offset(0, 1),
             color: AppColors.shadowThin,
           ),
         ];
         break;
 
       case AppButtonVariant.danger:
-        bg = Colors.white;
+        bg = AppColors.cardBg;
         border = AppColors.dangerBorder;
         fg = AppColors.dangerText;
-        shadow = const [];
+        shadow = [];
         break;
     }
 
@@ -153,6 +154,7 @@ class AppSoftButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return AppButton(
       label: label,
       onTap: onTap,

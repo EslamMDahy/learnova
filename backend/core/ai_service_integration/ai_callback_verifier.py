@@ -30,6 +30,7 @@ def _get_required_header(request: Request, header_name: str) -> str:
     value = request.headers.get(header_name)
 
     if not value:
+        print("callback header is empty")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Missing {header_name} header",
@@ -50,6 +51,7 @@ async def _read_request_body_bytes(request: Request) -> bytes:
     body = await request.body()
 
     if not body:
+        print("callback body is empty")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Empty callback request body",
@@ -120,13 +122,26 @@ def _validate_callback_signature(
 def _parse_callback_json(body: bytes) -> dict[str, Any]:
     try:
         payload = json.loads(body.decode("utf-8"))
-    except Exception:
+    except Exception as e:
+
+        print("\n=== JSON PARSE ERROR ===")
+        print(f"Exception Type: {type(e).__name__}")
+        print(f"Exception Message: {e}")
+        print(f"Raw Body: {body[:1000]}")
+        print("========================\n")
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid callback JSON body",
+            detail=f"Invalid callback JSON body",
         )
 
     if not isinstance(payload, dict):
+
+        print("\n=== INVALID PAYLOAD TYPE ===")
+        print(f"Payload Type: {type(payload).__name__}")
+        print(f"Payload Value: {payload}")
+        print("============================\n")
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Callback body must be a JSON object",

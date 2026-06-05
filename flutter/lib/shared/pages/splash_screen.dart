@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:learnova/core/theme/app_theme.dart';
 
 /// Facebook-style splash screen.
 ///
@@ -6,7 +7,7 @@ import 'package:flutter/material.dart';
 /// Never shown for API calls, page transitions, or in-app navigation.
 ///
 /// Structure:
-///   - White background fills entire screen
+///   - Theme-aware background fills the entire screen
 ///   - Learnova logo centered (image asset + brand name)
 ///   - Tiny progress indicator at bottom (matches Facebook's "L" bar)
 ///   - Smooth fade-out when bootstrap completes
@@ -50,7 +51,7 @@ class SplashScreenState extends State<SplashScreen>
     return FadeTransition(
       opacity: _fade,
       child: Material(
-        color: Colors.white,
+        color: AppColors.pageBg,
         child: Stack(
           children: [
             // ── Centered logo ─────────────────────────────────────────────
@@ -70,21 +71,21 @@ class SplashScreenState extends State<SplashScreen>
                   ),
                   const SizedBox(height: 16),
                   // Brand name
-                  const Text(
+                  Text(
                     'Learnova',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF111827),
+                      color: AppColors.textTitle,
                       letterSpacing: -0.5,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Smart Study Companion',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF6B7280),
+                      color: AppColors.textGray500,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 0.2,
                     ),
@@ -140,13 +141,13 @@ class _BottomBarState extends State<_BottomBar>
       mainAxisSize: MainAxisSize.min,
       children: [
         // Learnova copyright tiny text
-        const Padding(
-          padding: EdgeInsets.only(bottom: 10),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
           child: Text(
             'from Learnova',
             style: TextStyle(
               fontSize: 11,
-              color: Color(0xFF9CA3AF),
+              color: AppColors.textHint,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -155,11 +156,11 @@ class _BottomBarState extends State<_BottomBar>
         AnimatedBuilder(
           animation: _progress,
           builder: (_, __) {
-            return const SizedBox(
+            return SizedBox(
               height: 3,
               child: LinearProgressIndicator(
-                backgroundColor: Color(0xFFE5E7EB),
-                color: Color(0xFF137FEC),
+                backgroundColor: AppColors.borderGray,
+                color: AppColors.primary,
                 minHeight: 3,
               ),
             );

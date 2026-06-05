@@ -1,34 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:learnova/core/ui/toast.dart';
+
 import '../widgets/app_ui_components.dart';
 
-class NotificationsPage extends StatefulWidget {
+class NotificationsPage extends StatelessWidget {
   const NotificationsPage({super.key});
 
   @override
-  State<NotificationsPage> createState() => _NotificationsPageState();
-}
-
-class _NotificationsPageState extends State<NotificationsPage> {
-  final TextEditingController _search = TextEditingController();
-  int _topChipIndex = 0;
-
-  @override
-  void dispose() {
-    _search.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    const chips = [
-      'All',
-      'High Priority',
-      'Assignments',
-      'Grades',
-      'Mentions',
-    ];
-
+    Theme.of(context);
     return Container(
       color: AppColors.pageBg,
       width: double.infinity,
@@ -40,81 +19,71 @@ class _NotificationsPageState extends State<NotificationsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Row (title + button)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Notifications', style: AppText.h1),
-                          SizedBox(height: 8),
-                          Text(
-                            'Stay updated with your courses and system alerts',
-                            style: AppText.subtitle,
+                Text('Notifications', style: AppText.h1),
+                const SizedBox(height: 8),
+                Text(
+                  'System and course notifications will appear here when this area is enabled.',
+                  style: AppText.subtitle,
+                ),
+                const SizedBox(height: 28),
+                Expanded(
+                  child: Center(
+                    child: Container(
+                      width: double.infinity,
+                      constraints: const BoxConstraints(maxWidth: 560),
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBg,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: [
+                          const BoxShadow(
+                            color: Color(0x0A000000),
+                            blurRadius: 24,
+                            offset: Offset(0, 10),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    AppButton(
-                      label: 'Mark all as read',
-                      variant: AppButtonVariant.primarySoft,
-                      onTap: () {
-                        AppToast.info(context, title: 'Coming soon', message: 'Mark all as read will be available soon.');
-                      },
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                // Search
-                // ignore: deprecated_member_use_from_same_package
-                AppSearchField(
-                  controller: _search,
-                  hintText: 'Search notifications by keyword, professor, or date...',
-                ),
-
-                const SizedBox(height: 12),
-
-                // Chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: List.generate(chips.length, (i) {
-                      return Padding(
-                        padding: EdgeInsets.only(right: i == chips.length - 1 ? 0 : 8),
-                        child: AppFilterChip(
-                          label: chips[i],
-                          selected: i == _topChipIndex,
-                          onTap: () => setState(() => _topChipIndex = i),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                
-                const AppNotificationCard(
-                  title: 'Assignment Due Soon: Neural Networks',
-                  subtitle:
-                      'Reminder: The project "Backpropagation Implementation" is due tomorrow at 11:59 PM.',
-                  rightTag: 'Yesterday',
-                ),
-
-                const SizedBox(height: 20),
-
-                const Center(
-                  child: Text(
-                    'End of notifications',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF94A3B8),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySoft,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: const Color(0x33137FEC)),
+                            ),
+                            child: const Icon(
+                              Icons.lock_outline_rounded,
+                              color: AppColors.primary,
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          Text(
+                            'Notifications are locked',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.title,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              height: 1.25,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'There is no active notifications feed connected in the frontend yet. Static demo notifications were removed to avoid showing fake activity.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 14,
+                              height: 1.55,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

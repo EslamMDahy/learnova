@@ -31,7 +31,7 @@ class InstructorCoursesController extends StateNotifier<InstructorCoursesState> 
     try {
       final res = await _ref.read(coursesRepositoryProvider).myCourses(
         cancelToken: _cancel,
-        enrichMissingModuleCounts: false,
+        enrichMissingModuleCounts: true,
       );
       state = state.copyWith(loading: false, items: res.items);
     } catch (e) {
@@ -44,6 +44,11 @@ class InstructorCoursesController extends StateNotifier<InstructorCoursesState> 
       );
     }
   }
+
+
+  /// Course update/archive/delete are intentionally not implemented here because
+  /// the uploaded FastAPI backend exposes create/list/invite endpoints only.
+  /// Leaving guessed mutation calls here causes real 404 errors in the UI.
 
   /// Creates a course and returns the typed backend response.
   ///

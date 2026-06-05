@@ -20,9 +20,9 @@ extension _SettingsPageSections on _SettingsPageState {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
+            color: AppColors.surfaceBg,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            border: Border.all(color: AppColors.borderGray),
           ),
           child: Row(
             children: [
@@ -31,7 +31,7 @@ extension _SettingsPageSections on _SettingsPageState {
               Expanded(
                 child: Text(
                   resolved,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.title,
                     fontSize: 15,
                     height: 1.4,
@@ -39,7 +39,7 @@ extension _SettingsPageSections on _SettingsPageState {
                 ),
               ),
               const SizedBox(width: 12),
-              const Icon(Icons.lock_outline, color: AppColors.muted, size: 18),
+              Icon(Icons.lock_outline, color: AppColors.muted, size: 18),
             ],
           ),
         ),
@@ -59,8 +59,9 @@ extension _SettingsPageSections on _SettingsPageState {
 
   Widget _buildPersonalInfoCard() {
     return AppCard(
+      key: _kPersonal,
       child: Form(
-        key: _kPersonal,
+        key: _profileFormKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -88,7 +89,7 @@ extension _SettingsPageSections on _SettingsPageState {
                   hint: 'Last name',
                   icon: Icons.person_outline,
                   onChanged: (_) => setState(() {}),
-                  validator: (v) => _required(v, 'Last name is required'),
+                  validator: (_) => null,
                 );
 
                 final row = isWide
@@ -180,8 +181,9 @@ extension _SettingsPageSections on _SettingsPageState {
 
   Widget _buildSecurityCard(SettingsState st) {
     return AppCard(
+      key: _kSecurity,
       child: Form(
-        key: _kSecurity,
+        key: _passwordFormKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -262,25 +264,39 @@ extension _SettingsPageSections on _SettingsPageState {
                         label: 'Update Password',
                         loading: st.updatingPassword,
                         height: 40, 
-                        onPressed: () {
-                          if (!_validatePasswordForm()) return;
+                        onPressed: st.updatingPassword
+                            ? null
+                            : () async {
+                                if (!_validatePasswordForm()) return;
 
-                          if (currentPassword.text == newPassword.text) {
-                            _toast(
-                              context,
-                              title: 'Validation',
-                              message: 'New password must be different',
-                              icon: Icons.warning_amber_rounded,
-                            );
-                            return;
-                          }
+                                if (currentPassword.text == newPassword.text) {
+                                  _toast(
+                                    context,
+                                    title: 'Validation',
+                                    message: 'New password must be different',
+                                    icon: Icons.warning_amber_rounded,
+                                  );
+                                  return;
+                                }
 
-                          ref.read(settingsControllerProvider.notifier).changePassword(
-                                currentPassword: currentPassword.text,
-                                newPassword: newPassword.text,
-                              );
-                        },
-                        backgroundColor: Colors.white,
+                                final ok = await ref
+                                    .read(settingsControllerProvider.notifier)
+                                    .changePassword(
+                                      currentPassword: currentPassword.text,
+                                      newPassword: newPassword.text,
+                                    );
+
+                                if (!mounted || !ok) return;
+                                setState(() {
+                                  currentPassword.clear();
+                                  newPassword.clear();
+                                  confirmPassword.clear();
+                                  _obscureCurrent = true;
+                                  _obscureNew = true;
+                                  _obscureConfirm = true;
+                                });
+                              },
+                        backgroundColor: AppColors.cardBg,
                         foregroundColor: AppColors.title,
                         borderColor: AppColors.borderSoft,
                       ),
@@ -294,7 +310,7 @@ extension _SettingsPageSections on _SettingsPageState {
                   children: [
                     Expanded(child: left),
                     const SizedBox(width: 32),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -306,7 +322,7 @@ extension _SettingsPageSections on _SettingsPageState {
                               color: AppColors.title,
                             ),
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             'Use a strong password and avoid reusing it across services.',
                             style: TextStyle(
@@ -343,10 +359,10 @@ extension _SettingsPageSections on _SettingsPageState {
           AppModernDropdown<String>(
             label: 'Interface Language',
             value: _language,
-            items: const [
-              DropdownMenuItem(value: 'English (US)', child: Text('English (US)')),
-              DropdownMenuItem(value: 'English (UK)', child: Text('English (UK)')),
-              DropdownMenuItem(value: 'Arabic', child: Text('Arabic')),
+            items: [
+              const DropdownMenuItem(value: 'English (US)', child: Text('English (US)')),
+              const DropdownMenuItem(value: 'English (UK)', child: Text('English (UK)')),
+              const DropdownMenuItem(value: 'Arabic', child: Text('Arabic')),
             ],
             onChanged: (v) {
               if (v == null) return;
@@ -357,24 +373,25 @@ extension _SettingsPageSections on _SettingsPageState {
           AppModernDropdown<String>(
             label: 'Theme Mode',
             value: themeMode,
-            items: const [
-              DropdownMenuItem(value: 'light', child: Text('Light')),
-              DropdownMenuItem(value: 'dark', child: Text('Dark')),
-              DropdownMenuItem(value: 'system', child: Text('System')),
+            items: [
+              const DropdownMenuItem(value: 'light', child: Text('Light')),
+              const DropdownMenuItem(value: 'dark', child: Text('Dark')),
+              const DropdownMenuItem(value: 'system', child: Text('System')),
             ],
             onChanged: (v) {
               if (v == null) return;
               setState(() => themeMode = v);
+              ref.read(settingsControllerProvider.notifier).applyLocalThemeMode(v);
             },
           ),
           const SizedBox(height: 16),
           AppModernDropdown<String>(
             label: 'Profile Visibility',
             value: profileVisibility,
-            items: const [
-              DropdownMenuItem(value: 'public', child: Text('Public')),
-              DropdownMenuItem(value: 'private', child: Text('Private')),
-              DropdownMenuItem(value: 'connections', child: Text('Connections')),
+            items: [
+              const DropdownMenuItem(value: 'public', child: Text('Public')),
+              const DropdownMenuItem(value: 'private', child: Text('Private')),
+              const DropdownMenuItem(value: 'connections', child: Text('Connections')),
             ],
             onChanged: (v) {
               if (v == null) return;
@@ -463,7 +480,7 @@ extension _SettingsPageSections on _SettingsPageState {
       builder: (context, c) {
         final narrow = c.maxWidth < 560;
 
-        const textContent = Column(
+        final textContent = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -474,8 +491,8 @@ extension _SettingsPageSections on _SettingsPageState {
                 color: AppColors.dangerTitle,
               ),
             ),
-            SizedBox(height: 6),
-            Text(
+            const SizedBox(height: 6),
+            const Text(
               'Once you delete your account, there is no going back. Please be certain.',
               style: TextStyle(
                 fontWeight: FontWeight.w400,
@@ -492,7 +509,7 @@ extension _SettingsPageSections on _SettingsPageState {
           loading: st.deleting,
           onPressed: () => _openDeleteDialog(context),
           height: 40,
-          backgroundColor: const Color(0xFFDC2626),
+          backgroundColor: AppColors.dangerText,
           foregroundColor: Colors.white,
         );
 
@@ -515,7 +532,7 @@ extension _SettingsPageSections on _SettingsPageState {
                 )
               : Row(
                   children: [
-                    const Expanded(child: textContent),
+                    Expanded(child: textContent),
                     const SizedBox(width: 16),
                     SizedBox(width: 170, child: button),
                   ],
@@ -598,6 +615,7 @@ extension _SettingsPageSections on _SettingsPageState {
     deadlineReminders = snapshot.deadlineReminders;
 
     themeMode = snapshot.themeMode;
+    ref.read(settingsControllerProvider.notifier).applyLocalThemeMode(themeMode);
     profileVisibility = snapshot.profileVisibility;
     showOnlineStatus = snapshot.showOnlineStatus;
   }
@@ -721,7 +739,7 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
       AppToast.warning(
         context,
         title: 'Validation',
-        message: 'Enter a valid 6-digit OTP',
+        message: 'Enter a valid 6-character OTP',
       );
       return;
     }
@@ -750,7 +768,7 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
 
     final title = _otpStep ? 'Confirm deletion' : 'Delete account';
     final subtitle = _otpStep
-        ? 'Enter the 6-digit code sent to your email to confirm deletion.'
+        ? 'Enter the 6-character code sent to your email to confirm deletion.'
         : 'We’ll send a one-time code to confirm. This action can’t be undone.';
 
     return Dialog(
@@ -778,7 +796,7 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
                 ],
               ),
               const SizedBox(height: 6),
-              Text(subtitle, style: const TextStyle(color: AppColors.muted)),
+              Text(subtitle, style: TextStyle(color: AppColors.muted)),
               const SizedBox(height: 14),
 
               // step pills
@@ -799,12 +817,12 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.dangerBorder),
                 ),
-                child: const Row(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626), size: 20),
-                    SizedBox(width: 10),
-                    Expanded(
+                    Icon(Icons.warning_amber_rounded, color: AppColors.dangerText, size: 20),
+                    const SizedBox(width: 10),
+                    const Expanded(
                       child: Text(
                         'Deleting your account is permanent. You’ll lose access to your data.',
                         style: TextStyle(
@@ -846,15 +864,15 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
                     AppLabeledIconField(
                       label: 'OTP',
                       controller: _otpCtrl,
-                      hint: '6-digit code',
+                      hint: '6-character code',
                       icon: Icons.verified_outlined,
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.text,
                       onChanged: (_) => setState(() {}),
                     ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           'Didn’t get the code?',
                           style: TextStyle(color: AppColors.muted, fontSize: 13),
                         ),
@@ -893,7 +911,7 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
                               Navigator.of(context).pop();
                             },
                       height: 40,
-                      backgroundColor: Colors.white,
+                      backgroundColor: AppColors.cardBg,
                       foregroundColor: AppColors.title,
                       borderColor: AppColors.borderSoft,
                     ),
@@ -913,7 +931,7 @@ class _DeleteAccountDialogState extends ConsumerState<_DeleteAccountDialog> {
                               }
                             },
                       height: 40,
-                      backgroundColor: const Color(0xFFDC2626),
+                      backgroundColor: AppColors.dangerText,
                       foregroundColor: Colors.white,
                     ),
                   ),

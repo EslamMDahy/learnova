@@ -20,7 +20,8 @@ class InstructorSidebarWidget extends StatelessWidget {
       portalSubtitle: 'INSTRUCTOR Portal',
       mainItems: const [
         AppSidebarItem(icon: Icons.grid_view_rounded, title: 'Dashboard', index: InstructorTabs.dashboard),
-        AppSidebarItem(icon: Icons.menu_book_rounded, title: 'Course', index: InstructorTabs.course),
+        AppSidebarItem(icon: Icons.menu_book_rounded, title: 'My Courses', index: InstructorTabs.course),
+        AppSidebarItem(icon: Icons.document_scanner_outlined, title: 'Exam Correction', index: InstructorTabs.examCorrection),
         AppSidebarItem(icon: Icons.quiz_outlined, title: 'Quizzes', index: InstructorTabs.quizzes),
       ],
       bottomItems: const [

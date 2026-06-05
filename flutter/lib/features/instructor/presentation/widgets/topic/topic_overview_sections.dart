@@ -16,6 +16,7 @@ class TopicOverviewSnapshotCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return _TopicSectionCard(
       title: 'Topic Snapshot',
       icon: Icons.grid_view_rounded,
@@ -27,7 +28,7 @@ class TopicOverviewSnapshotCard extends StatelessWidget {
                 child: _MetricTile(
                   icon: Icons.bolt_rounded,
                   iconColor: AppColors.primary,
-                  iconBg: const Color(0xFFEFF6FF),
+                  iconBg: AppColors.primarySoft,
                   label: 'Readiness',
                   value: topic.readiness == TopicReadiness.ready
                       ? 'Ready'
@@ -40,8 +41,8 @@ class TopicOverviewSnapshotCard extends StatelessWidget {
               Expanded(
                 child: _MetricTile(
                   icon: Icons.trending_up_rounded,
-                  iconColor: const Color(0xFF7C3AED),
-                  iconBg: const Color(0xFFF5F3FF),
+                  iconColor: AppColors.purpleText,
+                  iconBg: AppColors.purpleBg,
                   label: 'Difficulty',
                   value: topic.difficulty.label,
                 ),
@@ -54,8 +55,8 @@ class TopicOverviewSnapshotCard extends StatelessWidget {
               Expanded(
                 child: _MetricTile(
                   icon: Icons.flag_outlined,
-                  iconColor: const Color(0xFF16A34A),
-                  iconBg: const Color(0xFFF0FDF4),
+                  iconColor: AppColors.successText,
+                  iconBg: AppColors.successBg,
                   label: 'Outcomes',
                   value: mappedOutcomes.isEmpty ? 'Not mapped' : '${mappedOutcomes.length} linked',
                 ),
@@ -64,8 +65,8 @@ class TopicOverviewSnapshotCard extends StatelessWidget {
               Expanded(
                 child: _MetricTile(
                   icon: Icons.schedule_rounded,
-                  iconColor: const Color(0xFFD97706),
-                  iconBg: const Color(0xFFFFFBEB),
+                  iconColor: AppColors.warningText,
+                  iconBg: AppColors.warningSoftBg,
                   label: 'Study time',
                   value: topic.estimatedDurationMinutes == null
                       ? 'Flexible'
@@ -87,6 +88,7 @@ class TopicAlignmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return _TopicSectionCard(
       title: 'Learning Outcome Alignment',
       icon: Icons.outlined_flag_rounded,
@@ -95,11 +97,11 @@ class TopicAlignmentCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppColors.surfaceBg,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppColors.border),
               ),
-              child: const Text(
+              child: Text(
                 'No learning outcomes are linked yet. Use Manage to connect this topic to one or more course outcomes.',
                 style: TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.6),
               ),
@@ -112,9 +114,9 @@ class TopicAlignmentCard extends StatelessWidget {
                     (lo) => Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: AppColors.primarySoft,
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: const Color(0xFFDBEAFE)),
+                        border: Border.all(color: AppColors.badgeBlueBg),
                       ),
                       child: Text(
                         '${lo.code} • ${(lo.description ?? lo.title).trim()}',
@@ -144,6 +146,7 @@ class TopicInsightsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final List<_InsightItem> items = [
       _InsightItem(
         icon: Icons.lightbulb_outline_rounded,
@@ -181,9 +184,9 @@ class TopicInsightsCard extends StatelessWidget {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: AppColors.surfaceBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: Icon(items[i].icon, size: 18, color: AppColors.primary),
                 ),
@@ -194,7 +197,7 @@ class TopicInsightsCard extends StatelessWidget {
                     children: [
                       Text(
                         items[i].title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textTitle,
@@ -203,7 +206,7 @@ class TopicInsightsCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         items[i].body,
-                        style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.6),
+                        style: TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.6),
                       ),
                     ],
                   ),
@@ -225,6 +228,7 @@ class TopicNotesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final hasNotes = topic.instructorNotes?.trim().isNotEmpty ?? false;
     return _TopicSectionCard(
       title: 'Instructor Notes',
@@ -233,15 +237,15 @@ class TopicNotesCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
+          color: AppColors.surfaceBg,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: AppColors.border),
         ),
         child: Text(
           hasNotes
               ? topic.instructorNotes!.trim()
               : 'No notes yet. Use Manage to add delivery notes, examples, misconceptions, or assessment guidance.',
-          style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.7),
+          style: TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.7),
         ),
       ),
     );
@@ -257,19 +261,20 @@ class _TopicSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEDEDED)),
+        border: Border.all(color: AppColors.borderSoft),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFEDEDED))),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.borderSoft)),
             ),
             child: Row(
               children: [
@@ -277,7 +282,7 @@ class _TopicSectionCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textTitle,
@@ -313,12 +318,13 @@ class _MetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.surfaceBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -338,12 +344,12 @@ class _MetricTile extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textTitle),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textTitle),
                 ),
               ],
             ),

@@ -35,17 +35,14 @@ part 'materials_tab_dialogs.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 class _K {
   _K._();
-  static const purple     = Color(0xFF7C3AED);
-  static const purpleSoft = Color(0xFFF5F3FF);
-  static const purpleBd   = Color(0xFFDDD6FE);
   static const amber      = Color(0xFFD97706);
   static const amberSoft  = Color(0xFFFFFBEB);
-  static const green      = Color(0xFF16A34A);
-  static const greenSoft  = Color(0xFFF0FDF4);
+  static Color get green => AppColors.successText;
+  static Color get greenSoft => AppColors.successBg;
   static const redSoft    = Color(0xFFFFF1F2);
   static const blue       = Color(0xFF2563EB);
-  static const blueSoft   = Color(0xFFEFF6FF);
-  static const blueMid    = Color(0xFFDBEAFE);
+  static Color get blueSoft => AppColors.primarySoft;
+  static Color get blueMid => AppColors.badgeBlueBg;
   static const div        = Color(0xFFEEEEEE);
   static const bg         = Color(0xFFF6F7F9);
   static const sidebar    = Color(0xFFFAFAFA);
@@ -130,6 +127,7 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
   Set<int> _authoringModuleIds = const <int>{};
   Set<int> _authoringMaterialIds = const <int>{};
   Set<int> _authoringTopicIds = const <int>{};
+  QuestionAuthoringLaunchContext? _authoringLaunchContext;
 
   @override
   bool get wantKeepAlive => true;
@@ -140,6 +138,12 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
   void initState() {
     super.initState();
     _scroll.addListener(_persistUiState);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(courseDetailsControllerProvider(widget.course.id).notifier)
+          .loadModules();
+    });
   }
 
   @override
@@ -165,6 +169,58 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
     }
   }
 
+  Set<int> _intSetFromJson(Object? value) {
+    return ((value as List?) ?? const <dynamic>[])
+        .whereType<num>()
+        .map((num item) => item.toInt())
+        .toSet();
+  }
+
+  QuestionAuthoringScopeKind? _authoringKindFromName(Object? value) {
+    final String? name = value?.toString();
+    if (name == null) return null;
+    for (final QuestionAuthoringScopeKind kind in QuestionAuthoringScopeKind.values) {
+      if (kind.name == name) return kind;
+    }
+    return null;
+  }
+
+  Map<String, dynamic>? _authoringLaunchContextToJson(
+    QuestionAuthoringLaunchContext? launchContext,
+  ) {
+    if (launchContext == null) return null;
+    return <String, dynamic>{
+      'kind': launchContext.kind.name,
+      'title': launchContext.title,
+      'subtitle': launchContext.subtitle,
+      'selectedModuleId': launchContext.selectedModuleId,
+      'selectedMaterialId': launchContext.selectedMaterialId,
+      'selectedTopicId': launchContext.selectedTopicId,
+      'selectedModuleIds': launchContext.selectedModuleIds.toList(),
+      'selectedMaterialIds': launchContext.selectedMaterialIds.toList(),
+      'selectedTopicIds': launchContext.selectedTopicIds.toList(),
+    };
+  }
+
+  QuestionAuthoringLaunchContext? _authoringLaunchContextFromJson(Object? value) {
+    if (value is! Map) return null;
+    final QuestionAuthoringScopeKind? kind = _authoringKindFromName(value['kind']);
+    if (kind == null) return null;
+    final String title = (value['title']?.toString() ?? '').trim();
+    final String subtitle = (value['subtitle']?.toString() ?? '').trim();
+    return QuestionAuthoringLaunchContext(
+      kind: kind,
+      title: title.isEmpty ? 'Selected content' : title,
+      subtitle: subtitle.isEmpty ? 'Question workspace restored from materials.' : subtitle,
+      selectedModuleId: (value['selectedModuleId'] as num?)?.toInt(),
+      selectedMaterialId: (value['selectedMaterialId'] as num?)?.toInt(),
+      selectedTopicId: (value['selectedTopicId'] as num?)?.toInt(),
+      selectedModuleIds: _intSetFromJson(value['selectedModuleIds']),
+      selectedMaterialIds: _intSetFromJson(value['selectedMaterialIds']),
+      selectedTopicIds: _intSetFromJson(value['selectedTopicIds']),
+    );
+  }
+
 
   void _persistUiState() {
     final sel = _sel;
@@ -179,6 +235,11 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
       'selectedMaterialId': sel?.material?.id,
       'selectedTopicId': sel?.topic?.id,
       'activeTopicId': active?.type == _CType.topic ? active?.topic?.id : null,
+      'questionAuthoringOpen': _showQuestionAuthoring,
+      'authoringModuleIds': _authoringModuleIds.toList(),
+      'authoringMaterialIds': _authoringMaterialIds.toList(),
+      'authoringTopicIds': _authoringTopicIds.toList(),
+      'authoringLaunchContext': _authoringLaunchContextToJson(_authoringLaunchContext),
     };
     _session.setString(_uiStateKey, jsonEncode(payload));
   }
@@ -192,13 +253,13 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
     }
     try {
       final map = jsonDecode(raw) as Map<String, dynamic>;
-      final expanded = ((map['expanded'] as List?) ?? const [])
+      final expanded = ((map['expanded'] as List?) ?? [])
           .map((e) => (e as num).toInt())
           .toSet();
-      final expandedMaterials = ((map['expandedMaterials'] as List?) ?? const [])
+      final expandedMaterials = ((map['expandedMaterials'] as List?) ?? [])
           .map((e) => (e as num).toInt())
           .toSet();
-      final expandedTopics = ((map['expandedTopics'] as List?) ?? const [])
+      final expandedTopics = ((map['expandedTopics'] as List?) ?? [])
           .map((e) => (e as num).toInt())
           .toSet();
       final selectedType = map['selectedType']?.toString();
@@ -207,6 +268,21 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
       final selectedTopicId = (map['selectedTopicId'] as num?)?.toInt();
       final activeTopicId = (map['activeTopicId'] as num?)?.toInt();
       final storedOffset = (map['scrollOffset'] as num?)?.toDouble() ?? 0.0;
+      final bool restoreAuthoring = map['questionAuthoringOpen'] == true;
+      final Set<int> authoringModuleIds = _intSetFromJson(map['authoringModuleIds']);
+      final Set<int> authoringMaterialIds = _intSetFromJson(map['authoringMaterialIds']);
+      final Set<int> authoringTopicIds = _intSetFromJson(map['authoringTopicIds']);
+      final QuestionAuthoringLaunchContext? restoredLaunchContext =
+          _authoringLaunchContextFromJson(map['authoringLaunchContext']);
+
+      if (restoreAuthoring) {
+        _showQuestionAuthoring = true;
+        _hideFooterForActive = true;
+        _authoringModuleIds = authoringModuleIds;
+        _authoringMaterialIds = authoringMaterialIds;
+        _authoringTopicIds = authoringTopicIds;
+        _authoringLaunchContext = restoredLaunchContext;
+      }
 
       ModuleItem? findModule(int? id) {
         if (id == null) return null;
@@ -284,6 +360,7 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
                 }
               }
               ref.read(courseDetailsControllerProvider(widget.course.id).notifier).fetchDownloadUrl(moduleId: module.id, materialId: material.id);
+              ensureCourseLearningOutcomesLoaded(ref, widget.course.id);
             }
           }
         }
@@ -315,6 +392,7 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
         initialMaterialIds: _authoringMaterialIds,
         initialTopicIds: _authoringTopicIds,
         embedded: true,
+        launchContext: _authoringLaunchContext,
         onClose: _closeQuestionAuthoring,
       );
     }
@@ -322,79 +400,104 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
     final active = _active ?? _sel;
     final hasTreeSelection = _selectionMode && !_treeSelection.isEmpty;
     final footerCtx = hasTreeSelection ? (_footerCtxFromSelection(st) ?? active) : active;
-    final showFooter = hasTreeSelection ? footerCtx != null : (footerCtx != null && !_hideFooterForActive);
-    return Column(children: [
-      Expanded(
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _SidebarWidget(
-            state: st,
-            expanded: _expanded,
-            active: _active,
-            scroll: _scroll,
-            draggingModuleId: _draggingModuleId,
-            onModuleTap: (m) => _tapModule(m, st),
-            onMaterialTap: _tapMaterial,
-            onTopicTap: _tapTopic,
-            onAddMaterial: _showUploadSheet,
-            onAddModule: _showCreateModuleDialog,
-            onModuleReorder: _handleModuleReorder,
-            onDragChanged: (moduleId) {
-              if (!mounted) return;
-              setState(() => _draggingModuleId = moduleId);
-            },
-            onRefresh: () => ref
-                .read(courseDetailsControllerProvider(widget.course.id).notifier)
-                .loadModulesAndAllMaterials(force: true),
-            selectionMode: _selectionMode,
-            treeSelection: _treeSelection,
-            onToggleSelectionMode: _toggleSelectionMode,
-            onClearSelection: _clearTreeSelection,
-            onModuleCheckChanged: (module, value) => _setModuleChecked(module, st, value),
-            onMaterialCheckChanged: (module, material, value) => _setMaterialChecked(module, material, st, value),
-            onTopicCheckChanged: (module, material, topic, value) =>
-                _setTopicChecked(module, material, topic, st, value),
-            expandedMaterialIds: _expandedMaterialIds,
-            expandedTopicIds: _expandedTopicIds,
-            onToggleMaterialExpanded: _toggleMaterialExpanded,
-            onToggleTopicExpanded: _toggleTopicExpanded,
+    final showFooter = hasTreeSelection
+        ? footerCtx != null
+        : (footerCtx != null && !_hideFooterForActive);
+    Widget sidebar({required double width}) => _SidebarWidget(
+          width: width,
+          state: st,
+          expanded: _expanded,
+          active: _active,
+          scroll: _scroll,
+          draggingModuleId: _draggingModuleId,
+          onModuleTap: (m) => _tapModule(m, st),
+          onMaterialTap: _tapMaterial,
+          onTopicTap: _tapTopic,
+          onAddMaterial: _showUploadSheet,
+          onAddModule: _showCreateModuleDialog,
+          onModuleReorder: _handleModuleReorder,
+          onDragChanged: (moduleId) {
+            if (!mounted) return;
+            setState(() => _draggingModuleId = moduleId);
+          },
+          onRefresh: () => ref
+              .read(courseDetailsControllerProvider(widget.course.id).notifier)
+              .loadModules(force: true),
+          selectionMode: _selectionMode,
+          treeSelection: _treeSelection,
+          onToggleSelectionMode: _toggleSelectionMode,
+          onClearSelection: _clearTreeSelection,
+          onModuleCheckChanged: (module, value) => _setModuleChecked(module, st, value),
+          onMaterialCheckChanged: (module, material, value) => _setMaterialChecked(module, material, st, value),
+          onTopicCheckChanged: (module, material, topic, value) =>
+              _setTopicChecked(module, material, topic, st, value),
+          expandedMaterialIds: _expandedMaterialIds,
+          expandedTopicIds: _expandedTopicIds,
+          onToggleMaterialExpanded: _toggleMaterialExpanded,
+          onToggleTopicExpanded: _toggleTopicExpanded,
+        );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < 820;
+        final compact = constraints.maxWidth < 1120;
+        final sidebarWidth = narrow
+            ? double.infinity
+            : compact
+                ? 232.0
+                : 268.0;
+        final sidebarHeight = constraints.maxHeight < 640 ? 212.0 : 286.0;
+
+        return Column(children: [
+          Expanded(
+            child: narrow
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        height: sidebarHeight,
+                        child: sidebar(width: sidebarWidth),
+                      ),
+                      const Divider(height: 1, thickness: 1, color: _K.div),
+                      Expanded(child: _buildPanel(st)),
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      sidebar(width: sidebarWidth),
+                      Expanded(child: _buildPanel(st)),
+                    ],
+                  ),
           ),
-          Expanded(child: _buildPanel(st)),
-        ]),
-      ),
-      if (showFooter && footerCtx != null)
-        _FooterWidget(
-          ctx: footerCtx,
-          uploading: st.uploading,
-          canGenerate: _canGenerate(footerCtx, st),
-          selectionCount: hasTreeSelection ? _treeSelection.totalCount : null,
-          onUpload: () { final m = footerCtx.module; if (m != null) _showUploadSheet(m); },
-          onGenerate: () => _openQuestionAuthoringFromSelection(footerCtx),
-          onClose: () => setState(() {
-            if (_selectionMode && !_treeSelection.isEmpty) {
-              _treeSelection = _treeSelection.clear();
-              _hideFooterForActive = false;
-            } else {
-              _hideFooterForActive = true;
-            }
-            _persistUiState();
-          }),
-        ),
-    ]);
+          if (showFooter)
+            _FooterWidget(
+              ctx: footerCtx,
+              uploading: st.uploading,
+              canGenerate: _canGenerate(footerCtx, st),
+              selectionCount: hasTreeSelection ? _treeSelection.totalCount : null,
+              onUpload: () { final m = footerCtx.module; if (m != null) _showUploadSheet(m); },
+              onGenerate: () => _openQuestionAuthoringFromSelection(footerCtx),
+              onClose: () => setState(() {
+                if (_selectionMode && !_treeSelection.isEmpty) {
+                  _treeSelection = _treeSelection.clear();
+                  _hideFooterForActive = false;
+                } else {
+                  _hideFooterForActive = true;
+                }
+                _persistUiState();
+              }),
+            ),
+        ],);
+      },
+    );
   }
 
   _Ctx? _footerCtxFromSelection(CourseDetailsState st) {
-    if (_treeSelection.topicIds.isNotEmpty) {
+    if (_treeSelection.moduleIds.isNotEmpty) {
       for (final module in st.modules) {
-        final topics = st.topics[module.id] ?? const <TopicItem>[];
-        for (final topic in topics) {
-          if (_treeSelection.topicIds.contains(topic.id)) {
-            final materials = st.materials[module.id] ?? const <MaterialItem>[];
-            for (final material in materials) {
-              if (material.id == topic.materialId) {
-                return _Ctx.topic(module, material, topic);
-              }
-            }
-          }
+        if (_treeSelection.moduleIds.contains(module.id)) {
+          return _Ctx.module(module);
         }
       }
     }
@@ -410,10 +513,18 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
       }
     }
 
-    if (_treeSelection.moduleIds.isNotEmpty) {
+    if (_treeSelection.topicIds.isNotEmpty) {
       for (final module in st.modules) {
-        if (_treeSelection.moduleIds.contains(module.id)) {
-          return _Ctx.module(module);
+        final topics = st.topics[module.id] ?? const <TopicItem>[];
+        for (final topic in topics) {
+          if (_treeSelection.topicIds.contains(topic.id)) {
+            final materials = st.materials[module.id] ?? const <MaterialItem>[];
+            for (final material in materials) {
+              if (material.id == topic.materialId) {
+                return _Ctx.topic(module, material, topic);
+              }
+            }
+          }
         }
       }
     }
@@ -671,6 +782,7 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
     final notifier = ref.read(courseDetailsControllerProvider(widget.course.id).notifier);
     notifier.loadTopics(m.id);
     notifier.fetchDownloadUrl(moduleId: m.id, materialId: mat.id);
+    ensureCourseLearningOutcomesLoaded(ref, widget.course.id);
   }
 
   void _tapTopic(ModuleItem m, MaterialItem mat, TopicItem t) {
@@ -765,8 +877,14 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
         downloadUrl: st.downloadUrls[matId] ?? c.material!.downloadUrl,
         urlLoading: st.downloadUrlLoading[matId] ?? false,
         onTopicTap: _drillTopic,
-        onAddTopicManual: () => _showAddTopicDialog(c.module!, c.material!),
-        onGenerateTopicsAI: () => _openGenerateDialog(moduleId: mid, materialId: matId),
+        onCreateTopicManual: (title, description, learningOutcomeIds) =>
+            _createManualTopicInline(
+          module: c.module!,
+          material: c.material!,
+          title: title,
+          description: description,
+          learningOutcomeIds: learningOutcomeIds,
+        ),
         onRefreshUrl: () => ref.read(courseDetailsControllerProvider(widget.course.id).notifier)
             .fetchDownloadUrl(moduleId: mid, materialId: matId, force: true),
         previewInteractive: !_dialogOpen,
@@ -787,13 +905,11 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
       outcomes: outcomes,
       canPop: _stack.isNotEmpty,
       onBack: _pop,
-      onGenerate: () => _openGenerateDialog(
-        moduleId: c.module!.id,
-        materialId: c.material!.id,
-        topicId: c.topic!.id,
-      ),
-      onAddManualQuestion: () => _showAddQuestionSheet(c.module!, c.material!, c.topic!),
-      onEditTopic: () => _showEditTopicDialog(c.module!, c.material!, c.topic!),
+      onRenameTopic: () => _showRenameTopicDialog(c.module!, c.material!, c.topic!),
+      onEditTopicSummary: () => _showTopicSummaryDialog(c.module!, c.material!, c.topic!),
+      onEditTopicStatus: () => _showTopicStatusDialog(c.module!, c.material!, c.topic!),
+      onMapTopicOutcomes: () => _showTopicOutcomeMappingDialog(c.module!, c.material!, c.topic!),
+      onDeleteTopic: () => _confirmDeleteTopic(c.module!, c.material!, c.topic!),
       onOpenSubtopic: (TopicItem subtopic) {
         _drillTopic(subtopic);
       },
@@ -802,6 +918,350 @@ class _CourseMaterialsTabState extends ConsumerState<CourseMaterialsTab>
   }
 
   // ── Dialogs ──────────────────────────────────────────────────────────────
+Future<void> _showRenameTopicDialog(ModuleItem m, MaterialItem mat, TopicItem topic) async {
+  final ctrl = TextEditingController(text: topic.title);
+  final result = await _showManagedDialog<bool>(
+    barrierColor: Colors.black.withOpacity(0.38),
+    builder: (_) => _PreferencesDialogShell(
+      title: topic.parentTopicId == null ? 'Rename topic' : 'Rename subtopic',
+      subtitle: 'This popup changes the title only.',
+      leading: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(12)),
+        child: const Icon(Icons.drive_file_rename_outline_rounded, size: 18, color: AppColors.primary),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _DialogTextField(
+            controller: ctrl,
+            hintText: 'Write a clear title',
+            autofocus: true,
+          ),
+          const SizedBox(height: 16),
+          _DialogActions(
+            onCancel: () => Navigator.pop(context, false),
+            onConfirm: () => Navigator.pop(context, true),
+            confirmLabel: 'Save title',
+          ),
+        ],
+      ),
+    ),
+  );
+
+  if (result != true || !mounted) return;
+  final title = ctrl.text.trim();
+  ctrl.dispose();
+  if (title.isEmpty) {
+    AppToast.error(context, title: 'Title required', message: 'Topic title cannot be empty.');
+    return;
+  }
+  await ref.read(courseDetailsControllerProvider(widget.course.id).notifier).updateTopic(
+        topic.copyWith(moduleId: m.id, materialId: mat.id, title: title),
+      );
+  if (!mounted) return;
+  AppToast.success(context, title: 'Title updated', message: 'The topic title was saved.');
+}
+
+Future<void> _showTopicSummaryDialog(ModuleItem m, MaterialItem mat, TopicItem topic) async {
+  final descriptionCtrl = TextEditingController(text: topic.description ?? '');
+  final notesCtrl = TextEditingController(text: topic.instructorNotes ?? '');
+  final result = await _showManagedDialog<bool>(
+    barrierColor: Colors.black.withOpacity(0.38),
+    builder: (_) => _PreferencesDialogShell(
+      title: 'Edit summary',
+      subtitle: 'This popup only updates the scope and instructor notes.',
+      maxWidth: 680,
+      leading: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(12)),
+        child: const Icon(Icons.notes_rounded, size: 18, color: AppColors.primary),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Scope / description', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
+          const SizedBox(height: 8),
+          _DialogTextField(
+            controller: descriptionCtrl,
+            hintText: 'What exactly does this topic cover?',
+            multiline: true,
+            autofocus: true,
+          ),
+          const SizedBox(height: 14),
+          Text('Instructor notes', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
+          const SizedBox(height: 8),
+          _DialogTextField(
+            controller: notesCtrl,
+            hintText: 'Examples, warnings, pacing notes, or delivery hints',
+            multiline: true,
+          ),
+          const SizedBox(height: 16),
+          _DialogActions(
+            onCancel: () => Navigator.pop(context, false),
+            onConfirm: () => Navigator.pop(context, true),
+            confirmLabel: 'Save summary',
+          ),
+        ],
+      ),
+    ),
+  );
+
+  if (result != true || !mounted) return;
+  final description = descriptionCtrl.text.trim();
+  final notes = notesCtrl.text.trim();
+  descriptionCtrl.dispose();
+  notesCtrl.dispose();
+  await ref.read(courseDetailsControllerProvider(widget.course.id).notifier).updateTopic(
+        topic.copyWith(
+          moduleId: m.id,
+          materialId: mat.id,
+          description: description.isEmpty ? null : description,
+          instructorNotes: notes.isEmpty ? null : notes,
+        ),
+      );
+  if (!mounted) return;
+  AppToast.success(context, title: 'Summary updated', message: 'The topic summary was saved.');
+}
+
+Future<void> _showTopicStatusDialog(ModuleItem m, MaterialItem mat, TopicItem topic) async {
+  TopicDifficulty difficulty = topic.difficulty;
+  TopicReadiness readiness = topic.readiness;
+
+  final result = await _showManagedDialog<bool>(
+    barrierColor: Colors.black.withOpacity(0.38),
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (dialogContext, setDialogState) => _PreferencesDialogShell(
+        title: 'Set delivery state',
+        subtitle: 'This popup only changes difficulty and readiness.',
+        maxWidth: 600,
+        leading: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(12)),
+          child: const Icon(Icons.speed_rounded, size: 18, color: AppColors.primary),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Difficulty', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final value in TopicDifficulty.values)
+                  ChoiceChip(
+                    label: Text(value.label),
+                    selected: difficulty == value,
+                    onSelected: (_) => setDialogState(() => difficulty = value),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text('Readiness', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final value in TopicReadiness.values)
+                  ChoiceChip(
+                    label: Text(value.label),
+                    selected: readiness == value,
+                    onSelected: (_) => setDialogState(() => readiness = value),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            _DialogActions(
+              onCancel: () => Navigator.pop(dialogContext, false),
+              onConfirm: () => Navigator.pop(dialogContext, true),
+              confirmLabel: 'Save state',
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  if (result != true || !mounted) return;
+  await ref.read(courseDetailsControllerProvider(widget.course.id).notifier).updateTopic(
+        topic.copyWith(
+          moduleId: m.id,
+          materialId: mat.id,
+          difficulty: difficulty,
+          readiness: readiness,
+        ),
+      );
+  if (!mounted) return;
+  AppToast.success(context, title: 'State updated', message: 'Delivery state was saved.');
+}
+
+Future<void> _showTopicOutcomeMappingDialog(ModuleItem m, MaterialItem mat, TopicItem topic) async {
+  final allTopics = ref.read(courseDetailsControllerProvider(widget.course.id)).topics[m.id] ?? const <TopicItem>[];
+  final hasSubtopics = allTopics.any((t) => t.parentTopicId == topic.id);
+
+  if (hasSubtopics && topic.parentTopicId == null) {
+    await _showManagedDialog<void>(
+      barrierColor: Colors.black.withOpacity(0.35),
+      builder: (_) => _PreferencesDialogShell(
+        title: 'Outcome mapping is on subtopics',
+        subtitle: 'This topic contains subtopics, so the parent topic should inherit coverage from its children.',
+        leading: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(color: AppColors.warningSoftBg, borderRadius: BorderRadius.circular(12)),
+          child: Icon(Icons.info_outline_rounded, size: 18, color: AppColors.warningText),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.warningSoftBg,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.warningBorder),
+              ),
+              child: Text(
+                'Map learning outcomes inside each subtopic. The topic coverage is then calculated from the subtopic mappings.',
+                style: TextStyle(fontSize: 13, height: 1.5, color: AppColors.warningText, fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(height: 16),
+            AppButton(
+              label: 'Got it',
+              onTap: () => Navigator.pop(context),
+              fullWidth: true,
+              height: 40,
+            ),
+          ],
+        ),
+      ),
+    );
+    return;
+  }
+
+  final outcomes = ref.read(courseLOProvider(widget.course.id));
+  final selectedOutcomeIds = <int>{...topic.learningOutcomeIds};
+  final result = await _showManagedDialog<bool>(
+    barrierColor: Colors.black.withOpacity(0.38),
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (dialogContext, setDialogState) => _PreferencesDialogShell(
+        title: 'Map learning outcomes',
+        subtitle: 'This popup only controls outcome links for this final-level item.',
+        maxWidth: 660,
+        leading: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(12)),
+          child: const Icon(Icons.flag_outlined, size: 18, color: AppColors.primary),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (outcomes.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Text('No course outcomes yet. Add them from the Outcomes tab first.', style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
+              )
+            else
+              Container(
+                constraints: const BoxConstraints(maxHeight: 300),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: outcomes.length,
+                  separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.divider),
+                  itemBuilder: (_, i) {
+                    final lo = outcomes[i];
+                    final selected = selectedOutcomeIds.contains(lo.id);
+                    return CheckboxListTile(
+                      value: selected,
+                      onChanged: (_) => setDialogState(() {
+                        if (selected) {
+                          selectedOutcomeIds.remove(lo.id);
+                        } else {
+                          selectedOutcomeIds.add(lo.id);
+                        }
+                      }),
+                      title: Text('${lo.code} • ${lo.title}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
+                      controlAffinity: ListTileControlAffinity.leading,
+                    );
+                  },
+                ),
+              ),
+            const SizedBox(height: 16),
+            _DialogActions(
+              onCancel: () => Navigator.pop(dialogContext, false),
+              onConfirm: outcomes.isEmpty ? null : () => Navigator.pop(dialogContext, true),
+              confirmLabel: 'Save mapping',
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  if (result != true || !mounted) return;
+  await ref.read(courseDetailsControllerProvider(widget.course.id).notifier).updateTopic(
+        topic.copyWith(
+          moduleId: m.id,
+          materialId: mat.id,
+          learningOutcomeIds: selectedOutcomeIds.toList(),
+          linkedOutcomeId: selectedOutcomeIds.isEmpty ? null : selectedOutcomeIds.first.toString(),
+          linkedOutcomeIds: selectedOutcomeIds.map((id) => id.toString()).toList(),
+        ),
+      );
+  if (!mounted) return;
+  AppToast.success(context, title: 'Outcomes updated', message: 'Outcome mapping was saved.');
+}
+
+Future<void> _confirmDeleteTopic(ModuleItem m, MaterialItem mat, TopicItem topic) async {
+  final ok = await _showManagedDialog<bool>(
+        barrierColor: Colors.black.withOpacity(0.38),
+        builder: (_) => _ConfirmDialogWidget(
+          title: topic.parentTopicId == null ? 'Delete Topic' : 'Delete Subtopic',
+          body: 'Delete "${topic.title}"? This action cannot be undone.',
+          confirm: 'Delete',
+          confirmColor: AppColors.dangerText,
+        ),
+      ) ??
+      false;
+  if (!ok || !mounted) return;
+
+  await ref.read(courseDetailsControllerProvider(widget.course.id).notifier).deleteTopic(
+        moduleId: m.id,
+        materialId: mat.id,
+        topicId: topic.id,
+      );
+  if (!mounted) return;
+  setState(() {
+    _sel = _Ctx.material(m, mat);
+    _stack.clear();
+    _persistUiState();
+  });
+  AppToast.success(context, title: 'Deleted', message: 'The item was removed from this material.');
+}
+
 Future<void> _showAddSubtopicDialog(
   ModuleItem m,
   MaterialItem mat,
@@ -811,7 +1271,7 @@ Future<void> _showAddSubtopicDialog(
 
   final result = await _showManagedDialog<_TopicDialogResult>(
     barrierColor: Colors.black.withOpacity(0.42),
-    builder: (_) => _AddTopicDialogV2(outcomes: outcomes),
+    builder: (_) => _AddTopicDialogV2(outcomes: outcomes, isSubtopic: true),
   );
 
   if (result == null || !mounted) return;
@@ -836,7 +1296,7 @@ Future<void> _showAddSubtopicDialog(
 
   if (topic != null) {
     AppToast.success(context,
-        title: 'Subtopic added', message: '"${topic.title}" created.');
+        title: 'Subtopic added', message: '"${topic.title}" created.',);
   }
 }
 
@@ -867,7 +1327,7 @@ Future<void> _showCreateModuleDialog() async {
 
     if (m != null && mounted) {
       AppToast.success(context,
-          title: 'Module created', message: '"${m.title}" added.');
+          title: 'Module created', message: '"${m.title}" added.',);
     }
     return;
   }
@@ -901,12 +1361,12 @@ Future<void> _showCreateModuleDialog() async {
 
     setState(() {
       _expanded.add(refreshedModule!.id);
-      _sel = _Ctx.module(refreshedModule!);
+      _sel = _Ctx.module(refreshedModule);
       _stack.clear();
       _persistUiState();
     });
     if (refreshedModule != null) {
-      ref
+      await ref
           .read(courseDetailsControllerProvider(widget.course.id).notifier)
           .loadMaterials(refreshedModule.id);
     }
@@ -928,19 +1388,19 @@ Future<void> _showCreateModuleDialog() async {
   Future<void> _showUploadSheet(ModuleItem module) async {
     final results = await _showManagedDialog<List<UploadSheetResult>>(
         barrierColor: Colors.black.withOpacity(0.35),
-        builder: (_) => UploadMaterialSheet(moduleTitle: module.title));
+        builder: (_) => UploadMaterialSheet(moduleTitle: module.title),);
     if (results == null || results.isEmpty || !mounted) return;
     int ok = 0;
     for (final r in results) {
       if (!mounted) break;
       final success = await ref.read(courseDetailsControllerProvider(widget.course.id).notifier)
           .uploadMaterial(moduleId: module.id, bytes: r.bytes,
-              filename: r.filename, contentType: r.contentType, title: r.title);
+              filename: r.filename, contentType: r.contentType, title: r.title,);
       if (success) ok++;
     }
     if (mounted && ok > 0) {
       AppToast.success(context, title: 'Uploaded',
-          message: ok == 1 ? '"${results.first.title}" is ready.' : '$ok files uploaded.');
+          message: ok == 1 ? '"${results.first.title}" is ready.' : '$ok files uploaded.',);
     }
   }
 
@@ -969,7 +1429,7 @@ Future<void> _showCreateModuleDialog() async {
     } else {
       AppToast.error(context,
           title: 'Copy failed',
-          message: 'Could not copy module. Please try again.');
+          message: 'Could not copy module. Please try again.',);
     }
   }
 
@@ -1087,7 +1547,7 @@ Future<void> _showCreateModuleDialog() async {
         barrierColor: Colors.black.withOpacity(0.35),
         builder: (_) => _ConfirmDialogWidget(title: 'Delete Module',
             body: 'Delete "${m.title}"? This will also remove all its materials.',
-            confirm: 'Delete', confirmColor: const Color(0xFFEF4444)));
+            confirm: 'Delete', confirmColor: const Color(0xFFEF4444),),);
     if (ok != true || !mounted) return;
 
     final success = await ref.read(courseDetailsControllerProvider(widget.course.id).notifier)
@@ -1108,11 +1568,51 @@ Future<void> _showCreateModuleDialog() async {
     }
   }
 
+  Future<bool> _createManualTopicInline({
+    required ModuleItem module,
+    required MaterialItem material,
+    required String title,
+    String? description,
+    List<int> learningOutcomeIds = const [],
+  }) async {
+    final trimmedTitle = title.trim();
+    if (trimmedTitle.isEmpty) return false;
+
+    final notifier = ref.read(courseDetailsControllerProvider(widget.course.id).notifier);
+    final topic = await notifier.createTopic(
+      moduleId: module.id,
+      materialId: material.id,
+      payload: TopicCreateRequest(
+        title: trimmedTitle,
+        description: description?.trim().isEmpty ?? false ? null : description?.trim(),
+        learningOutcomeIds: learningOutcomeIds,
+      ),
+    );
+
+    if (!mounted) return false;
+
+    if (topic != null) {
+      AppToast.success(
+        context,
+        title: 'Topic added',
+        message: '"${topic.title}" was attached to this PDF.',
+      );
+      return true;
+    }
+
+    AppToast.error(
+      context,
+      title: 'Could not add topic',
+      message: 'Please try again.',
+    );
+    return false;
+  }
+
   Future<void> _showAddTopicDialog(ModuleItem m, MaterialItem mat) async {
-    final outcomes = ref.read(courseLOProvider(widget.course.id));
+    ref.read(courseLOProvider(widget.course.id));
     final result = await _showManagedDialog<_TopicDialogResult>(
       barrierColor: Colors.black.withOpacity(0.42),
-      builder: (_) => _AddTopicDialogV2(outcomes: outcomes),
+      builder: (_) => const _AddTopicDialogV2(),
     );
 
     if (result == null || !mounted) return;
@@ -1175,7 +1675,7 @@ Future<void> _showCreateModuleDialog() async {
     Color difficultyColor(TopicDifficulty value) {
       switch (value) {
         case TopicDifficulty.advanced:
-          return const Color(0xFFDC2626);
+          return AppColors.dangerText;
         case TopicDifficulty.intermediate:
           return _K.amber;
         case TopicDifficulty.beginner:
@@ -1190,7 +1690,7 @@ Future<void> _showCreateModuleDialog() async {
         case TopicDifficulty.intermediate:
           return const Color(0xFFFFFBEB);
         case TopicDifficulty.beginner:
-          return const Color(0xFFEFF6FF);
+          return AppColors.primarySoft;
       }
     }
 
@@ -1212,7 +1712,7 @@ Future<void> _showCreateModuleDialog() async {
         case TopicReadiness.review:
           return _K.amberSoft;
         case TopicReadiness.draft:
-          return const Color(0xFFF1F5F9);
+          return AppColors.headerBg;
       }
     }
 
@@ -1223,7 +1723,7 @@ Future<void> _showCreateModuleDialog() async {
               title: 'Delete Topic',
               body: 'Delete "${topic.title}"? This action cannot be undone.',
               confirm: 'Delete',
-              confirmColor: const Color(0xFFDC2626),
+              confirmColor: AppColors.dangerText,
             ),
           ) ??
           false;
@@ -1242,7 +1742,6 @@ Future<void> _showCreateModuleDialog() async {
             title: 'Manage Topic',
             subtitle: 'Update topic details, delivery state, and linked learning outcomes without leaving the material workspace.',
             maxWidth: 760,
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
             leading: Container(
               width: 44,
               height: 44,
@@ -1325,7 +1824,7 @@ Future<void> _showCreateModuleDialog() async {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Topic title',
                               style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textMuted),
                             ),
@@ -1336,7 +1835,7 @@ Future<void> _showCreateModuleDialog() async {
                               autofocus: true,
                             ),
                             const SizedBox(height: 14),
-                            const Text(
+                            Text(
                               'Description',
                               style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textMuted),
                             ),
@@ -1347,7 +1846,7 @@ Future<void> _showCreateModuleDialog() async {
                               multiline: true,
                             ),
                             const SizedBox(height: 14),
-                            const Text(
+                            Text(
                               'Hierarchy',
                               style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textMuted),
                             ),
@@ -1355,7 +1854,7 @@ Future<void> _showCreateModuleDialog() async {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF8FAFC),
+                                color: AppColors.surfaceBg,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: _K.div),
                               ),
@@ -1363,11 +1862,10 @@ Future<void> _showCreateModuleDialog() async {
                                 child: DropdownButton<int?>(
                                   value: selectedParentTopicId,
                                   isExpanded: true,
-                                  dropdownColor: Colors.white,
+                                  dropdownColor: AppColors.cardBg,
                                   borderRadius: BorderRadius.circular(14),
                                   items: [
                                     const DropdownMenuItem<int?>(
-                                      value: null,
                                       child: Text('Top-level topic'),
                                     ),
                                     ...parentTopicOptions.map(
@@ -1386,7 +1884,7 @@ Future<void> _showCreateModuleDialog() async {
                               selectedParentTopicId == null
                                   ? 'This item appears as a top-level topic inside the material.'
                                   : 'This item becomes a subtopic. Subtopics are final-level items and cannot contain children.',
-                              style: const TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.45),
+                              style: TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.45),
                             ),
                           ],
                         ),
@@ -1408,7 +1906,7 @@ Future<void> _showCreateModuleDialog() async {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Difficulty',
                                     style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textMuted),
                                   ),
@@ -1430,13 +1928,13 @@ Future<void> _showCreateModuleDialog() async {
                                         backgroundColor: difficultyBg(value),
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                                         side: BorderSide(
-                                          color: selected ? difficultyColor(value) : const Color(0xFFE5E7EB),
+                                          color: selected ? difficultyColor(value) : AppColors.borderGray,
                                         ),
                                       );
                                     }).toList(),
                                   ),
                                   const SizedBox(height: 16),
-                                  const Text(
+                                  Text(
                                     'Readiness',
                                     style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textMuted),
                                   ),
@@ -1458,7 +1956,7 @@ Future<void> _showCreateModuleDialog() async {
                                         backgroundColor: readinessBg(value),
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                                         side: BorderSide(
-                                          color: selected ? readinessFg(value) : const Color(0xFFE5E7EB),
+                                          color: selected ? readinessFg(value) : AppColors.borderGray,
                                         ),
                                       );
                                     }).toList(),
@@ -1481,7 +1979,7 @@ Future<void> _showCreateModuleDialog() async {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Use notes for examples, misconceptions, teaching cues, or assessment reminders.',
                                     style: TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.5),
                                   ),
@@ -1510,7 +2008,7 @@ Future<void> _showCreateModuleDialog() async {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Select the course outcomes this topic supports.',
                               style: TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.5),
                             ),
@@ -1520,11 +2018,11 @@ Future<void> _showCreateModuleDialog() async {
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
+                                  color: AppColors.surfaceBg,
                                   borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  border: Border.all(color: AppColors.border),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'No course outcomes yet. Add them in the Outcomes tab first.',
                                   style: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
                                 ),
@@ -1560,7 +2058,7 @@ Future<void> _showCreateModuleDialog() async {
                               Container(
                                 constraints: const BoxConstraints(maxHeight: 220),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
+                                  color: AppColors.surfaceBg,
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(color: _K.div),
                                 ),
@@ -1613,7 +2111,7 @@ Future<void> _showCreateModuleDialog() async {
                                                 ),
                                                 child: Text(
                                                   lo.code,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.w800,
                                                     color: AppColors.badgeBlueFg,
@@ -1646,16 +2144,16 @@ Future<void> _showCreateModuleDialog() async {
                     ),
                     const SizedBox(height: 16),
                     _CardWidget(
-                      header: const _HdrWidget(
+                      header: _HdrWidget(
                         icon: Icons.warning_amber_rounded,
-                        iconColor: Color(0xFFDC2626),
+                        iconColor: AppColors.dangerText,
                         title: 'Danger zone',
                       ),
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
                         child: Row(
                           children: [
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -1663,7 +2161,7 @@ Future<void> _showCreateModuleDialog() async {
                                     'Delete this topic',
                                     style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textTitle),
                                   ),
-                                  SizedBox(height: 4),
+                                  const SizedBox(height: 4),
                                   Text(
                                     'This removes the topic and its direct links from the material structure.',
                                     style: TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.5),
@@ -1771,19 +2269,30 @@ Future<void> _showCreateModuleDialog() async {
   }
 
   void _openQuestionAuthoringFromSelection(_Ctx active) {
-    final hasTreeSelection = _selectionMode && !_treeSelection.isEmpty;
+    final CourseDetailsState st = ref.read(
+      courseDetailsControllerProvider(widget.course.id),
+    );
+    final bool hasTreeSelection = _selectionMode && !_treeSelection.isEmpty;
+    final QuestionAuthoringLaunchContext launchContext =
+        _buildAuthoringLaunchContext(active, st, hasTreeSelection: hasTreeSelection);
 
-    final moduleIds = hasTreeSelection
-        ? const <int>{}
-        : (active.type == _CType.module ? <int>{if (active.module != null) active.module!.id} : const <int>{});
+    final Set<int> moduleIds = hasTreeSelection
+        ? {..._treeSelection.moduleIds}
+        : (active.type == _CType.module
+            ? <int>{if (active.module != null) active.module!.id}
+            : const <int>{});
 
-    final materialIds = hasTreeSelection
-        ? const <int>{}
-        : (active.type == _CType.material ? <int>{if (active.material != null) active.material!.id} : const <int>{});
+    final Set<int> materialIds = hasTreeSelection
+        ? {..._treeSelection.materialIds}
+        : (active.type == _CType.material
+            ? <int>{if (active.material != null) active.material!.id}
+            : const <int>{});
 
-    final topicIds = hasTreeSelection
-        ? _treeSelection.topicIds
-        : (active.type == _CType.topic ? <int>{if (active.topic != null) active.topic!.id} : const <int>{});
+    final Set<int> topicIds = hasTreeSelection
+        ? {..._treeSelection.topicIds}
+        : (active.type == _CType.topic
+            ? <int>{if (active.topic != null) active.topic!.id}
+            : const <int>{});
 
     if (moduleIds.isEmpty && materialIds.isEmpty && topicIds.isEmpty) {
       _openGenerateDialog(
@@ -1795,19 +2304,196 @@ Future<void> _showCreateModuleDialog() async {
     }
 
     setState(() {
-      _authoringModuleIds = {...moduleIds};
-      _authoringMaterialIds = {...materialIds};
-      _authoringTopicIds = {...topicIds};
+      _authoringModuleIds = moduleIds;
+      _authoringMaterialIds = materialIds;
+      _authoringTopicIds = topicIds;
+      _authoringLaunchContext = launchContext;
       _showQuestionAuthoring = true;
       _hideFooterForActive = true;
     });
+    _persistUiState();
+  }
+
+  QuestionAuthoringLaunchContext _buildAuthoringLaunchContext(
+    _Ctx active,
+    CourseDetailsState st, {
+    required bool hasTreeSelection,
+  }) {
+    if (!hasTreeSelection) {
+      switch (active.type) {
+        case _CType.module:
+          final ModuleItem? module = active.module;
+          return QuestionAuthoringLaunchContext(
+            kind: QuestionAuthoringScopeKind.module,
+            title: module?.title ?? 'Selected module',
+            subtitle: 'Questions will be built from every topic and subtopic inside this module.',
+            selectedModuleId: module?.id,
+            selectedModuleIds: <int>{if (module != null) module.id},
+          );
+        case _CType.material:
+          final ModuleItem? module = active.module;
+          final MaterialItem? material = active.material;
+          return QuestionAuthoringLaunchContext(
+            kind: QuestionAuthoringScopeKind.material,
+            title: material?.displayTitle ?? 'Selected material',
+            subtitle: module == null
+                ? 'Questions will be built from this file structure.'
+                : '${module.title} • questions will use this file topics and subtopics.',
+            selectedModuleId: module?.id,
+            selectedMaterialId: material?.id,
+            selectedModuleIds: <int>{if (module != null) module.id},
+            selectedMaterialIds: <int>{if (material != null) material.id},
+          );
+        case _CType.topic:
+          final ModuleItem? module = active.module;
+          final MaterialItem? material = active.material;
+          final TopicItem? topic = active.topic;
+          final bool isSubtopic = topic?.parentTopicId != null;
+          return QuestionAuthoringLaunchContext(
+            kind: isSubtopic
+                ? QuestionAuthoringScopeKind.subtopic
+                : QuestionAuthoringScopeKind.topic,
+            title: topic?.title ?? 'Selected topic',
+            subtitle: isSubtopic
+                ? 'Questions will target this specific subtopic.'
+                : 'Questions will use this topic and its subtopics if they exist.',
+            selectedModuleId: module?.id,
+            selectedMaterialId: material?.id,
+            selectedTopicId: topic?.id,
+            selectedModuleIds: <int>{if (module != null) module.id},
+            selectedMaterialIds: <int>{if (material != null) material.id},
+            selectedTopicIds: <int>{if (topic != null) topic.id},
+          );
+      }
+    }
+
+    final Set<int> containingModuleIds = <int>{};
+    final Set<int> containingMaterialIds = <int>{};
+    final Set<int> selectedTopicIds = {..._treeSelection.topicIds};
+
+    for (final ModuleItem module in st.modules) {
+      final List<TopicItem> topics = st.topics[module.id] ?? const <TopicItem>[];
+      for (final TopicItem topic in topics) {
+        if (!selectedTopicIds.contains(topic.id)) continue;
+        containingModuleIds.add(module.id);
+        containingMaterialIds.add(topic.materialId);
+      }
+    }
+
+    final Set<int> moduleIds = <int>{
+      ...containingModuleIds,
+      ..._treeSelection.moduleIds,
+    };
+    final Set<int> materialIds = <int>{
+      ...containingMaterialIds,
+      ..._treeSelection.materialIds,
+    };
+
+    ModuleItem? selectedModule;
+    MaterialItem? selectedMaterial;
+    TopicItem? selectedTopic;
+
+    if (_treeSelection.moduleIds.length == 1) {
+      selectedModule = _findModuleById(st, _treeSelection.moduleIds.first);
+    }
+    if (_treeSelection.materialIds.length == 1) {
+      selectedMaterial = _findMaterialById(st, _treeSelection.materialIds.first);
+    }
+    if (_treeSelection.topicIds.length == 1) {
+      selectedTopic = _findTopicById(st, _treeSelection.topicIds.first);
+      selectedMaterial ??= selectedTopic == null ? null : _findMaterialById(st, selectedTopic.materialId);
+      selectedModule ??= selectedMaterial == null ? null : _findModuleById(st, selectedMaterial.moduleId);
+    }
+
+    if (selectedModule != null && _treeSelection.moduleIds.length == 1) {
+      return QuestionAuthoringLaunchContext(
+        kind: QuestionAuthoringScopeKind.module,
+        title: selectedModule.title,
+        subtitle: 'Full module selected from the structure tree.',
+        selectedModuleId: selectedModule.id,
+        selectedModuleIds: moduleIds,
+        selectedMaterialIds: materialIds,
+        selectedTopicIds: selectedTopicIds,
+      );
+    }
+
+    if (selectedMaterial != null && _treeSelection.materialIds.length == 1) {
+      return QuestionAuthoringLaunchContext(
+        kind: QuestionAuthoringScopeKind.material,
+        title: selectedMaterial.displayTitle,
+        subtitle: 'Full material file selected from the structure tree.',
+        selectedModuleId: selectedModule?.id ?? selectedMaterial.moduleId,
+        selectedMaterialId: selectedMaterial.id,
+        selectedModuleIds: moduleIds,
+        selectedMaterialIds: materialIds,
+        selectedTopicIds: selectedTopicIds,
+      );
+    }
+
+    if (selectedTopic != null && _treeSelection.topicIds.length == 1) {
+      final bool isSubtopic = selectedTopic.parentTopicId != null;
+      return QuestionAuthoringLaunchContext(
+        kind: isSubtopic
+            ? QuestionAuthoringScopeKind.subtopic
+            : QuestionAuthoringScopeKind.topic,
+        title: selectedTopic.title,
+        subtitle: isSubtopic
+            ? 'One subtopic selected from the structure tree.'
+            : 'One topic selected from the structure tree.',
+        selectedModuleId: selectedModule?.id,
+        selectedMaterialId: selectedMaterial?.id,
+        selectedTopicId: selectedTopic.id,
+        selectedModuleIds: moduleIds,
+        selectedMaterialIds: materialIds,
+        selectedTopicIds: selectedTopicIds,
+      );
+    }
+
+    return QuestionAuthoringLaunchContext(
+      kind: QuestionAuthoringScopeKind.selection,
+      title: '${selectedTopicIds.length} selected content targets',
+      subtitle: 'Custom selection across ${moduleIds.length} module${moduleIds.length == 1 ? '' : 's'} and ${materialIds.length} file${materialIds.length == 1 ? '' : 's'}.',
+      selectedModuleIds: moduleIds,
+      selectedMaterialIds: materialIds,
+      selectedTopicIds: selectedTopicIds,
+    );
+  }
+
+  ModuleItem? _findModuleById(CourseDetailsState st, int id) {
+    for (final ModuleItem module in st.modules) {
+      if (module.id == id) return module;
+    }
+    return null;
+  }
+
+  MaterialItem? _findMaterialById(CourseDetailsState st, int id) {
+    for (final List<MaterialItem> materials in st.materials.values) {
+      for (final MaterialItem material in materials) {
+        if (material.id == id) return material;
+      }
+    }
+    return null;
+  }
+
+  TopicItem? _findTopicById(CourseDetailsState st, int id) {
+    for (final List<TopicItem> topics in st.topics.values) {
+      for (final TopicItem topic in topics) {
+        if (topic.id == id) return topic;
+      }
+    }
+    return null;
   }
 
   void _closeQuestionAuthoring() {
     if (!mounted) return;
     setState(() {
       _showQuestionAuthoring = false;
+      _authoringModuleIds = const <int>{};
+      _authoringMaterialIds = const <int>{};
+      _authoringTopicIds = const <int>{};
+      _authoringLaunchContext = null;
     });
+    _persistUiState();
   }
 
   void _openGenerateDialog({int? moduleId, int? materialId, int? topicId}) => _showManagedDialog(
@@ -1816,10 +2502,9 @@ Future<void> _showCreateModuleDialog() async {
         initialModuleId: moduleId,
         initialMaterialId: materialId,
         initialTopicId: topicId,
-      ));
+      ),);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  SIDEBAR
 // ─────────────────────────────────────────────────────────────────────────────
-

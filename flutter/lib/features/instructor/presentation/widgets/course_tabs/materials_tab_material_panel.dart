@@ -1,375 +1,1006 @@
 part of 'materials_tab.dart';
 
 class _MaterialPanelWidget extends StatelessWidget {
-  final ModuleItem module; final MaterialItem material;
-  final List<TopicItem> topics; final bool topicsLoading;
+  final ModuleItem module;
+  final MaterialItem material;
+  final List<TopicItem> topics;
+  final bool topicsLoading;
   final List<LearningOutcome> outcomes;
-  final String? downloadUrl; final bool urlLoading;
+  final String? downloadUrl;
+  final bool urlLoading;
   final void Function(TopicItem) onTopicTap;
-  final VoidCallback onAddTopicManual, onGenerateTopicsAI, onRefreshUrl;
+  final Future<bool> Function(
+    String title,
+    String? description,
+    List<int> learningOutcomeIds,
+  ) onCreateTopicManual;
+  final VoidCallback onRefreshUrl;
   final bool previewInteractive;
-  const _MaterialPanelWidget({required this.module, required this.material,
-      required this.topics, required this.topicsLoading, required this.outcomes,
-      required this.downloadUrl, required this.urlLoading,
-      required this.onTopicTap, required this.onAddTopicManual,
-      required this.onGenerateTopicsAI, required this.onRefreshUrl, required this.previewInteractive});
+
+  const _MaterialPanelWidget({
+    required this.module,
+    required this.material,
+    required this.topics,
+    required this.topicsLoading,
+    required this.outcomes,
+    required this.downloadUrl,
+    required this.urlLoading,
+    required this.onTopicTap,
+    required this.onCreateTopicManual,
+    required this.onRefreshUrl,
+    required this.previewInteractive,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final mappedOutcomeIds = <String>{};
+    Theme.of(context);
+    final mappedOutcomeIds = _mappedOutcomeIds(topics);
+    final readyTopics = topics
+        .where((t) => t.readiness == TopicReadiness.ready || t.isReviewed)
+        .length;
+
+    return _PdfReviewerWorkspace(
+      module: module,
+      material: material,
+      topics: topics,
+      topicsLoading: topicsLoading,
+      outcomes: outcomes,
+      mappedOutcomeIds: mappedOutcomeIds,
+      readyTopics: readyTopics,
+      downloadUrl: downloadUrl,
+      urlLoading: urlLoading,
+      previewInteractive: previewInteractive,
+      onRefreshUrl: onRefreshUrl,
+      onTopicTap: onTopicTap,
+      onCreateTopicManual: onCreateTopicManual,
+    );
+  }
+
+  Set<int> _mappedOutcomeIds(List<TopicItem> topics) {
+    final ids = <int>{};
     for (final topic in topics) {
-      mappedOutcomeIds.addAll(topic.linkedOutcomeIds);
-      if (topic.linkedOutcomeId != null) mappedOutcomeIds.add(topic.linkedOutcomeId!);
+      ids.addAll(topic.learningOutcomeIds);
+      if (topic.linkedOutcomeId != null) {
+        final parsed = int.tryParse(topic.linkedOutcomeId!);
+        if (parsed != null) ids.add(parsed);
+      }
+      for (final raw in topic.linkedOutcomeIds) {
+        final parsed = int.tryParse(raw);
+        if (parsed != null) ids.add(parsed);
+      }
     }
+    return ids;
+  }
+}
 
-    final readyTopics = topics.where((t) => t.readiness == TopicReadiness.ready).length;
-    final statusLabel = material.isReady || material.status == 'uploaded'
-        ? 'Ready'
-        : material.isProcessing
-            ? 'Processing'
-            : 'Draft';
+class _PdfReviewerWorkspace extends StatefulWidget {
+  final ModuleItem module;
+  final MaterialItem material;
+  final List<TopicItem> topics;
+  final bool topicsLoading;
+  final List<LearningOutcome> outcomes;
+  final Set<int> mappedOutcomeIds;
+  final int readyTopics;
+  final String? downloadUrl;
+  final bool urlLoading;
+  final bool previewInteractive;
+  final VoidCallback onRefreshUrl;
+  final void Function(TopicItem) onTopicTap;
+  final Future<bool> Function(
+    String title,
+    String? description,
+    List<int> learningOutcomeIds,
+  ) onCreateTopicManual;
 
-    final previewCard = _CardWidget(
-      noPadding: true,
-      header: _HdrWidget(
-        icon: Icons.preview_rounded,
-        iconColor: AppColors.primary,
-        title: 'Material preview',
-        trailing: downloadUrl != null && downloadUrl!.isNotEmpty
-            ? _OBtn(url: downloadUrl!)
-            : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
+  const _PdfReviewerWorkspace({
+    required this.module,
+    required this.material,
+    required this.topics,
+    required this.topicsLoading,
+    required this.outcomes,
+    required this.mappedOutcomeIds,
+    required this.readyTopics,
+    required this.downloadUrl,
+    required this.urlLoading,
+    required this.previewInteractive,
+    required this.onRefreshUrl,
+    required this.onTopicTap,
+    required this.onCreateTopicManual,
+  });
+
+  @override
+  State<_PdfReviewerWorkspace> createState() => _PdfReviewerWorkspaceState();
+}
+
+class _PdfReviewerWorkspaceState extends State<_PdfReviewerWorkspace> {
+  bool _reviewerDialogOpen = false;
+
+  void _setReviewerDialogOpen(bool value) {
+    if (!mounted || _reviewerDialogOpen == value) return;
+    setState(() => _reviewerDialogOpen = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    final pdfPreviewActive = widget.previewInteractive && !_reviewerDialogOpen;
+    return Container(
+      color: AppColors.pageBg,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 1120;
+          final stageHeight = compact
+              ? 620.0
+              : (constraints.maxHeight - 190).clamp(620.0, 900.0).toDouble();
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(22, 18, 22, 96),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Pill(l: material.type.toUpperCase(), fg: AppColors.primary, bg: _K.blueSoft),
-                _Pill(
-                  l: statusLabel,
-                  fg: material.isReady ? _K.green : material.isProcessing ? _K.amber : AppColors.textMuted,
-                  bg: material.isReady ? _K.greenSoft : material.isProcessing ? _K.amberSoft : const Color(0xFFF1F5F9),
+                _ReviewerShellHeader(
+                  module: widget.module,
+                  material: widget.material,
+                  topics: widget.topics,
+                  readyTopics: widget.readyTopics,
+                  mappedOutcomeCount: widget.mappedOutcomeIds.length,
+                  totalOutcomeCount: widget.outcomes.length,
+                  downloadUrl: widget.downloadUrl,
+                  urlLoading: widget.urlLoading,
+                  onRefreshUrl: widget.onRefreshUrl,
                 ),
-                if (material.fileName != null && material.fileName!.trim().isNotEmpty)
-                  Text(
-                    material.fileName!,
-                    style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted, fontWeight: FontWeight.w500),
+                const SizedBox(height: 18),
+                if (compact)
+                  Column(
+                    children: [
+                      _DocumentStage(
+                        material: widget.material,
+                        downloadUrl: widget.downloadUrl,
+                        urlLoading: widget.urlLoading,
+                        onRefreshUrl: widget.onRefreshUrl,
+                        previewInteractive: pdfPreviewActive,
+                        height: stageHeight,
+                      ),
+                      const SizedBox(height: 18),
+                      _ReviewerSidePanel(
+                        material: widget.material,
+                        topics: widget.topics,
+                        topicsLoading: widget.topicsLoading,
+                        outcomes: widget.outcomes,
+                        mappedOutcomeIds: widget.mappedOutcomeIds,
+                        readyTopics: widget.readyTopics,
+                        onTopicTap: widget.onTopicTap,
+                        onCreateTopicManual: widget.onCreateTopicManual,
+                        onReviewerDialogOpenChanged: _setReviewerDialogOpen,
+                      ),
+                    ],
+                  )
+                else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _DocumentStage(
+                          material: widget.material,
+                          downloadUrl: widget.downloadUrl,
+                          urlLoading: widget.urlLoading,
+                          onRefreshUrl: widget.onRefreshUrl,
+                          previewInteractive: pdfPreviewActive,
+                          height: stageHeight,
+                        ),
+                      ),
+                      const SizedBox(width: 18),
+                      SizedBox(
+                        width: 430,
+                        child: _ReviewerSidePanel(
+                          material: widget.material,
+                          topics: widget.topics,
+                          topicsLoading: widget.topicsLoading,
+                          outcomes: widget.outcomes,
+                          mappedOutcomeIds: widget.mappedOutcomeIds,
+                          readyTopics: widget.readyTopics,
+                          onTopicTap: widget.onTopicTap,
+                          onCreateTopicManual: widget.onCreateTopicManual,
+                          onReviewerDialogOpenChanged: _setReviewerDialogOpen,
+                        ),
+                      ),
+                    ],
                   ),
               ],
             ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReviewerShellHeader extends StatelessWidget {
+  final ModuleItem module;
+  final MaterialItem material;
+  final List<TopicItem> topics;
+  final int readyTopics;
+  final int mappedOutcomeCount;
+  final int totalOutcomeCount;
+  final String? downloadUrl;
+  final bool urlLoading;
+  final VoidCallback onRefreshUrl;
+
+  const _ReviewerShellHeader({
+    required this.module,
+    required this.material,
+    required this.topics,
+    required this.readyTopics,
+    required this.mappedOutcomeCount,
+    required this.totalOutcomeCount,
+    required this.downloadUrl,
+    required this.urlLoading,
+    required this.onRefreshUrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    final status = _materialStatusLabel(material);
+    final statusColor = _materialStatusColor(material);
+    final fileName = (material.fileName ?? '').trim();
+    final parentTopics = topics.where((t) => t.parentTopicId == null).length;
+    final subTopics = topics.length - parentTopics;
+    final fileMeta = material.pageCount != null
+        ? '${material.pageCount} pages'
+        : material.fileSize != null
+            ? _MetaStripW._fmt(material.fileSize!)
+            : material.type.toUpperCase();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF145CCB), AppColors.primary, Color(0xFF4CB5FF)],
+        ),
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.18),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
           ),
-          Container(height: 1, color: _K.div),
-          SizedBox(
-            height: 680,
-            child: _FilePreviewWidget(
-              material: material,
-              downloadUrl: downloadUrl,
-              loading: urlLoading,
-              onRefresh: onRefreshUrl,
-              interactive: previewInteractive,
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 980;
+          final titleBlock = Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 62,
+                height: 62,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.16),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(0.18)),
+                ),
+                child: Icon(
+                  material.type == 'video'
+                      ? Icons.play_circle_fill_rounded
+                      : material.type == 'audio'
+                          ? Icons.headphones_rounded
+                          : material.type == 'link'
+                              ? Icons.link_rounded
+                              : Icons.picture_as_pdf_rounded,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _GradientHeaderPill(label: material.type.toUpperCase()),
+                        _GradientHeaderPill(label: status, dotColor: statusColor),
+                        if (fileName.isNotEmpty) _GradientHeaderPill(label: fileName),
+                      ],
+                    ),
+                    const SizedBox(height: 13),
+                    Text(
+                      material.displayTitle,
+                      maxLines: compact ? 2 : 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: compact ? 25 : 32,
+                        height: 1.04,
+                        letterSpacing: -0.5,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${module.title}  •  Material → Topics → Subtopics',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        height: 1.45,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withOpacity(0.82),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+
+          final statsBlock = Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: compact ? WrapAlignment.start : WrapAlignment.end,
+            children: [
+              _GradientHeaderMetric(icon: Icons.topic_outlined, label: 'Topics', value: '$parentTopics'),
+              _GradientHeaderMetric(icon: Icons.account_tree_outlined, label: 'Subtopics', value: '$subTopics'),
+              _GradientHeaderMetric(
+                icon: Icons.flag_outlined,
+                label: 'Outcomes',
+                value: totalOutcomeCount == 0 ? '—' : '$mappedOutcomeCount/$totalOutcomeCount',
+              ),
+              _GradientHeaderMetric(icon: Icons.storage_rounded, label: material.pageCount != null ? 'Pages' : 'Size', value: fileMeta),
+            ],
+          );
+
+          final actions = Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _GradientHeaderIconButton(
+                tooltip: 'Refresh preview URL',
+                icon: urlLoading ? null : Icons.refresh_rounded,
+                loading: urlLoading,
+                onTap: urlLoading ? null : onRefreshUrl,
+              ),
+              if (downloadUrl != null && downloadUrl!.isNotEmpty) ...[
+                const SizedBox(width: 10),
+                _GradientHeaderOpenButton(url: downloadUrl!),
+              ],
+            ],
+          );
+
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                titleBlock,
+                const SizedBox(height: 20),
+                statsBlock,
+                const SizedBox(height: 16),
+                actions,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: titleBlock),
+              const SizedBox(width: 22),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 540),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [statsBlock, const SizedBox(height: 14), actions],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _GradientHeaderPill extends StatelessWidget {
+  final String label;
+  final Color? dotColor;
+
+  const _GradientHeaderPill({required this.label, this.dotColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withOpacity(0.18)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (dotColor != null) ...[
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 7),
+          ],
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 190),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w900,
+                color: Colors.white.withOpacity(0.92),
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+}
 
-    final overviewCard = _CardWidget(
-      header: _HdrWidget(
-        icon: Icons.dashboard_customize_rounded,
-        iconColor: AppColors.primary,
-        title: 'Overview',
+class _GradientHeaderMetric extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _GradientHeaderMetric({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 122,
+      padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(0.18)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
-        child: Column(
-          children: [
-            _MaterialMetaRow(
-              icon: Icons.task_alt_rounded,
-              iconColor: _K.green,
-              iconBg: _K.greenSoft,
-              label: 'Status',
-              value: statusLabel,
-              sub: material.isReady
-                  ? 'This file is ready for course workflows.'
-                  : material.isProcessing
-                      ? 'This file is still being processed.'
-                      : 'This file is saved inside the module.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 15, color: Colors.white.withOpacity(0.82)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white.withOpacity(0.72),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white, height: 1.0),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GradientHeaderIconButton extends StatelessWidget {
+  final String tooltip;
+  final IconData? icon;
+  final bool loading;
+  final VoidCallback? onTap;
+
+  const _GradientHeaderIconButton({required this.tooltip, required this.icon, required this.loading, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.white.withOpacity(0.14),
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: 46,
+            height: 46,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.18)),
             ),
-            const SizedBox(height: 10),
-            _MaterialMetaRow(
-              icon: Icons.account_tree_outlined,
-              iconColor: AppColors.primary,
-              iconBg: _K.blueSoft,
-              label: 'Topics',
-              value: '${topics.length}',
-              sub: '$readyTopics ready topic${readyTopics == 1 ? '' : 's'} in this file.',
-            ),
-            const SizedBox(height: 10),
-            _MaterialMetaRow(
-              icon: Icons.flag_outlined,
-              iconColor: _K.amber,
-              iconBg: _K.amberSoft,
-              label: 'Learning outcomes',
-              value: totalOutcomeCountLabel(mappedOutcomeIds.length, outcomes.length),
-              sub: outcomes.isEmpty
-                  ? 'No outcomes are attached to this course yet.'
-                  : 'Coverage mapped from topics to course outcomes.',
-            ),
-          ],
+            child: loading
+                ? const SizedBox(width: 17, height: 17, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : Icon(icon, size: 19, color: Colors.white),
+          ),
         ),
       ),
     );
+  }
+}
 
-    final parentTopics = topics
-        .where((t) => t.parentTopicId == null)
-        .toList()
+class _GradientHeaderOpenButton extends StatelessWidget {
+  final String url;
+
+  const _GradientHeaderOpenButton({required this.url});
+
+  Future<void> _open() async {
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 46,
+      child: ElevatedButton.icon(
+        onPressed: _open,
+        icon: const Icon(Icons.open_in_new_rounded, size: 16),
+        label: const Text('Open file'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: AppColors.primary,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+        ),
+      ),
+    );
+  }
+}
+
+class _DocumentStage extends StatelessWidget {
+  final MaterialItem material;
+  final String? downloadUrl;
+  final bool urlLoading;
+  final VoidCallback onRefreshUrl;
+  final bool previewInteractive;
+  final double height;
+
+  const _DocumentStage({
+    required this.material,
+    required this.downloadUrl,
+    required this.urlLoading,
+    required this.onRefreshUrl,
+    required this.previewInteractive,
+    required this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    final viewerStateLabel = previewInteractive ? 'Live preview' : 'Editor safe mode';
+
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.borderGray),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          Container(
+            height: 58,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            color: AppColors.cardBg,
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.picture_as_pdf_rounded, color: Colors.white, size: 17),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'PDF preview',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.textTitle),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _documentMetaLine(material),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                _ViewerToolbarChip(
+                  icon: previewInteractive ? Icons.visibility_rounded : Icons.lock_outline_rounded,
+                  label: viewerStateLabel,
+                  highlighted: previewInteractive,
+                ),
+                const SizedBox(width: 8),
+                _ViewerIconButton(
+                  tooltip: 'Refresh preview URL',
+                  icon: urlLoading ? null : Icons.refresh_rounded,
+                  loading: urlLoading,
+                  onTap: urlLoading ? null : onRefreshUrl,
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.cardBg,
+                border: Border(top: BorderSide(color: AppColors.borderGray)),
+              ),
+              child: _FilePreviewWidget(
+                material: material,
+                downloadUrl: downloadUrl,
+                loading: urlLoading,
+                onRefresh: onRefreshUrl,
+                interactive: previewInteractive,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ViewerToolbarChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool highlighted;
+
+  const _ViewerToolbarChip({
+    required this.icon,
+    required this.label,
+    this.highlighted = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    final color = highlighted ? AppColors.primary : AppColors.textMuted;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: highlighted ? AppColors.primarySoft : AppColors.surfaceBg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: highlighted ? AppColors.primary.withOpacity(0.22) : AppColors.borderGray),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: color),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ViewerIconButton extends StatelessWidget {
+  final String tooltip;
+  final IconData? icon;
+  final bool loading;
+  final VoidCallback? onTap;
+
+  const _ViewerIconButton({
+    required this.tooltip,
+    required this.icon,
+    required this.loading,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: AppColors.surfaceBg,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.borderGray),
+            ),
+            child: loading
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                : Icon(icon, size: 18, color: AppColors.textMuted),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReviewerSidePanel extends StatelessWidget {
+  final MaterialItem material;
+  final List<TopicItem> topics;
+  final bool topicsLoading;
+  final List<LearningOutcome> outcomes;
+  final Set<int> mappedOutcomeIds;
+  final int readyTopics;
+  final void Function(TopicItem) onTopicTap;
+  final Future<bool> Function(
+    String title,
+    String? description,
+    List<int> learningOutcomeIds,
+  ) onCreateTopicManual;
+  final ValueChanged<bool> onReviewerDialogOpenChanged;
+
+  const _ReviewerSidePanel({
+    required this.material,
+    required this.topics,
+    required this.topicsLoading,
+    required this.outcomes,
+    required this.mappedOutcomeIds,
+    required this.readyTopics,
+    required this.onTopicTap,
+    required this.onCreateTopicManual,
+    required this.onReviewerDialogOpenChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return _MaterialSideDeck(
+      material: material,
+      topics: topics,
+      topicsLoading: topicsLoading,
+      outcomes: outcomes,
+      mappedOutcomeIds: mappedOutcomeIds,
+      readyTopics: readyTopics,
+      onTopicTap: onTopicTap,
+      onCreateTopicManual: onCreateTopicManual,
+      onReviewerDialogOpenChanged: onReviewerDialogOpenChanged,
+    );
+  }
+}
+
+class _MaterialSideDeck extends StatelessWidget {
+  final MaterialItem material;
+  final List<TopicItem> topics;
+  final bool topicsLoading;
+  final List<LearningOutcome> outcomes;
+  final Set<int> mappedOutcomeIds;
+  final int readyTopics;
+  final void Function(TopicItem) onTopicTap;
+  final Future<bool> Function(
+    String title,
+    String? description,
+    List<int> learningOutcomeIds,
+  ) onCreateTopicManual;
+  final ValueChanged<bool> onReviewerDialogOpenChanged;
+
+  const _MaterialSideDeck({
+    required this.material,
+    required this.topics,
+    required this.topicsLoading,
+    required this.outcomes,
+    required this.mappedOutcomeIds,
+    required this.readyTopics,
+    required this.onTopicTap,
+    required this.onCreateTopicManual,
+    required this.onReviewerDialogOpenChanged,
+  });
+
+  Future<void> _openCaptureTopicDialog(BuildContext context) async {
+    onReviewerDialogOpenChanged(true);
+    await WidgetsBinding.instance.endOfFrame;
+    if (!context.mounted) {
+      onReviewerDialogOpenChanged(false);
+      return;
+    }
+
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierColor: AppColors.overlayStrong,
+        builder: (dialogContext) {
+          return _CaptureTopicDialog(
+            onCreate: onCreateTopicManual,
+          );
+        },
+      );
+    } finally {
+      onReviewerDialogOpenChanged(false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    final parentTopics = topics.where((t) => t.parentTopicId == null).toList()
       ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
     final childrenByParent = <int, List<TopicItem>>{};
     for (final topic in topics.where((t) => t.parentTopicId != null)) {
       childrenByParent.putIfAbsent(topic.parentTopicId!, () => <TopicItem>[]).add(topic);
     }
-    for (final items in childrenByParent.values) {
-      items.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    for (final children in childrenByParent.values) {
+      children.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
     }
+    final subtopicCount = topics.length - parentTopics.length;
+    final topicProgress = topics.isEmpty ? 0.0 : readyTopics / topics.length;
+    final outcomeProgress = outcomes.isEmpty ? 0.0 : mappedOutcomeIds.length / outcomes.length;
+    final visibleTopics = parentTopics.take(5).toList();
 
-    final topicsCard = _CardWidget(
-      noPadding: true,
-      header: _HdrWidget(
-        icon: Icons.auto_awesome_mosaic_rounded,
-        iconColor: AppColors.primary,
-        title: 'Topics',
-        badge: topics.isNotEmpty ? '${topics.length}' : null,
-        trailing: _AddTopicUnifiedBtn(onTap: onAddTopicManual),
-      ),
-      child: topicsLoading
-          ? const SizedBox(
-              height: 240,
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              ),
-            )
-          : topics.isEmpty
-              ? _TopicsEmptyW(onAddManual: onAddTopicManual)
-              : ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 460),
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                    shrinkWrap: true,
-                    children: [
-                      for (var index = 0; index < parentTopics.length; index++) ...[
-                        _TopicItemW(
-                          topic: parentTopics[index],
-                          index: index,
-                          onTap: () => onTopicTap(parentTopics[index]),
-                        ),
-                        if ((childrenByParent[parentTopics[index].id] ?? const <TopicItem>[]).isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          ...(childrenByParent[parentTopics[index].id] ?? const <TopicItem>[]).map(
-                            (subtopic) => Padding(
-                              padding: const EdgeInsets.only(left: 14, bottom: 8),
-                              child: _SubtopicItemW(
-                                subtopic: subtopic,
-                                onTap: () => onTopicTap(subtopic),
-                              ),
-                            ),
-                          ),
-                        ],
-                        if (index != parentTopics.length - 1) const SizedBox(height: 10),
-                      ],
-                    ],
-                  ),
-                ),
-    );
-
-    final detailsCard = _CardWidget(
-      header: _HdrWidget(
-        icon: Icons.info_outline_rounded,
-        iconColor: AppColors.primary,
-        title: 'Material details',
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 6, 18, 18),
-        child: Column(
-          children: [
-            _MaterialDetailLine(label: 'Module', value: module.title),
-            _MaterialDetailLine(label: 'Type', value: material.type.toUpperCase()),
-            if (material.fileName != null && material.fileName!.trim().isNotEmpty)
-              _MaterialDetailLine(label: 'File name', value: material.fileName!),
-            if (material.fileSize != null)
-              _MaterialDetailLine(label: 'Size', value: _MetaStripW._fmt(material.fileSize!)),
-            if (material.pageCount != null)
-              _MaterialDetailLine(label: 'Pages', value: '${material.pageCount}'),
-            _MaterialDetailLine(label: 'Uploaded', value: _relativeDate(material.uploadedAt)),
-          ],
-        ),
-      ),
-    );
-
-    return Container(
-      color: _K.bg,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 100),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _MaterialHeroWidget(module: module, material: material),
-            const SizedBox(height: 16),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final stacked = constraints.maxWidth < 1180;
-                if (stacked) {
-                  return Column(
-                    children: [
-                      overviewCard,
-                      const SizedBox(height: 14),
-                      previewCard,
-                      const SizedBox(height: 14),
-                      topicsCard,
-                      const SizedBox(height: 14),
-                      detailsCard,
-                    ],
-                  );
-                }
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: previewCard),
-                    const SizedBox(width: 16),
-                    SizedBox(
-                      width: 360,
-                      child: Column(
-                        children: [
-                          overviewCard,
-                          const SizedBox(height: 14),
-                          topicsCard,
-                          const SizedBox(height: 14),
-                          detailsCard,
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String totalOutcomeCountLabel(int mapped, int total) {
-    if (total == 0) return 'No outcomes';
-    return '$mapped/$total';
-  }
-}
-
-
-
-class _SubtopicItemW extends StatelessWidget {
-  final TopicItem subtopic;
-  final VoidCallback onTap;
-
-  const _SubtopicItemW({required this.subtopic, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAF3FF),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.subdirectory_arrow_right_rounded, size: 16, color: AppColors.primary),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    subtopic.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textTitle,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'Subtopic • ${subtopic.readiness.label}',
-                    style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textMuted),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MaterialMetaRow extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final Color iconBg;
-  final String label;
-  final String value;
-  final String sub;
-  const _MaterialMetaRow({required this.icon, required this.iconColor, required this.iconBg, required this.label, required this.value, required this.sub});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _K.div),
-      ),
-      child: Row(
+    return _PremiumPanel(
+      padding: EdgeInsets.zero,
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(10)),
-            alignment: Alignment.center,
-            child: Icon(icon, size: 17, color: iconColor),
+            padding: const EdgeInsets.fromLTRB(18, 17, 18, 15),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.borderGray)),
+            ),
+            child: Row(
+              children: [
+                const _SoftIcon(icon: Icons.account_tree_rounded, color: AppColors.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'File structure',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textTitle),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'This file only contains topics and subtopics inside its module.',
+                        style: TextStyle(fontSize: 12.3, color: AppColors.textMuted, height: 1.35),
+                      ),
+                    ],
+                  ),
+                ),
+                _TinyBadge(
+                  label: _materialStatusLabel(material),
+                  color: _materialStatusColor(material),
+                  background: _materialStatusColor(material).withOpacity(0.10),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
-                const SizedBox(height: 4),
-                Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
-                const SizedBox(height: 4),
-                Text(sub, style: const TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.textMuted)),
+                _MaterialPathSummary(
+                  topicCount: parentTopics.length,
+                  subtopicCount: subtopicCount,
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openCaptureTopicDialog(context),
+                    icon: const Icon(Icons.add_rounded, size: 20),
+                    label: const Text('Add topic to this file'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(child: _MaterialMetricTile(label: 'Topics', value: '${parentTopics.length}', caption: '$readyTopics ready')),
+                    const SizedBox(width: 10),
+                    Expanded(child: _MaterialMetricTile(label: 'Subtopics', value: '$subtopicCount', caption: 'nested items')),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(child: _MaterialMetricTile(label: 'Outcomes', value: outcomes.isEmpty ? '—' : '${mappedOutcomeIds.length}/${outcomes.length}', caption: 'mapped')),
+                    const SizedBox(width: 10),
+                    Expanded(child: _MaterialMetricTile(label: 'Source', value: material.type.toUpperCase(), caption: material.pageCount != null ? '${material.pageCount} pages' : 'file')),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                _ProgressInsightRow(
+                  label: 'Topic review',
+                  value: topics.isEmpty ? '0' : '$readyTopics/${topics.length}',
+                  progress: topicProgress,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(height: 12),
+                _ProgressInsightRow(
+                  label: 'Outcome mapping',
+                  value: outcomes.isEmpty ? '—' : '${mappedOutcomeIds.length}/${outcomes.length}',
+                  progress: outcomeProgress,
+                  color: AppColors.purpleText,
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Topics in this file',
+                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: AppColors.textTitle),
+                      ),
+                    ),
+                    _CountBadge(value: '${topics.length}'),
+                  ],
+                ),
+                const SizedBox(height: 11),
+                if (topicsLoading)
+                  Container(
+                    height: 150,
+                    alignment: Alignment.center,
+                    child: const CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else if (topics.isEmpty)
+                  const _EmptyTopicMap()
+                else ...[
+                  for (var i = 0; i < visibleTopics.length; i++) ...[
+                    _MaterialCompactTopicTile(
+                      topic: visibleTopics[i],
+                      index: i,
+                      children: childrenByParent[visibleTopics[i].id] ?? const <TopicItem>[],
+                      onTopicTap: onTopicTap,
+                    ),
+                    if (i != visibleTopics.length - 1) const SizedBox(height: 9),
+                  ],
+                  if (parentTopics.length > visibleTopics.length) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      '+ ${parentTopics.length - visibleTopics.length} more topic${parentTopics.length - visibleTopics.length == 1 ? '' : 's'} in the structure tree',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted),
+                    ),
+                  ],
+                ],
               ],
             ),
           ),
@@ -379,25 +1010,287 @@ class _MaterialMetaRow extends StatelessWidget {
   }
 }
 
-class _MaterialDetailLine extends StatelessWidget {
-  final String label;
-  final String value;
-  const _MaterialDetailLine({required this.label, required this.value});
+class _MaterialPathSummary extends StatelessWidget {
+  final int topicCount;
+  final int subtopicCount;
+
+  const _MaterialPathSummary({required this.topicCount, required this.subtopicCount});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceBg,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.borderGray),
+      ),
+      child: Column(
+        children: [
+          const _MaterialPathStep(icon: Icons.insert_drive_file_rounded, title: 'Material file', value: 'current'),
+          const _MaterialPathConnector(),
+          _MaterialPathStep(icon: Icons.topic_rounded, title: 'Topics', value: '$topicCount'),
+          const _MaterialPathConnector(),
+          _MaterialPathStep(icon: Icons.subdirectory_arrow_right_rounded, title: 'Subtopics', value: '$subtopicCount'),
+        ],
+      ),
+    );
+  }
+}
+
+class _MaterialPathStep extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+
+  const _MaterialPathStep({required this.icon, required this.title, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(12)),
+          child: Icon(icon, size: 17, color: AppColors.primary),
+        ),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.textTitle),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: AppColors.textMuted),
+        ),
+      ],
+    );
+  }
+}
+
+class _MaterialPathConnector extends StatelessWidget {
+  const _MaterialPathConnector();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        width: 1.5,
+        height: 14,
+        margin: const EdgeInsets.only(left: 16.25),
+        color: AppColors.borderGray,
+      ),
+    );
+  }
+}
+
+class _MaterialMetricTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final String caption;
+
+  const _MaterialMetricTile({required this.label, required this.value, required this.caption});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderGray),
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 86,
-            child: Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.textMuted)),
+          const SizedBox(height: 5),
+          Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textTitle, height: 1.0)),
+          const SizedBox(height: 5),
+          Text(caption, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+        ],
+      ),
+    );
+  }
+}
+
+class _MaterialCompactTopicTile extends StatelessWidget {
+  final TopicItem topic;
+  final int index;
+  final List<TopicItem> children;
+  final void Function(TopicItem) onTopicTap;
+
+  const _MaterialCompactTopicTile({required this.topic, required this.index, required this.children, required this.onTopicTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final ready = topic.readiness == TopicReadiness.ready || topic.isReviewed;
+    return Material(
+      color: AppColors.surfaceBg,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: () => onTopicTap(topic),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.borderGray),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
+          child: Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.cardBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Text('${index + 1}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.primary)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(topic.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.textTitle)),
+                    const SizedBox(height: 4),
+                    Text(
+                      children.isEmpty ? 'No subtopics yet' : '${children.length} subtopic${children.length == 1 ? '' : 's'}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _TinyBadge(
+                label: ready ? 'Ready' : 'Draft',
+                color: ready ? _K.green : _K.amber,
+                background: ready ? _K.greenSoft : _K.amberSoft,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReviewerActionsPanel extends StatelessWidget {
+  final List<LearningOutcome> outcomes;
+  final Future<bool> Function(
+    String title,
+    String? description,
+    List<int> learningOutcomeIds,
+  ) onCreateTopicManual;
+  final ValueChanged<bool> onReviewerDialogOpenChanged;
+
+  const _ReviewerActionsPanel({
+    required this.outcomes,
+    required this.onCreateTopicManual,
+    required this.onReviewerDialogOpenChanged,
+  });
+
+  Future<void> _openCaptureTopicDialog(BuildContext context) async {
+    // Native PDF iframes can sit above Flutter overlays on web and swallow clicks.
+    // Pause/remove the preview first, wait one frame, then show the dialog.
+    onReviewerDialogOpenChanged(true);
+    await WidgetsBinding.instance.endOfFrame;
+    if (!context.mounted) {
+      onReviewerDialogOpenChanged(false);
+      return;
+    }
+
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierColor: AppColors.overlayStrong,
+        builder: (dialogContext) {
+          return _CaptureTopicDialog(
+            onCreate: onCreateTopicManual,
+          );
+        },
+      );
+    } finally {
+      onReviewerDialogOpenChanged(false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return _PremiumPanel(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const _SoftIcon(icon: Icons.edit_note_rounded, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Reviewer actions',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textTitle),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Keep the workspace clean. Add topics only when you need them.',
+                      style: TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.35),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: () => _openCaptureTopicDialog(context),
+              icon: const Icon(Icons.add_rounded, size: 20),
+              label: const Text('Capture topic from PDF'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+          const SizedBox(height: 11),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.borderGray),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline_rounded, size: 17, color: AppColors.textMuted),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    'The topic form opens as a focused popup, so the PDF canvas stays clean.',
+                    style: TextStyle(fontSize: 12.3, color: AppColors.textMuted, height: 1.35),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -405,203 +1298,1042 @@ class _MaterialDetailLine extends StatelessWidget {
   }
 }
 
-class _MaterialInsightsStrip extends StatelessWidget {
-  final int topicCount;
-  final int readyCount;
-  final int mappedOutcomeCount;
-  final int totalOutcomeCount;
+class _CaptureTopicDialog extends StatelessWidget {
+  final Future<bool> Function(
+    String title,
+    String? description,
+    List<int> learningOutcomeIds,
+  ) onCreate;
 
-  const _MaterialInsightsStrip({
-    required this.topicCount,
-    required this.readyCount,
-    required this.mappedOutcomeCount,
-    required this.totalOutcomeCount,
+  const _CaptureTopicDialog({
+    required this.onCreate,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(spacing: 10, runSpacing: 10, children: [
-      _InsightPill(icon: Icons.tag_rounded, label: '$topicCount topic${topicCount == 1 ? '' : 's'}'),
-      _InsightPill(icon: Icons.task_alt_rounded, label: '$readyCount ready'),
-      _InsightPill(icon: Icons.flag_outlined, label: totalOutcomeCount == 0 ? 'No outcomes yet' : '$mappedOutcomeCount / $totalOutcomeCount LOs mapped'),
-    ]);
-  }
-}
+    Theme.of(context);
+    final maxDialogHeight = MediaQuery.of(context).size.height - 56;
 
-class _InsightPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _InsightPill({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(999),
-      border: Border.all(color: _K.div),
-    ),
-    child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Icon(icon, size: 13, color: AppColors.primary),
-      const SizedBox(width: 6),
-      Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
-    ]),
-  );
-}
-
-class _MatHeaderWidget extends StatelessWidget {
-  final ModuleItem module; final MaterialItem material;
-  const _MatHeaderWidget({required this.module, required this.material});
-  static const _tc = {
-    'video': (Color(0xFF2563EB), Color(0xFFDBEAFE)),
-    'pdf'  : (Color(0xFFDC2626), Color(0xFFFEE2E2)),
-    'image': (Color(0xFF7C3AED), Color(0xFFF3E8FF)),
-    'audio': (Color(0xFF16A34A), Color(0xFFDCFCE7)),
-    'quiz' : (Color(0xFF9333EA), Color(0xFFF3E8FF)),
-  };
-  @override
-  Widget build(BuildContext context) {
-    final (tcol, tbg) = _tc[material.type] ?? (AppColors.textMuted, const Color(0xFFF1F5F9));
-    final (scol, sbg) = material.isReady ? (_K.green, _K.greenSoft)
-        : material.isProcessing ? (_K.amber, _K.amberSoft)
-        : (AppColors.dangerText, const Color(0xFFFFF1F2));
-    final sl = material.isReady ? '● Ready' : material.isProcessing ? '● Processing' : '● Error';
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 12, 16, 12),
-      decoration: const BoxDecoration(color: Colors.white,
-          border: Border(bottom: BorderSide(color: _K.div))),
-      child: Row(children: [
-        _TIcon(type: material.type, size: 36), const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            _Pill(l: material.type.toUpperCase(), fg: tcol, bg: tbg), const SizedBox(width: 6),
-            _Pill(l: sl, fg: scol, bg: sbg),
-          ]),
-          const SizedBox(height: 4),
-          Text(material.displayTitle, maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
-          Text('In "${module.title}"', style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted)),
-        ])),
-      ]),
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 560, maxHeight: maxDialogHeight),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            SingleChildScrollView(
+              child: _CaptureTopicPanel(
+                onCreate: onCreate,
+                onSaved: () => Navigator.of(context).pop(),
+              ),
+            ),
+            Positioned(
+              top: 14,
+              right: 14,
+              child: Material(
+                color: AppColors.surfaceBg,
+                borderRadius: BorderRadius.circular(13),
+                child: InkWell(
+                  onTap: () => Navigator.of(context).pop(),
+                  borderRadius: BorderRadius.circular(13),
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(13),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Icon(Icons.close_rounded, size: 19, color: AppColors.textMuted),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Material Hero — mirrors _ModuleHeroWidget layout
-// ─────────────────────────────────────────────────────────────────────────────
-class _MaterialHeroWidget extends StatelessWidget {
-  final ModuleItem module;
-  final MaterialItem material;
-  const _MaterialHeroWidget({required this.module, required this.material});
+class _CaptureTopicPanel extends StatefulWidget {
+  final Future<bool> Function(
+    String title,
+    String? description,
+    List<int> learningOutcomeIds,
+  ) onCreate;
+  final VoidCallback? onSaved;
 
-  static const _gradients = {
-    'pdf'  : [Color(0xFF1565C0), Color(0xFF137FEC), Color(0xFF60A5FA)],
-    'video': [Color(0xFF065F46), Color(0xFF059669), Color(0xFF34D399)],
-    'image': [Color(0xFF6D28D9), Color(0xFF7C3AED), Color(0xFFA78BFA)],
-    'audio': [Color(0xFF0F766E), Color(0xFF0D9488), Color(0xFF5EEAD4)],
-    'quiz' : [Color(0xFF5B21B6), Color(0xFF7C3AED), Color(0xFFC4B5FD)],
-  };
+  const _CaptureTopicPanel({
+    required this.onCreate,
+    this.onSaved,
+  });
+
+  @override
+  State<_CaptureTopicPanel> createState() => _CaptureTopicPanelState();
+}
+
+class _CaptureTopicPanelState extends State<_CaptureTopicPanel> {
+  final _titleCtrl = TextEditingController();
+  final _pageCtrl = TextEditingController();
+  final _noteCtrl = TextEditingController();
+  bool _saving = false;
+  bool _submitted = false;
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _pageCtrl.dispose();
+    _noteCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    setState(() => _submitted = true);
+    final title = _titleCtrl.text.trim();
+    if (title.isEmpty || _saving) return;
+
+    final note = _noteCtrl.text.trim();
+    final pages = _pageCtrl.text.trim();
+    final descriptionParts = <String>[
+      if (pages.isNotEmpty) 'Page reference: $pages',
+      if (note.isNotEmpty) note,
+    ];
+
+    setState(() => _saving = true);
+    final ok = await widget.onCreate(
+      title,
+      descriptionParts.isEmpty ? null : descriptionParts.join('\n\n'),
+      const <int>[],
+    );
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (!ok) return;
+
+    _titleCtrl.clear();
+    _pageCtrl.clear();
+    _noteCtrl.clear();
+    setState(() {
+      _submitted = false;
+    });
+    widget.onSaved?.call();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final t = material.type.toLowerCase();
-    final colors = _gradients[t] ??
-        [const Color(0xFF374151), const Color(0xFF4B5563), const Color(0xFF9CA3AF)];
-
-    final statusLabel = material.isReady || material.status == 'uploaded'
-        ? '● Ready'
-        : material.isProcessing
-            ? '● Processing'
-            : '● Processing';
-    final statusColor = material.isReady || material.status == 'uploaded'
-        ? const Color(0xFF4ADE80)
-        : const Color(0xFFFBBF24);
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: colors,
-        ),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Color(colors[1].value).withOpacity(0.22),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
+    Theme.of(context);
+    return _PremiumPanel(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.borderGray)),
+            ),
+            child: Row(
+              children: [
+                const _SoftIcon(icon: Icons.add_task_rounded, color: AppColors.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Capture a topic',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textTitle),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Create a parent topic under this material. Outcomes are mapped later through subtopics.',
+                        style: TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.35),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _CleanTextField(
+                  controller: _titleCtrl,
+                  enabled: !_saving,
+                  label: 'Topic name',
+                  hint: 'e.g. Variables, types, and expressions',
+                  icon: Icons.title_rounded,
+                  errorText: _submitted && _titleCtrl.text.trim().isEmpty ? 'Topic name is required' : null,
+                  onSubmitted: (_) => _submit(),
+                ),
+                const SizedBox(height: 10),
+                _CleanTextField(
+                  controller: _pageCtrl,
+                  enabled: !_saving,
+                  label: 'Page / section reference',
+                  hint: 'Optional, e.g. pages 12–15',
+                  icon: Icons.bookmark_border_rounded,
+                  onSubmitted: (_) => _submit(),
+                ),
+                const SizedBox(height: 10),
+                _CleanTextField(
+                  controller: _noteCtrl,
+                  enabled: !_saving,
+                  label: 'Instructor note',
+                  hint: 'What should students understand here?',
+                  icon: Icons.notes_rounded,
+                  minLines: 3,
+                  maxLines: 4,
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(13),
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.18)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.account_tree_outlined, size: 18, color: AppColors.primary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Outcome mapping belongs to subtopics',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: AppColors.textTitle),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Create the parent topic first. If it has subtopics, map each subtopic to its learning outcomes so the topic inherits coverage from its children.',
+                              style: TextStyle(fontSize: 12.2, color: AppColors.textMuted, height: 1.4),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    onPressed: _saving ? null : _submit,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.add_rounded, size: 19),
+                    label: Text(_saving ? 'Saving topic...' : 'Save topic'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: AppColors.primary.withOpacity(0.55),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Wrap(spacing: 6, children: [
-              _HPill(statusLabel, statusColor),
-              _HPill(material.type.toUpperCase(), Colors.white70),
-              _HPill('In "${module.title}"', Colors.white60),
-            ]),
-            const SizedBox(height: 10),
-            Text(
-              material.displayTitle,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                height: 1.25,
-              ),
-            ),
-            if (material.fileName != null) ...[
-              const SizedBox(height: 5),
-              Text(
-                material.fileName!,
-                style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.7)),
-              ),
-            ],
-          ]),
-        ),
-        const SizedBox(width: 12),
-        // File size / pages info box
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
-          ),
-          child: Column(children: [
-            Text(
-              material.pageCount != null ? 'Pages' : 'Size',
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.white.withOpacity(0.7),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              material.pageCount != null
-                  ? '${material.pageCount}'
-                  : material.fileSize != null
-                      ? '${(material.fileSize! / 1024 / 1024).toStringAsFixed(1)}MB'
-                      : '—',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              ),
-            ),
-          ]),
-        ),
-      ]),
     );
   }
 }
 
+class _CoveragePanel extends StatelessWidget {
+  final List<TopicItem> topics;
+  final int readyTopics;
+  final List<LearningOutcome> outcomes;
+  final Set<int> mappedOutcomeIds;
+
+  const _CoveragePanel({
+    required this.topics,
+    required this.readyTopics,
+    required this.outcomes,
+    required this.mappedOutcomeIds,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    final topicProgress = topics.isEmpty ? 0.0 : readyTopics / topics.length;
+    final outcomeProgress = outcomes.isEmpty ? 0.0 : mappedOutcomeIds.length / outcomes.length;
+
+    return _PremiumPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _SoftIcon(icon: Icons.insights_rounded, color: AppColors.purpleText),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Review coverage',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textTitle),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _ProgressInsightRow(
+            label: 'Topics reviewed',
+            value: topics.isEmpty ? '0' : '$readyTopics/${topics.length}',
+            progress: topicProgress,
+            color: AppColors.primary,
+          ),
+          const SizedBox(height: 12),
+          _ProgressInsightRow(
+            label: 'Outcomes mapped',
+            value: outcomes.isEmpty ? '—' : '${mappedOutcomeIds.length}/${outcomes.length}',
+            progress: outcomeProgress,
+            color: AppColors.purpleText,
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.borderGray),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.tips_and_updates_outlined, size: 18, color: AppColors.warningText),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _coverageHint,
+                    style: TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String get _coverageHint {
+    if (topics.isEmpty) return 'Start by capturing the first topic from the PDF section you are reviewing.';
+    if (outcomes.isNotEmpty && mappedOutcomeIds.isEmpty) {
+      return 'Topics exist, but none are mapped to learning outcomes yet.';
+    }
+    return 'Use this panel as a quick quality check before generating questions.';
+  }
+}
+
+class _TopicRoadmapPanel extends StatelessWidget {
+  final List<TopicItem> topics;
+  final bool topicsLoading;
+  final void Function(TopicItem) onTopicTap;
+
+  const _TopicRoadmapPanel({
+    required this.topics,
+    required this.topicsLoading,
+    required this.onTopicTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    final parentTopics = topics.where((t) => t.parentTopicId == null).toList()
+      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    final childrenByParent = <int, List<TopicItem>>{};
+    for (final topic in topics.where((t) => t.parentTopicId != null)) {
+      childrenByParent.putIfAbsent(topic.parentTopicId!, () => <TopicItem>[]).add(topic);
+    }
+    for (final children in childrenByParent.values) {
+      children.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    }
+
+    return _PremiumPanel(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+            child: Row(
+              children: [
+                const _SoftIcon(icon: Icons.route_rounded, color: Color(0xFF0F766E)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Topic map',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textTitle),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Open any topic to review or generate questions.',
+                        style: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                _CountBadge(value: '${topics.length}'),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: AppColors.borderGray),
+          if (topicsLoading)
+            const SizedBox(
+              height: 190,
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            )
+          else if (topics.isEmpty)
+            const _EmptyTopicMap()
+          else
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 420),
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                shrinkWrap: true,
+                itemCount: parentTopics.length,
+                itemBuilder: (context, index) {
+                  final topic = parentTopics[index];
+                  final children = childrenByParent[topic.id] ?? const <TopicItem>[];
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: index == parentTopics.length - 1 ? 0 : 10),
+                    child: _RoadmapTopicTile(
+                      topic: topic,
+                      index: index,
+                      children: children,
+                      onTopicTap: onTopicTap,
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoadmapTopicTile extends StatelessWidget {
+  final TopicItem topic;
+  final int index;
+  final List<TopicItem> children;
+  final void Function(TopicItem) onTopicTap;
+
+  const _RoadmapTopicTile({
+    required this.topic,
+    required this.index,
+    required this.children,
+    required this.onTopicTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    final ready = topic.readiness == TopicReadiness.ready || topic.isReviewed;
+    return Material(
+      color: AppColors.surfaceBg,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: () => onTopicTap(topic),
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(13, 12, 12, 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.borderGray),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 30,
+                    height: 30,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBg,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Text(
+                      '${index + 1}',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.primary),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      topic.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: AppColors.textTitle),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _TinyBadge(
+                    label: ready ? 'Ready' : 'Draft',
+                    color: ready ? _K.green : _K.amber,
+                    background: ready ? _K.greenSoft : _K.amberSoft,
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textMuted),
+                ],
+              ),
+              if ((topic.description ?? '').trim().isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  topic.description!.trim(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12.2, color: AppColors.textMuted, height: 1.35),
+                ),
+              ],
+              if (children.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  children: [
+                    for (final child in children)
+                      InkWell(
+                        onTap: () => onTopicTap(child),
+                        borderRadius: BorderRadius.circular(999),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: AppColors.cardBg,
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.subdirectory_arrow_right_rounded, size: 13, color: AppColors.textMuted),
+                              const SizedBox(width: 5),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 170),
+                                child: Text(
+                                  child.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textTitle),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CleanTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final bool enabled;
+  final String label;
+  final String hint;
+  final IconData icon;
+  final String? errorText;
+  final int minLines;
+  final int maxLines;
+  final ValueChanged<String>? onSubmitted;
+
+  const _CleanTextField({
+    required this.controller,
+    required this.enabled,
+    required this.label,
+    required this.hint,
+    required this.icon,
+    this.errorText,
+    this.minLines = 1,
+    this.maxLines = 1,
+    this.onSubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return TextField(
+      controller: controller,
+      enabled: enabled,
+      minLines: minLines,
+      maxLines: maxLines,
+      onSubmitted: onSubmitted,
+      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textTitle),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        errorText: errorText,
+        prefixIcon: Icon(icon, size: 18, color: AppColors.textMuted),
+        filled: true,
+        fillColor: AppColors.surfaceBg,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        labelStyle: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textMuted),
+        hintStyle: TextStyle(fontSize: 13, color: AppColors.textHint),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(color: AppColors.borderGray),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(color: AppColors.borderGray),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
+        ),
+      ),
+    );
+  }
+}
+
+class _OutcomeSelectTile extends StatelessWidget {
+  final LearningOutcome outcome;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _OutcomeSelectTile({
+    required this.outcome,
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return Material(
+      color: selected ? AppColors.infoBg : AppColors.surfaceBg,
+      borderRadius: BorderRadius.circular(15),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(15),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(11, 10, 10, 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: selected ? AppColors.primary.withOpacity(0.40) : AppColors.borderGray),
+          ),
+          child: Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.primary : AppColors.cardBg,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: selected ? AppColors.primary : AppColors.borderSoft),
+                ),
+                child: selected ? const Icon(Icons.check_rounded, size: 15, color: Colors.white) : null,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      outcome.code.isNotEmpty ? outcome.code : 'LO',
+                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: AppColors.primary),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      outcome.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textTitle, height: 1.25),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgressInsightRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final double progress;
+  final Color color;
+
+  const _ProgressInsightRow({
+    required this.label,
+    required this.value,
+    required this.progress,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: AppColors.textMuted)),
+            ),
+            Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.textTitle)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(
+            minHeight: 8,
+            value: progress.clamp(0.0, 1.0).toDouble(),
+            backgroundColor: AppColors.borderSoft,
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PremiumPanel extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  const _PremiumPanel({
+    required this.child,
+    this.padding = const EdgeInsets.all(18),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.borderGray),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowSoft,
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _ReviewerStatPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final String helper;
+
+  const _ReviewerStatPill({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.helper,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return Container(
+      width: 112,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceBg,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: AppColors.borderGray),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.primary),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: AppColors.textMuted)),
+                const SizedBox(height: 2),
+                Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textTitle)),
+                Text(helper, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10.5, color: AppColors.textMuted)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TinyBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color background;
+
+  const _TinyBadge({
+    required this.label,
+    required this.color,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: color),
+      ),
+    );
+  }
+}
+
+class _CountBadge extends StatelessWidget {
+  final String value;
+
+  const _CountBadge({required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.infoBg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        value,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.primary),
+      ),
+    );
+  }
+}
+
+class _SoftIcon extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+
+  const _SoftIcon({required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Icon(icon, size: 19, color: color),
+    );
+  }
+}
+
+class _DarkToolbarChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _DarkToolbarChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.07),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.cardBg.withOpacity(0.10)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.white.withOpacity(0.76)),
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white.withOpacity(0.76))),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  final String tooltip;
+  final IconData? icon;
+  final bool loading;
+  final VoidCallback? onTap;
+
+  const _HeaderIconButton({
+    required this.tooltip,
+    required this.icon,
+    required this.loading,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: AppColors.surfaceBg,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: 46,
+            height: 46,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.borderGray),
+            ),
+            child: loading
+                ? const SizedBox(width: 17, height: 17, child: CircularProgressIndicator(strokeWidth: 2))
+                : Icon(icon, size: 19, color: AppColors.textMuted),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OpenDocumentButton extends StatelessWidget {
+  final String url;
+
+  const _OpenDocumentButton({required this.url});
+
+  Future<void> _open() async {
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return SizedBox(
+      height: 46,
+      child: ElevatedButton.icon(
+        onPressed: _open,
+        icon: const Icon(Icons.open_in_new_rounded, size: 16),
+        label: const Text('Open PDF'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.textTitle,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyTopicMap extends StatelessWidget {
+  const _EmptyTopicMap();
+
+  @override
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(22, 26, 22, 28),
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: AppColors.infoBg,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(Icons.route_outlined, color: AppColors.primary, size: 28),
+          ),
+          const SizedBox(height: 13),
+          Text(
+            'No topic map yet',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textTitle),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Capture topics while reading the PDF. They will appear here as a clean review map.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.45),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _materialStatusLabel(MaterialItem material) {
+  if (material.isReady || material.status == 'uploaded') return 'Ready';
+  if (material.isProcessing) return 'Processing';
+  if (material.isError) return 'Needs attention';
+  return 'Draft';
+}
+
+Color _materialStatusColor(MaterialItem material) {
+  if (material.isReady || material.status == 'uploaded') return _K.green;
+  if (material.isProcessing) return _K.amber;
+  if (material.isError) return AppColors.dangerText;
+  return AppColors.textMuted;
+}
+
+String _documentMetaLine(MaterialItem material) {
+  final parts = <String>[];
+  final fileName = (material.fileName ?? '').trim();
+  if (fileName.isNotEmpty) parts.add(fileName);
+  if (material.pageCount != null) parts.add('${material.pageCount} pages');
+  if (material.fileSize != null) parts.add(_MetaStripW._fmt(material.fileSize!));
+  if (parts.isEmpty) return material.type.toUpperCase();
+  return parts.join('  •  ');
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  FILE PREVIEW
@@ -613,7 +2345,7 @@ class _FilePreviewWidget extends StatelessWidget {
   final bool loading; final VoidCallback onRefresh;
   final bool interactive;
   const _FilePreviewWidget({required this.material, required this.downloadUrl,
-      required this.loading, required this.onRefresh, required this.interactive});
+      required this.loading, required this.onRefresh, required this.interactive,});
 
   _PK get _kind {
     final t = material.type.toLowerCase(); final m = (material.mimeType ?? '').toLowerCase();
@@ -627,23 +2359,24 @@ class _FilePreviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (loading) return const _LoaderW(label: 'Loading preview…');
+    Theme.of(context);
+    if (loading) return _LoaderW(label: 'Loading preview…');
     if (material.isProcessing && material.status != 'uploaded') {
       return const _PlaceholderW(icon: Icons.hourglass_top_rounded,
         iconColor: _K.amber, iconBg: _K.amberSoft, title: 'Processing…',
-        sub: 'Your file is being processed. Preview will be available shortly.');
+        sub: 'Your file is being processed. Preview will be available shortly.',);
     }
     if (material.isError && material.status != 'uploaded') {
       return _PlaceholderW(icon: Icons.error_outline_rounded,
         iconColor: AppColors.dangerText, iconBg: _K.redSoft, title: 'Processing failed',
         sub: 'Something went wrong processing this file.',
-        actionLabel: 'Retry', onAction: onRefresh);
+        actionLabel: 'Retry', onAction: onRefresh,);
     }
     if (downloadUrl == null || downloadUrl!.isEmpty) {
       return _PlaceholderW(icon: Icons.link_off_rounded, iconColor: AppColors.textMuted,
           iconBg: _K.bg, title: 'Preview unavailable',
           sub: 'Could not load a URL for this file.',
-          actionLabel: 'Retry', onAction: onRefresh);
+          actionLabel: 'Retry', onAction: onRefresh,);
     }
 
     final url = downloadUrl!;
@@ -699,24 +2432,25 @@ class _PdfPreviewWidgetState extends State<_PdfPreviewWidget> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     if (!widget.interactive) {
       return _PlaceholderW(
         icon: Icons.picture_as_pdf_rounded,
         iconColor: AppColors.primary,
         iconBg: _K.blueSoft,
-        title: 'Preview paused',
-        sub: 'The PDF preview is temporarily paused while a dialog is open.',
+        title: 'Preview hidden while editing',
+        sub: 'The PDF viewer is hidden so the popup controls stay fully clickable.',
         actionLabel: 'Open file',
         onAction: () async {
           final uri = Uri.tryParse(widget.url);
           if (uri != null) {
-            await launchUrl(uri, mode: LaunchMode.platformDefault);
+            await launchUrl(uri);
           }
         },
       );
     }
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(13)),
+      borderRadius: BorderRadius.circular(20),
       child: HtmlElementView(viewType: _viewId),
     );
   }
@@ -726,16 +2460,16 @@ class _ImagePreviewWidget extends StatelessWidget {
   final String url; const _ImagePreviewWidget({required this.url});
   @override
   Widget build(BuildContext context) => Padding(padding: const EdgeInsets.all(20),
-    child: Container(decoration: BoxDecoration(color: Colors.white,
-        borderRadius: BorderRadius.circular(14), border: Border.all(color: _K.div)),
+    child: Container(decoration: BoxDecoration(color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(14), border: Border.all(color: _K.div),),
       child: ClipRRect(borderRadius: BorderRadius.circular(13), child: Stack(children: [
-        Container(color: const Color(0xFFF8F9FB)),
+        Container(color: AppColors.surfaceBg),
         Center(child: Image.network(url, fit: BoxFit.contain,
             errorBuilder: (_, __, ___) => _FallbackWidget(url: url, material: null),
             loadingBuilder: (_, child, p) => p == null ? child :
-                const Center(child: CircularProgressIndicator(strokeWidth: 2)))),
+                const Center(child: CircularProgressIndicator(strokeWidth: 2)),),),
         Positioned(top: 12, right: 12, child: _OBtn(url: url)),
-      ]))));
+      ],),),),);
 }
 
 class _VideoPreviewWidget extends StatelessWidget {
@@ -750,37 +2484,37 @@ class _VideoPreviewWidget extends StatelessWidget {
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _MetaStripW(material: material), const SizedBox(height: 14),
       Expanded(child: Container(
-        decoration: BoxDecoration(color: const Color(0xFF0D1117),
-            borderRadius: BorderRadius.circular(14), border: Border.all(color: _K.div)),
+        decoration: BoxDecoration(color: AppColors.documentCanvasBg,
+            borderRadius: BorderRadius.circular(14), border: Border.all(color: _K.div),),
         child: ClipRRect(borderRadius: BorderRadius.circular(13),
             child: Stack(alignment: Alignment.center, children: [
-          Container(decoration: const BoxDecoration(gradient: RadialGradient(
-              colors: [Color(0xFF1A2332), Color(0xFF0D1117)]))),
+          Container(decoration: BoxDecoration(gradient: RadialGradient(
+              colors: [AppColors.documentCanvasRadial, AppColors.documentCanvasBg],),),),
           Column(mainAxisSize: MainAxisSize.min, children: [
             Container(width: 80, height: 80,
                 decoration: BoxDecoration(color: Colors.white.withOpacity(0.1),
-                    shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.2))),
-                child: const Icon(Icons.play_arrow_rounded, size: 44, color: Colors.white)),
+                    shape: BoxShape.circle, border: Border.all(color: AppColors.cardBg.withOpacity(0.2)),),
+                child: const Icon(Icons.play_arrow_rounded, size: 44, color: Colors.white),),
             const SizedBox(height: 16),
             Text(material.displayTitle, style: const TextStyle(fontSize: 16,
-                fontWeight: FontWeight.w700, color: Colors.white)),
+                fontWeight: FontWeight.w700, color: Colors.white,),),
             if (material.durationSeconds != null) ...[
               const SizedBox(height: 4),
               Text(_fmt(material.durationSeconds!),
-                  style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.55))),
+                  style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.55)),),
             ],
             const SizedBox(height: 22),
             ElevatedButton.icon(onPressed: () {},
                 icon: const Icon(Icons.open_in_new_rounded, size: 14),
                 label: const Text('Open Video'),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.15),
+                    backgroundColor: AppColors.cardBg.withOpacity(0.15),
                     foregroundColor: Colors.white, elevation: 0,
                     side: BorderSide(color: Colors.white.withOpacity(0.25)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)))),
-          ]),
-        ])))),
-    ]));
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),),),
+          ],),
+        ],),),),),
+    ],),);
 }
 
 class _AudioPreviewWidget extends StatelessWidget {
@@ -789,23 +2523,23 @@ class _AudioPreviewWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(padding: const EdgeInsets.all(20),
     child: Container(padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _K.div)),
+      decoration: BoxDecoration(color: AppColors.cardBg, borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _K.div),),
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         Container(width: 80, height: 80, decoration: BoxDecoration(
-            color: _K.greenSoft, borderRadius: BorderRadius.circular(22)),
-            child: const Icon(Icons.headphones_rounded, size: 40, color: _K.green)),
+            color: _K.greenSoft, borderRadius: BorderRadius.circular(22),),
+            child: Icon(Icons.headphones_rounded, size: 40, color: _K.green),),
         const SizedBox(height: 18),
-        Text(material.displayTitle, textAlign: TextAlign.center, style: const TextStyle(
-            fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+        Text(material.displayTitle, textAlign: TextAlign.center, style: TextStyle(
+            fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textTitle,),),
         if (material.durationSeconds != null) ...[
           const SizedBox(height: 6),
           Text('Duration: ${material.durationSeconds! ~/ 60}m ${material.durationSeconds! % 60}s',
-              style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+              style: TextStyle(fontSize: 13, color: AppColors.textMuted),),
         ],
         const SizedBox(height: 24),
         _OBtn(url: url, big: true),
-      ])));
+      ],),),);
 }
 
 class _LinkPreviewWidget extends StatelessWidget {
@@ -813,20 +2547,20 @@ class _LinkPreviewWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(padding: const EdgeInsets.all(20),
     child: Container(padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _K.div)),
+      decoration: BoxDecoration(color: AppColors.cardBg, borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _K.div),),
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         Container(width: 72, height: 72, decoration: BoxDecoration(
-            color: _K.blueSoft, borderRadius: BorderRadius.circular(18)),
-            child: const Icon(Icons.link_rounded, size: 34, color: AppColors.primary)),
+            color: _K.blueSoft, borderRadius: BorderRadius.circular(18),),
+            child: const Icon(Icons.link_rounded, size: 34, color: AppColors.primary),),
         const SizedBox(height: 16),
-        const Text('External Link', style: TextStyle(fontSize: 17,
-            fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+        Text('External Link', style: TextStyle(fontSize: 17,
+            fontWeight: FontWeight.w800, color: AppColors.textTitle,),),
         const SizedBox(height: 8),
         Text(url, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+            style: TextStyle(fontSize: 13, color: AppColors.textMuted),),
         const SizedBox(height: 20), _OBtn(url: url, big: true),
-      ])));
+      ],),),);
 }
 
 class _FallbackWidget extends StatelessWidget {
@@ -836,7 +2570,7 @@ class _FallbackWidget extends StatelessWidget {
   Widget build(BuildContext context) => _PlaceholderW(icon: Icons.insert_drive_file_rounded,
       iconColor: AppColors.textMuted, iconBg: _K.bg, title: 'Preview not available',
       sub: material != null ? 'This file type (${material!.type}) cannot be previewed inline.'
-          : 'Preview not available.', actionLabel: 'Open / Download', onAction: () {});
+          : 'Preview not available.', actionLabel: 'Open / Download', onAction: () {},);
 }
 
 class _LoaderW extends StatelessWidget {
@@ -844,31 +2578,31 @@ class _LoaderW extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
     const CircularProgressIndicator(strokeWidth: 2), const SizedBox(height: 12),
-    Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textMuted))]));
+    Text(label, style: TextStyle(fontSize: 13, color: AppColors.textMuted)),],),);
 }
 
 class _PlaceholderW extends StatelessWidget {
   final IconData icon; final Color iconColor, iconBg;
   final String title, sub; final String? actionLabel; final VoidCallback? onAction;
   const _PlaceholderW({required this.icon, required this.iconColor, required this.iconBg,
-      required this.title, required this.sub, this.actionLabel, this.onAction});
+      required this.title, required this.sub, this.actionLabel, this.onAction,});
   @override
   Widget build(BuildContext context) => Center(child: Padding(padding: const EdgeInsets.all(32),
     child: Column(mainAxisSize: MainAxisSize.min, children: [
       Container(width: 70, height: 70,
           decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(18)),
-          child: Icon(icon, size: 32, color: iconColor)),
+          child: Icon(icon, size: 32, color: iconColor),),
       const SizedBox(height: 16),
-      Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+      Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
       const SizedBox(height: 6),
-      Text(sub, style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
-          textAlign: TextAlign.center),
+      Text(sub, style: TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.5),
+          textAlign: TextAlign.center,),
       if (actionLabel != null && onAction != null) ...[
         const SizedBox(height: 20),
         ElevatedButton.icon(onPressed: onAction,
-            icon: const Icon(Icons.open_in_new_rounded, size: 14), label: Text(actionLabel!)),
+            icon: const Icon(Icons.open_in_new_rounded, size: 14), label: Text(actionLabel!),),
       ],
-    ])));
+    ],),),);
 }
 
 class _MetaStripW extends StatelessWidget {
@@ -880,6 +2614,7 @@ class _MetaStripW extends StatelessWidget {
   }
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final items = <(IconData, String)>[];
     if (material.fileSize != null) items.add((Icons.storage_rounded, _fmt(material.fileSize!)));
     if (material.pageCount != null) items.add((Icons.menu_book_rounded, '${material.pageCount} pages'));
@@ -891,8 +2626,8 @@ class _MetaStripW extends StatelessWidget {
     return Wrap(spacing: 14, runSpacing: 5, children: items.map((it) =>
         Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(it.$1, size: 12, color: AppColors.textHint), const SizedBox(width: 4),
-          Text(it.$2, style: const TextStyle(fontSize: 13, color: AppColors.textMuted, fontWeight: FontWeight.w500)),
-        ])).toList());
+          Text(it.$2, style: TextStyle(fontSize: 13, color: AppColors.textMuted, fontWeight: FontWeight.w500)),
+        ],),).toList(),);
   }
 }
 
@@ -908,12 +2643,13 @@ class _OBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     if (big) {
       return ElevatedButton.icon(onPressed: _open,
         icon: const Icon(Icons.open_in_new_rounded, size: 14), label: const Text('Open'),
         style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary,
             foregroundColor: Colors.white, elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))));
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),),);
     }
     return Material(color: AppColors.primary, borderRadius: BorderRadius.circular(7),
         child: InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent), onTap: _open, borderRadius: BorderRadius.circular(7),
@@ -922,7 +2658,7 @@ class _OBtn extends StatelessWidget {
                   Icon(Icons.open_in_new_rounded, size: 12, color: Colors.white),
                   SizedBox(width: 5),
                   Text('Open', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
-                ]))));
+                ],),),),);
   }
 }
 

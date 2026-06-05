@@ -46,8 +46,8 @@ class Exam(Base):
         nullable=True
     )
 
-    exam_type: Mapped[ExamType] = mapped_column(
-        SQLEnum(ExamType, name="exam_type_enum"),
+    exam_type: Mapped[str] = mapped_column(
+        String(255),
         nullable=False,
         index=True
     )

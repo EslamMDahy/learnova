@@ -97,26 +97,7 @@ class AuthApi {
     return (res.data ?? <String, dynamic>{}).cast<String, dynamic>();
   }
 
-  Future<String> refresh() async {
-    final res = await _client.post<Map<String, dynamic>>(
-      Endpoints.refresh,
-    );
-
-    final payload = (res.data ?? <String, dynamic>{}).cast<String, dynamic>();
-    final root = (payload['data'] is Map<String, dynamic>)
-        ? payload['data'] as Map<String, dynamic>
-        : payload;
-
-    final newAccess =
-        (root['access_token'] ?? root['token'] ?? root['accessToken'])
-            ?.toString();
-
-    if (newAccess == null || newAccess.trim().isEmpty) {
-      throw Exception('Missing access token in refresh response');
-    }
-
-    return newAccess.trim();
-  }
+  Future<String> refresh() => _client.refreshAccessToken();
 
   Future<void> logout() async {
     await _client.post(Endpoints.logout);

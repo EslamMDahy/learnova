@@ -70,7 +70,7 @@ class _ReusableCourse {
 final _reusableCoursesProvider =
     FutureProvider.autoDispose.family<List<_ReusableCourse>, int>((ref, currentCourseId) async {
   final coursesResponse = await ref.read(coursesRepositoryProvider).myCourses(
-    enrichMissingModuleCounts: false,
+    
   );
   final modulesApi = ref.read(modulesApiProvider);
 
@@ -128,11 +128,12 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final reusableAsync = ref.watch(_reusableCoursesProvider(widget.currentCourseId));
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -149,7 +150,7 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
             subtitle: _headerSubtitle,
             onClose: () => Navigator.pop(context),
           ),
-          const Divider(height: 1, color: AppColors.border),
+          Divider(height: 1, color: AppColors.border),
           Expanded(
             child: _buildStepContent(reusableAsync),
           ),
@@ -211,10 +212,10 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
                     // Both badges use the same blue palette to stay consistent
                     // with the site’s primary color. The old “From other courses”
                     // badge was purple which clashed with the rest of the UI.
-                    badgeColor: const Color(0xFFE8F1FF),
-                    badgeTextColor: const Color(0xFF1D6FE9),
-                    iconBg: const Color(0xFFEFF6FF),
-                    iconFg: const Color(0xFF137FEC),
+                    badgeColor: AppColors.infoBg,
+                    badgeTextColor: AppColors.primary,
+                    iconBg: AppColors.primarySoft,
+                    iconFg: AppColors.primary,
                     title: 'Create a fresh module',
                     description:
                         'Best for a brand-new chapter, week, or topic group. Title and description are validated before creation.',
@@ -227,10 +228,10 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
                   child: _ActionCard(
                     icon: Icons.content_copy_rounded,
                     badge: 'From other courses',
-                    badgeColor: const Color(0xFFE8F1FF),
-                    badgeTextColor: const Color(0xFF1D6FE9),
-                    iconBg: const Color(0xFFEFF6FF),
-                    iconFg: const Color(0xFF137FEC),
+                    badgeColor: AppColors.infoBg,
+                    badgeTextColor: AppColors.primary,
+                    iconBg: AppColors.primarySoft,
+                    iconFg: AppColors.primary,
                     title: 'Reuse from another course',
                     description: readyCount > 0
                         ? '$readyCount validated modules can be copied from ${courses.length} ${courses.length == 1 ? 'other course' : 'other courses'}.'
@@ -264,18 +265,18 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
                             margin: const EdgeInsets.only(bottom: 14),
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
+                              color: AppColors.surfaceBg,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: AppColors.border),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.info_outline_rounded, size: 16, color: AppColors.textMuted),
+                                Icon(Icons.info_outline_rounded, size: 16, color: AppColors.textMuted),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     '$blockedCount ${blockedCount == 1 ? 'module already exists' : 'modules already exist'} in this course and will stay disabled to avoid duplicate copies.',
-                                    style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+                                    style: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
                                   ),
                                 ),
                               ],
@@ -424,7 +425,7 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
                               ),
                             ),
                           ),
-                        )),
+                        ),),
                   ],
                   if (blockedModules.isNotEmpty) ...[
                     const SizedBox(height: 8),
@@ -437,7 +438,7 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
                             enabled: false,
                             reason: _blockedReason(module),
                           ),
-                        )),
+                        ),),
                   ],
                 ],
               ),
@@ -457,9 +458,9 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
     Widget quickChip(String label) {
       return ActionChip(
         label: Text(label),
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: AppColors.border),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.cardBg,
         onPressed: () {
           _titleCtrl.text = label;
           _titleCtrl.selection = TextSelection.collapsed(offset: _titleCtrl.text.length);
@@ -472,16 +473,16 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
     final detailsCard = Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Module details', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+          Text('Module details', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
           const SizedBox(height: 6),
-          const Text('This section will appear in the course structure.', style: TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.textMuted)),
+          Text('This section will appear in the course structure.', style: TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.textMuted)),
           const SizedBox(height: 16),
           const _FieldLabel('Module title', required: true),
           const SizedBox(height: 6),
@@ -527,19 +528,19 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
     final previewCard = Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.surfaceBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Live preview', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+          Text('Live preview', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.cardBg,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AppColors.border),
             ),
@@ -548,25 +549,25 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: AppColors.primarySoft,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.folder_open_rounded, color: Color(0xFF137FEC), size: 18),
+                child: const Icon(Icons.folder_open_rounded, color: AppColors.primary, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(previewTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+                  Text(previewTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
                   const SizedBox(height: 4),
-                  Text(previewDescription, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.8, height: 1.4, color: AppColors.textMuted)),
-                ]),
+                  Text(previewDescription, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11.8, height: 1.4, color: AppColors.textMuted)),
+                ],),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(999)),
-                child: const Text('Module', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFF137FEC))),
+                decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(999)),
+                child: const Text('Module', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.primary)),
               ),
-            ]),
+            ],),
           ),
         ],
       ),
@@ -583,21 +584,21 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FBFF),
+              color: AppColors.hoverBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFDCEBFF)),
+              border: Border.all(color: AppColors.badgeBlueBorder),
             ),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Create a module', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+              Text('Create a module', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
               const SizedBox(height: 6),
-              const Text('Use a short, clear title. Description is optional and only appears as extra context.', style: TextStyle(fontSize: 12.8, height: 1.45, color: AppColors.textMuted)),
+              Text('Use a short, clear title. Description is optional and only appears as extra context.', style: TextStyle(fontSize: 12.8, height: 1.45, color: AppColors.textMuted)),
               const SizedBox(height: 12),
               Wrap(spacing: 8, runSpacing: 8, children: [
                 quickChip('Chapter 1'),
                 quickChip('Week 2'),
                 quickChip('Assessment Prep'),
-              ]),
-            ]),
+              ],),
+            ],),
           ),
           const SizedBox(height: 16),
           Expanded(
@@ -630,7 +631,7 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.textTitle,
                     padding: const EdgeInsets.symmetric(vertical: 15),
-                    side: const BorderSide(color: AppColors.border),
+                    side: BorderSide(color: AppColors.border),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   child: const Text('Cancel'),
@@ -642,7 +643,7 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
                 child: FilledButton.icon(
                   onPressed: _submitCreate,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF137FEC),
+                    backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -670,21 +671,21 @@ class _ModuleSelectorSheetState extends ConsumerState<_ModuleSelectorSheet> {
       isDense: true,
       alignLabelWithHint: true,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: AppColors.cardBg,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       prefixIcon: prefixIcon,
       prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 42),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFF137FEC), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
     );
   }
@@ -756,12 +757,13 @@ class _PreviewMiniPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.08),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: AppColors.cardBg.withOpacity(0.08)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -788,6 +790,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
       child: Row(
@@ -797,19 +800,19 @@ class _Header extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: AppColors.primarySoft,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.widgets_outlined, color: Color(0xFF137FEC)),
+            child: const Icon(Icons.widgets_outlined, color: AppColors.primary),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+                Text(title, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
                 const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(fontSize: 12.8, height: 1.45, color: AppColors.textMuted)),
+                Text(subtitle, style: TextStyle(fontSize: 12.8, height: 1.45, color: AppColors.textMuted)),
               ],
             ),
           ),
@@ -824,7 +827,7 @@ class _Header extends StatelessWidget {
                 borderRadius: BorderRadius.circular(99),
                 border: Border.all(color: AppColors.border),
               ),
-              child: const Icon(Icons.close_rounded, size: 20, color: AppColors.textMuted),
+              child: Icon(Icons.close_rounded, size: 20, color: AppColors.textMuted),
             ),
           ),
         ],
@@ -862,10 +865,11 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Opacity(
       opacity: enabled ? 1 : 0.6,
       child: Material(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(10),
         child: InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent),
           borderRadius: BorderRadius.circular(10),
@@ -902,15 +906,15 @@ class _ActionCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 18),
-                Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+                Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
                 const SizedBox(height: 10),
-                Text(description, style: const TextStyle(fontSize: 12.8, height: 1.55, color: AppColors.textMuted)),
+                Text(description, style: TextStyle(fontSize: 12.8, height: 1.55, color: AppColors.textMuted)),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Text(cta, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: enabled ? const Color(0xFF137FEC) : AppColors.textMuted)),
+                    Text(cta, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: enabled ? AppColors.primary : AppColors.textMuted)),
                     const SizedBox(width: 6),
-                    Icon(Icons.arrow_forward_rounded, size: 16, color: enabled ? const Color(0xFF137FEC) : AppColors.textMuted),
+                    Icon(Icons.arrow_forward_rounded, size: 16, color: enabled ? AppColors.primary : AppColors.textMuted),
                   ],
                 ),
               ],
@@ -943,10 +947,11 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.surfaceBg,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.border),
       ),
@@ -959,9 +964,9 @@ class _SectionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+                    Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
                     const SizedBox(height: 6),
-                    Text(subtitle, style: const TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.textMuted)),
+                    Text(subtitle, style: TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.textMuted)),
                   ],
                 ),
               ),
@@ -997,8 +1002,9 @@ class _CourseTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Material(
-      color: Colors.white,
+      color: AppColors.cardBg,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent),
         borderRadius: BorderRadius.circular(10),
@@ -1015,10 +1021,10 @@ class _CourseTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: AppColors.primarySoft,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.menu_book_rounded, color: Color(0xFF137FEC)),
+                child: const Icon(Icons.menu_book_rounded, color: AppColors.primary),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -1028,21 +1034,21 @@ class _CourseTile extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(course.safeTitle, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+                          child: Text(course.safeTitle, style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
+                            color: AppColors.surfaceBg,
                             borderRadius: BorderRadius.circular(99),
                             border: Border.all(color: AppColors.border),
                           ),
-                          child: Text(course.safeCourseCode, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+                          child: Text(course.safeCourseCode, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
                         ),
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Text('${course.courseType} • ${course.visibilityLevel}', style: const TextStyle(fontSize: 12.2, color: AppColors.textMuted)),
+                    Text('${course.courseType} • ${course.visibilityLevel}', style: TextStyle(fontSize: 12.2, color: AppColors.textMuted)),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
@@ -1057,7 +1063,7 @@ class _CourseTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+              Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
             ],
           ),
         ),
@@ -1081,10 +1087,11 @@ class _ModuleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final card = Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: enabled ? Colors.white : const Color(0xFFF8FAFC),
+        color: enabled ? AppColors.cardBg : AppColors.surfaceBg,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.border),
       ),
@@ -1095,10 +1102,10 @@ class _ModuleTile extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: enabled ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
+              color: enabled ? AppColors.primarySoft : AppColors.headerBg,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.folder_copy_outlined, color: enabled ? const Color(0xFF137FEC) : AppColors.textMuted),
+            child: Icon(Icons.folder_copy_outlined, color: enabled ? AppColors.primary : AppColors.textMuted),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -1111,7 +1118,7 @@ class _ModuleTile extends StatelessWidget {
                   (module.description ?? '').trim().isEmpty ? 'No description yet' : module.description!,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.textMuted),
+                  style: TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.textMuted),
                 ),
                 const SizedBox(height: 10),
                 Wrap(
@@ -1131,14 +1138,14 @@ class _ModuleTile extends StatelessWidget {
             FilledButton.icon(
               onPressed: onTap,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF137FEC),
+                backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               icon: const Icon(Icons.copy_all_rounded, size: 16),
               label: const Text('Copy'),
             )
           else
-            const Icon(Icons.block_rounded, color: AppColors.textMuted),
+            Icon(Icons.block_rounded, color: AppColors.textMuted),
         ],
       ),
     );
@@ -1161,19 +1168,20 @@ class _MiniBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(99),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: const Color(0xFF1D6FE9)),
+          Icon(icon, size: 14, color: AppColors.primary),
           const SizedBox(width: 6),
-          Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
+          Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
         ],
       ),
     );
@@ -1186,16 +1194,17 @@ class _CountBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       width: 38,
       height: 38,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(99),
         border: Border.all(color: AppColors.border),
       ),
-      child: Text('$count', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+      child: Text('$count', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
     );
   }
 }
@@ -1206,7 +1215,8 @@ class _StateLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textMuted));
+    Theme.of(context);
+    return Text(text, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textMuted));
   }
 }
 
@@ -1218,6 +1228,7 @@ class _BackLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return InkWell(hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent, overlayColor: const WidgetStatePropertyAll(Colors.transparent),
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
@@ -1226,9 +1237,9 @@ class _BackLink extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.arrow_back_rounded, size: 16, color: AppColors.textMuted),
+            Icon(Icons.arrow_back_rounded, size: 16, color: AppColors.textMuted),
             const SizedBox(width: 6),
-            Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+            Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
           ],
         ),
       ),
@@ -1243,11 +1254,12 @@ class _FieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Row(
       children: [
-        Text(text, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
+        Text(text, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textTitle)),
         if (required)
-          const Text(' *', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFFEF4444))),
+          const Text(' *', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.errorDot)),
       ],
     );
   }
@@ -1262,11 +1274,12 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.border),
       ),
@@ -1277,15 +1290,15 @@ class _EmptyState extends StatelessWidget {
             width: 58,
             height: 58,
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: AppColors.headerBg,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: AppColors.textMuted),
           ),
           const SizedBox(height: 14),
-          Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
+          Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textTitle)),
           const SizedBox(height: 6),
-          Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12.5, height: 1.5, color: AppColors.textMuted)),
+          Text(message, textAlign: TextAlign.center, style: TextStyle(fontSize: 12.5, height: 1.5, color: AppColors.textMuted)),
         ],
       ),
     );
@@ -1298,10 +1311,11 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Text(message, style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+        child: Text(message, style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
       ),
     );
   }

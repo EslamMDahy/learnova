@@ -43,7 +43,7 @@ class AppDialogSurface extends StatelessWidget {
   final double? maxWidth;
   final double? maxHeight;
   final EdgeInsets? insetPadding;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final bool blurBackdrop;
 
   const AppDialogSurface({
@@ -52,12 +52,13 @@ class AppDialogSurface extends StatelessWidget {
     this.maxWidth,
     this.maxHeight,
     this.insetPadding,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor,
     this.blurBackdrop = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final Widget content = Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -71,19 +72,19 @@ class AppDialogSurface extends StatelessWidget {
           maxHeight: maxHeight ?? double.infinity,
         ),
         decoration: BoxDecoration(
-          color: backgroundColor,
+          color: backgroundColor ?? AppColors.cardBg,
           borderRadius: BorderRadius.circular(AppDialogTokens.radius),
           border: Border.all(color: AppColors.borderSoft),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Color(0x1A0F172A),
+              color: AppColors.shadowSoft,
               blurRadius: 32,
-              offset: Offset(0, 16),
+              offset: const Offset(0, 16),
             ),
             BoxShadow(
-              color: Color(0x120F172A),
+              color: AppColors.shadowSoft,
               blurRadius: 8,
-              offset: Offset(0, 2),
+              offset: const Offset(0, 2),
             ),
           ],
         ),

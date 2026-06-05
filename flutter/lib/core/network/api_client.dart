@@ -121,7 +121,6 @@ class ApiClient implements ITokenRefreshScheduler {
                 DioException(
                   requestOptions: e.requestOptions,
                   response: e.response,
-                  type: DioExceptionType.unknown,
                   error: ApiException(
                     'Request could not be completed. Please try again.',
                     code: 'AUTH_RETRY_FAILED',
@@ -364,6 +363,8 @@ class ApiClient implements ITokenRefreshScheduler {
       _refreshCompleter = null;
     }
   }
+
+  Future<String> refreshAccessToken() => _refreshAccessToken();
 
   Future<String> _callRefreshEndpoint() async {
     final url = '${Env.baseUrl}${Endpoints.refresh}';

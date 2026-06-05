@@ -15,3 +15,16 @@ void downloadTextFile({required String filename, required String content, String
   a.remove();
   html.Url.revokeObjectUrl(url);
 }
+
+void downloadBytesFile({required String filename, required List<int> bytes, String mimeType = 'application/octet-stream'}) {
+  final blob = html.Blob([bytes], mimeType);
+  final url = html.Url.createObjectUrlFromBlob(blob);
+  final a = html.AnchorElement(href: url)
+    ..setAttribute('download', filename)
+    ..style.display = 'none';
+
+  html.document.body?.children.add(a);
+  a.click();
+  a.remove();
+  html.Url.revokeObjectUrl(url);
+}

@@ -94,6 +94,7 @@ class QuestionModel {
   final List<QuestionLearningOutcomeRef> learningOutcomes;
 
   final DateTime createdAt;
+  final DateTime updatedAt;
 
   const QuestionModel({
     required this.id,
@@ -123,7 +124,8 @@ class QuestionModel {
     this.topicName,
     this.learningOutcomes = const [],
     required this.createdAt,
-  });
+    DateTime? updatedAt,
+  }) : updatedAt = updatedAt ?? createdAt;
 
   String get typeLabel => type.label;
 
@@ -224,6 +226,7 @@ class QuestionModel {
           .map((e) => QuestionLearningOutcomeRef.fromJson(Map<String, dynamic>.from(e)))
           .toList(),
       createdAt: dt(json['created_at']),
+      updatedAt: dt(json['updated_at'] ?? json['created_at']),
     );
   }
 
@@ -239,6 +242,8 @@ class QuestionModel {
       if (moduleId != null) 'module_id': moduleId,
       if (materialId != null) 'material_id': materialId,
       if (topicId != null) 'topic_id': topicId,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
     };
   }
 }
